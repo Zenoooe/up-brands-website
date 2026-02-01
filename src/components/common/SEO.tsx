@@ -10,6 +10,7 @@ interface SEOProps {
   publishedTime?: string;
   author?: string;
   tags?: string[];
+  keywords?: string[];
 }
 
 export function SEO({ 
@@ -20,7 +21,8 @@ export function SEO({
   type = 'website',
   publishedTime,
   author,
-  tags
+  tags,
+  keywords
 }: SEOProps) {
   const { i18n } = useTranslation();
   const siteTitle = 'Up-Brands | Brand Strategy & Visual Identity';
@@ -45,7 +47,7 @@ export function SEO({
       name: 'Up-Brands',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://up-brands.com/logo.png'
+        url: 'https://up-brands.com/favicon.svg'
       }
     },
     description: description
@@ -53,7 +55,7 @@ export function SEO({
     '@context': 'https://schema.org',
     '@type': 'Organization',
     url: 'https://up-brands.com',
-    logo: 'https://up-brands.com/logo.png',
+    logo: 'https://up-brands.com/favicon.svg',
     name: 'Up-Brands',
     description: 'Specializing in brand strategy and visual identity for cross-border success.',
     sameAs: [
@@ -67,6 +69,7 @@ export function SEO({
       {/* Standard Metadata */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {keywords && <meta name="keywords" content={keywords.join(', ')} />}
       <link rel="canonical" href={currentUrl} />
       <html lang={lang} />
 

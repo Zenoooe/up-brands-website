@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import * as OpenCC from 'opencc-js';
 import { useEffect, useState } from 'react';
+import { SEO } from '../components/common/SEO';
 
 // Create converter instance
 const convertToSimplified = OpenCC.Converter({ from: 'hk', to: 'cn' });
@@ -25,10 +26,11 @@ export default function Blog() {
 
   return (
     <Layout>
-      <Helmet>
-        <title>Blog | Up-Brands</title>
-        <meta name="description" content="Insights and news about brand design, strategy, and marketing from Up-Brands." />
-      </Helmet>
+      <SEO 
+        title={t('blog.seo_title') || "Blog & Insights | Up-Brands"}
+        description={t('blog.seo_desc') || "Explore our latest thoughts on brand strategy, design trends, and marketing insights."}
+        keywords={['Brand Insights', 'Design Blog', 'Marketing Trends', '品牌洞察', '设计博客', '营销趋势']}
+      />
 
       <section className="w-full pt-32 pb-16 px-4 md:px-8 bg-white min-h-screen">
         <motion.div

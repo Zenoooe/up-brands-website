@@ -9,6 +9,7 @@ import { X } from 'lucide-react';
 import { FaBehance, FaWeixin } from 'react-icons/fa';
 import { SiXiaohongshu } from 'react-icons/si';
 import { ContactModal } from '../components/ui/ContactModal';
+import { SEO } from '../components/common/SEO';
 
 function toWpImageProxyUrl(url: string) {
   const cleaned = url.replace(/^https?:\/\//, '');
@@ -300,11 +301,11 @@ export default function Home() {
 
   return (
     <Layout>
-      <Helmet>
-        <title>创意视觉与品牌策略 - 上游文创 Up-Brands | 品牌提升专家</title>
-        <meta name="description" content="上游文创 Up-Brands 提供专业的品牌策略和创意视觉服务，帮助大湾区企业通过精准的市场定位和创意设计实现品牌升级和业务增长。" />
-        <meta name="keywords" content="品牌咨询, 品牌策略, 创意视觉, 珠海品牌设计, 大湾区设计, Up-Brands, Brand Strategy, Visual Identity" />
-      </Helmet>
+      <SEO 
+        title={t('home.seo_title') || "Up-Brands | Brand Strategy & Creative Design Agency"}
+        description={t('home.seo_desc') || "Up-Brands is a brand strategy and creative design agency based in the Greater Bay Area. We help businesses discover unique brand values through systematic visual language."}
+        keywords={['Brand Strategy', 'Creative Design', 'Visual Identity', 'Digital Marketing', 'Greater Bay Area', 'Up-Brands', '品牌咨询', '品牌策略', '创意视觉', '珠海品牌设计', '大湾区设计']}
+      />
 
       {/* Interactive Hero Section */}
       <section 

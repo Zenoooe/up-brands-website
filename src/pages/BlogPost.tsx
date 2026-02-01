@@ -56,6 +56,7 @@ export default function BlogPost() {
         publishedTime={post.date}
         author={post.author}
         tags={post.tags}
+        keywords={post.tags}
       />
 
       <article className="w-full pt-32 pb-16 px-4 md:px-8 bg-white min-h-screen">

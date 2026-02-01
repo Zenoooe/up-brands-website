@@ -5,6 +5,7 @@ import { Mail, Phone } from 'lucide-react';
 import { FaBehance, FaWeixin, FaWhatsapp } from 'react-icons/fa';
 import { ContactModal } from '../components/ui/ContactModal';
 import { useState } from 'react';
+import { SEO } from '../components/common/SEO';
 
 export default function About() {
   const { t } = useTranslation();
@@ -12,6 +13,11 @@ export default function About() {
 
   return (
     <Layout>
+      <SEO 
+        title={t('about.seo_title') || "About Us | Up-Brands"}
+        description={t('about.seo_desc') || "Learn about Up-Brands, a team of creative strategists helping brands grow globally through design and innovation."}
+        keywords={['About Up-Brands', 'Creative Team', 'Brand Agency', 'Design Studio', '关于我们', '设计团队', '品牌机构']}
+      />
       <div className="container mx-auto px-4 md:px-8 py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
