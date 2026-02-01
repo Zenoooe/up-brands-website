@@ -69,7 +69,7 @@ export function Footer() {
             <a href="https://www.linkedin.com/company/up_brands/" target="_blank" rel="noopener noreferrer" className="text-2xl font-normal hover:opacity-70 transition-opacity">
               LinkedIn
             </a>
-            <a href="https://www.instagram.com/upstream.asia/" target="_blank" rel="noopener noreferrer" className="text-2xl font-normal hover:opacity-70 transition-opacity">
+            <a href="https://www.instagram.com/up.brands_/" target="_blank" rel="noopener noreferrer" className="text-2xl font-normal hover:opacity-70 transition-opacity">
               Instagram
             </a>
             <a href="https://www.behance.net/up-brands" target="_blank" rel="noopener noreferrer" className="text-2xl font-normal hover:opacity-70 transition-opacity">
