@@ -447,7 +447,13 @@ export default function Dashboard() {
             // Only update if we don't have a backup yet
             const existingProject = projects.find(p => p.id === id);
             
+            // Check if backup is missing
             if (existingProject && !existingProject.backup_image_url) {
+               // Also check if the original imageUrl has changed, we might want to update it
+               if (existingProject.imageUrl !== imageUrl) {
+                 await supabase.from('projects').update({ imageUrl }).eq('id', id);
+               }
+
                try {
                 const newBackupUrl = await backupImageToSupabase(imageUrl, id);
                 if (newBackupUrl) {
