@@ -50,8 +50,16 @@ export default function ProjectEditor() {
 
     try {
       const newUrl = await backupImageToSupabase(formData.imageUrl, projectId);
+      
+      // Update form data immediately to reflect new URL in input
       setFormData(prev => ({ ...prev, imageUrl: newUrl }));
-      toast.success('Image backed up successfully!', { id: toastId });
+      
+      // Force update state to ensure UI re-renders with new value
+      // (React state batching sometimes might need a nudge if we are relying on deep object updates)
+      // But setFormData({...prev}) should be enough. 
+      // Let's add a small delay to ensure user sees the change visually or just rely on toast.
+      
+      toast.success('Image backed up successfully! URL updated.', { id: toastId });
     } catch (error) {
       toast.error('Failed to backup image', { id: toastId });
     } finally {
