@@ -1,0 +1,75 @@
+{
+  "nav": {
+    "work": "Work",
+    "about": "About",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "home": {
+    "tagline": "Empowering your brand's global leap, driving exponential business growth.",
+    "marquee": "Great Bay Area Brand Design · Strategy First Creative Lead · Brand Strategy & Design ·",
+    "about_title": "We are Up-Brands.",
+    "about_desc_1": "Up-Brands is a brand strategy and creative design company rooted in the Greater Bay Area. We focus on helping companies discover unique brand values and presenting them to the world through a systematic visual language.",
+    "about_desc_2": "From market insight to creative implementation, we believe that good brand design is not only an expression of aesthetics, but also a concrete representation of business strategy.",
+    "view_project": "View Project",
+    "contact_title": "Let's Create Together",
+    "contact_btn": "Start a Project",
+    "modal": {
+      "title": "View Project",
+      "behance": "View on Behance",
+      "wechat": "View on WeChat"
+    }
+  },
+  "about": {
+    "title": "About Us",
+    "intro": "Up-Brands is a brand strategy and creative marketing solution provider based in Zhuhai, adjacent to Hong Kong and Macau. We are dedicated to providing enterprise owners with refined brand strategies, advanced creative visuals, and digital marketing policies to effectively excavate and enhance the core competitiveness of brands, ensuring your brand stands out in complex market environments and driving business growth and value creation.",
+    "problem_title": "95% of companies face these problems...",
+    "problems": {
+      "1": {
+        "title": "Outdated Brand Image",
+        "desc": "Brand visuals and image are out of touch with current trends and consumer perceptions, failing to communicate effectively."
+      },
+      "2": {
+        "title": "Poor Brand Reputation",
+        "desc": "Lack of awareness and recognition in the target market, making it difficult to gain consumer trust and praise."
+      },
+      "3": {
+        "title": "Homogenization Dilemma",
+        "desc": "Fierce competition with many rivals, serious homogenization, often falling into price wars."
+      },
+      "4": {
+        "title": "Inability to Command Premium Prices",
+        "desc": "Unclear product positioning, lack of unique selling points, unable to create brand differentiation."
+      },
+      "5": {
+        "title": "Lack of Innovation Capability",
+        "desc": "Products and services struggle to adapt to market changes and updated consumer demands, lacking continuous product packaging capabilities and innovation mechanisms."
+      }
+    },
+    "contact_cta_title": "Contact Us",
+    "contact_cta_desc": "Don't let these problems hold you back. Let's solve them together.",
+    "solution_title": "Brand Strategy + Creative Visuals + Digital Marketing",
+    "solution_desc": "Up-Brands is committed to providing enterprise owners with an executable and efficient set of brand strategic solutions. With 'Brand Strategy + Creative Visuals + Digital Marketing' as the core path, we realize the path of brand renewal or reshaping, allowing enterprise owners and products to gain higher market share and generate new business opportunities.",
+    "connect": "Connect with us"
+  },
+  "blog": {
+    "title": "Insights & News",
+    "read_more": "Read More",
+    "back": "Back to Blog"
+  },
+  "footer": {
+    "rights": "Up-Brands. All Rights Reserved.",
+    "keep_touch": "Keep in Touch",
+    "email_placeholder": "your.email@address.com",
+    "lets_talk": "Let's Talk",
+    "new_business": "New Business:",
+    "careers": "Careers:",
+    "location": "Location",
+    "address_line1": "Room 1101, Dongda Commercial Center",
+    "address_line2": "Jingshan Road, Jida, Xiangzhou District",
+    "address_line3": "Zhuhai, Guangdong",
+    "address_line4": "China",
+    "wechat": "WeChat",
+    "xiaohongshu": "Xiaohongshu"
+  }
+}
