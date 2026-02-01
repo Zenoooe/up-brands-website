@@ -3,6 +3,7 @@ export interface Project {
   title: string;
   category: string;
   imageUrl: string;
+  backup_image_url?: string;
   link: string; // Behance Link
   wechatLink?: string; // WeChat Article Link
   redNoteLink?: string; // RedNote (Xiaohongshu) Link
@@ -21,6 +22,7 @@ export interface BlogPost {
   content_zh: string; // Markdown or HTML
   date: string;
   imageUrl: string;
+  backup_image_url?: string;
   author: string;
   tags: string[];
   sort_order?: number;

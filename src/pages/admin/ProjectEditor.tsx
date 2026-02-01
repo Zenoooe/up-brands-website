@@ -19,6 +19,7 @@ export default function ProjectEditor() {
     title: '',
     category: '',
     imageUrl: '',
+    backup_image_url: '',
     link: '',
     wechatLink: '',
     redNoteLink: '',
@@ -51,15 +52,10 @@ export default function ProjectEditor() {
     try {
       const newUrl = await backupImageToSupabase(formData.imageUrl, projectId);
       
-      // Update form data immediately to reflect new URL in input
-      setFormData(prev => ({ ...prev, imageUrl: newUrl }));
+      // Update backup URL specifically
+      setFormData(prev => ({ ...prev, backup_image_url: newUrl }));
       
-      // Force update state to ensure UI re-renders with new value
-      // (React state batching sometimes might need a nudge if we are relying on deep object updates)
-      // But setFormData({...prev}) should be enough. 
-      // Let's add a small delay to ensure user sees the change visually or just rely on toast.
-      
-      toast.success('Image backed up successfully! URL updated.', { id: toastId });
+      toast.success('Image backed up successfully! Backup URL updated.', { id: toastId });
     } catch (error) {
       toast.error('Failed to backup image', { id: toastId });
     } finally {
@@ -151,7 +147,7 @@ export default function ProjectEditor() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Image URL (Original)</label>
           <div className="flex gap-2">
             <input
               type="url"
@@ -172,7 +168,21 @@ export default function ProjectEditor() {
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Tip: Click "Backup" to save the image to your own server. This ensures it loads fast in China.
+            Original URL from Behance (kept for sync). Click "Backup" to generate a stable Supabase link below.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Backup Image URL (Supabase)</label>
+          <input
+            type="url"
+            value={formData.backup_image_url || ''}
+            onChange={e => setFormData({...formData, backup_image_url: e.target.value})}
+            className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none bg-gray-50"
+            placeholder="Generated automatically when you click Backup"
+          />
+           <p className="text-xs text-gray-500 mt-1">
+            This URL will be prioritized on the website if present.
           </p>
         </div>
 

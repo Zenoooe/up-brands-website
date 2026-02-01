@@ -70,7 +70,7 @@ export default function Blog() {
                     <Link to={`/blog/${post.slug}`} className="block h-full">
                       <div className="overflow-hidden aspect-[16/9] mb-6 bg-gray-100">
                         <img 
-                          src={post.imageUrl} 
+                          src={post.backup_image_url || post.imageUrl} 
                           alt={title} 
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />

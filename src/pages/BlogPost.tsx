@@ -51,7 +51,7 @@ export default function BlogPost() {
       <SEO
         title={title}
         description={excerpt}
-        image={post.imageUrl}
+        image={post.backup_image_url || post.imageUrl}
         type="article"
         publishedTime={post.date}
         author={post.author}
@@ -86,7 +86,7 @@ export default function BlogPost() {
 
             <div className="w-full aspect-[21/9] overflow-hidden bg-gray-100 mb-12">
               <img 
-                src={post.imageUrl} 
+                src={post.backup_image_url || post.imageUrl} 
                 alt={title} 
                 className="w-full h-full object-cover"
               />

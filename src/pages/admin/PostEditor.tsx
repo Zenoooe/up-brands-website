@@ -24,6 +24,7 @@ export default function PostEditor() {
     content_zh: '',
     date: new Date().toISOString().split('T')[0],
     imageUrl: '',
+    backup_image_url: '',
     author: 'Up-Brands Team',
     tags: []
   });
@@ -58,7 +59,7 @@ export default function PostEditor() {
 
     try {
       const newUrl = await backupImageToSupabase(formData.imageUrl, imageId);
-      setFormData(prev => ({ ...prev, imageUrl: newUrl }));
+      setFormData(prev => ({ ...prev, backup_image_url: newUrl }));
       toast.success('Image backed up successfully!', { id: toastId });
     } catch (error) {
       toast.error('Failed to backup image', { id: toastId });
@@ -125,7 +126,7 @@ export default function PostEditor() {
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL (Original)</label>
             <div className="flex gap-2">
               <input
                 type="url"
@@ -145,6 +146,20 @@ export default function PostEditor() {
                 {backingUp ? 'Backing up...' : 'Backup'}
               </button>
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Original URL. Click "Backup" to generate a stable Supabase link below.
+            </p>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Backup Image URL (Supabase)</label>
+            <input
+              type="url"
+              value={formData.backup_image_url || ''}
+              onChange={e => setFormData({...formData, backup_image_url: e.target.value})}
+              className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none bg-gray-50"
+              placeholder="Generated automatically when you click Backup"
+            />
           </div>
            <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>

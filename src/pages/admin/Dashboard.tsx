@@ -54,7 +54,7 @@ function SortableProjectRow({
       </td>
       <td className="px-6 py-4 w-24">
         <div className="relative">
-          <img src={project.imageUrl} alt="" className={`w-12 h-12 object-cover rounded ${isHidden ? 'grayscale' : ''}`} />
+          <img src={project.backup_image_url || project.imageUrl} alt="" className={`w-12 h-12 object-cover rounded ${isHidden ? 'grayscale' : ''}`} />
           {isHidden && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded">
               <EyeOff size={16} className="text-white drop-shadow-md" />
@@ -129,7 +129,7 @@ function SortablePostRow({
       </td>
       <td className="px-6 py-4 w-24">
         <div className="relative">
-          <img src={post.imageUrl} alt="" className={`w-12 h-12 object-cover rounded ${isHidden ? 'grayscale' : ''}`} />
+          <img src={post.backup_image_url || post.imageUrl} alt="" className={`w-12 h-12 object-cover rounded ${isHidden ? 'grayscale' : ''}`} />
           {isHidden && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded">
               <EyeOff size={16} className="text-white drop-shadow-md" />
@@ -423,18 +423,20 @@ export default function Dashboard() {
             const { data } = await supabase.from('projects').select('id').eq('id', id).single();
             
             if (!data) {
-              let finalImageUrl = imageUrl;
+              let backupUrl = '';
               try {
-                finalImageUrl = await backupImageToSupabase(imageUrl, id);
+                // Try to backup immediately for new projects
+                backupUrl = await backupImageToSupabase(imageUrl, id);
               } catch (err) {
-                console.warn(`Failed to backup image for project ${id}, using original URL`, err);
+                console.warn(`Failed to backup image for project ${id}`, err);
               }
 
               await supabase.from('projects').insert({
                 id,
                 title,
                 category,
-                imageUrl: finalImageUrl,
+                imageUrl, // Keep original Behance URL
+                backup_image_url: backupUrl, // Store backup separately
                 link,
                 sort_order: maxSortOrder + count + 1
               });
@@ -442,24 +444,20 @@ export default function Dashboard() {
             }
           } else {
             // Existing project: 
-            // CRITICAL: Only update/backup if the current image is NOT a Supabase URL
-            // This prevents overwriting manually backed up images with Behance URLs from RSS
+            // Only update if we don't have a backup yet
             const existingProject = projects.find(p => p.id === id);
             
-            const isSupabaseUrl = existingProject?.imageUrl?.includes('supabase.co');
-            const isBehanceUrl = existingProject?.imageUrl?.includes('behance.net');
-            
-            // Only proceed if we have a behance URL (needs backup) OR if it's not a supabase URL (unknown external)
-            // If it is ALREADY a supabase URL, we assume it is safe and backed up, so we DO NOT touch it.
-            if (existingProject && !isSupabaseUrl && isBehanceUrl) {
+            if (existingProject && !existingProject.backup_image_url) {
                try {
-                const finalImageUrl = await backupImageToSupabase(imageUrl, id);
-                if (finalImageUrl !== existingProject.imageUrl) {
-                  await supabase.from('projects').update({ imageUrl: finalImageUrl }).eq('id', id);
-                  count++; // Count as updated
+                const newBackupUrl = await backupImageToSupabase(imageUrl, id);
+                if (newBackupUrl) {
+                  await supabase.from('projects')
+                    .update({ backup_image_url: newBackupUrl }) // Only update backup field
+                    .eq('id', id);
+                  count++; 
                 }
               } catch (err) {
-                console.warn(`Failed to update backup for existing project ${id}`, err);
+                console.warn(`Failed to create backup for existing project ${id}`, err);
               }
             }
           }

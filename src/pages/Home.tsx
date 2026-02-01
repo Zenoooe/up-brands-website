@@ -56,7 +56,11 @@ const SpawnedPreviewImage = ({ src }: { src: string }) => {
 };
 
 const ProjectCard = ({ project, index, onClick }: { project: Project; index: number; onClick: (project: Project, e: React.MouseEvent) => void }) => {
-  const smart = useSmartImageSrc(project.imageUrl);
+  // Use backup URL if available, otherwise fallback to original imageUrl
+  // And use smart loader for further fallback (wp proxy) if needed
+  const displayUrl = project.backup_image_url || project.imageUrl;
+  const smart = useSmartImageSrc(displayUrl);
+  
   return (
     <motion.div
       onClick={(e) => onClick(project, e)}
@@ -260,7 +264,7 @@ export default function Home() {
         id: imageIdCounter.current++,
         x,
         y,
-        src: randomProject.imageUrl,
+        src: randomProject.backup_image_url || randomProject.imageUrl,
         rotation: Math.random() * 40 - 20, // -20 to 20 degrees
         scale: Math.random() * 0.3 + 0.8, // 0.8 to 1.1 scale
         createdAt: Date.now(),
