@@ -13,4 +13,4 @@ jobs:
       - name: Ping Supabase URL
         run: |
           # Replace with your actual project URL or a specific API endpoint
-          curl -I https://traenewweboa54.vercel.app/api/keep-alive || echo "Ping failed, but workflow continues"
+          curl -I https://up-brands.vercel.app/api/keep-alive || echo "Ping failed, but workflow continues"
