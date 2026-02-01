@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { BlogPost } from '../../types';
 import { Helmet } from 'react-helmet-async';
+import { Upload } from 'lucide-react';
+import { backupImageToSupabase } from '../../utils/imageBackup';
+import toast from 'react-hot-toast';
 
 export default function PostEditor() {
   const { id } = useParams();
@@ -10,6 +13,7 @@ export default function PostEditor() {
   const isNew = id === 'new';
   
   const [loading, setLoading] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
   const [formData, setFormData] = useState<Partial<BlogPost>>({
     slug: '',
     title_en: '',
@@ -37,6 +41,29 @@ export default function PostEditor() {
     if (data) {
       setFormData(data);
       setTagsString(data.tags?.join(', ') || '');
+    }
+  };
+
+  const handleBackupImage = async () => {
+    if (!formData.imageUrl) {
+      toast.error('Please enter a Cover Image URL first');
+      return;
+    }
+
+    // Use slug as part of filename for easier identification
+    const imageId = `post_${formData.slug || 'untitled'}_${Date.now()}`;
+    
+    setBackingUp(true);
+    const toastId = toast.loading('Backing up image...');
+
+    try {
+      const newUrl = await backupImageToSupabase(formData.imageUrl, imageId);
+      setFormData(prev => ({ ...prev, imageUrl: newUrl }));
+      toast.success('Image backed up successfully!', { id: toastId });
+    } catch (error) {
+      toast.error('Failed to backup image', { id: toastId });
+    } finally {
+      setBackingUp(false);
     }
   };
 
@@ -99,13 +126,25 @@ export default function PostEditor() {
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
-            <input
-              type="url"
-              value={formData.imageUrl}
-              onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-              className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={formData.imageUrl}
+                onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                required
+              />
+              <button
+                type="button"
+                onClick={handleBackupImage}
+                disabled={backingUp || !formData.imageUrl}
+                className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                title="Backup image to Supabase"
+              >
+                <Upload size={16} />
+                {backingUp ? 'Backing up...' : 'Backup'}
+              </button>
+            </div>
           </div>
            <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
