@@ -419,6 +419,7 @@ export default function Dashboard() {
           
           if (!exists) {
             // New project: Backup image and insert
+            // Check again in DB to be safe
             const { data } = await supabase.from('projects').select('id').eq('id', id).single();
             
             if (!data) {
@@ -440,10 +441,18 @@ export default function Dashboard() {
               count++;
             }
           } else {
-            // Existing project: Check if image needs backup (still on Behance CDN)
+            // Existing project: 
+            // CRITICAL: Only update/backup if the current image is NOT a Supabase URL
+            // This prevents overwriting manually backed up images with Behance URLs from RSS
             const existingProject = projects.find(p => p.id === id);
-            if (existingProject && existingProject.imageUrl.includes('behance.net')) {
-              try {
+            
+            const isSupabaseUrl = existingProject?.imageUrl?.includes('supabase.co');
+            const isBehanceUrl = existingProject?.imageUrl?.includes('behance.net');
+            
+            // Only proceed if we have a behance URL (needs backup) OR if it's not a supabase URL (unknown external)
+            // If it is ALREADY a supabase URL, we assume it is safe and backed up, so we DO NOT touch it.
+            if (existingProject && !isSupabaseUrl && isBehanceUrl) {
+               try {
                 const finalImageUrl = await backupImageToSupabase(imageUrl, id);
                 if (finalImageUrl !== existingProject.imageUrl) {
                   await supabase.from('projects').update({ imageUrl: finalImageUrl }).eq('id', id);
