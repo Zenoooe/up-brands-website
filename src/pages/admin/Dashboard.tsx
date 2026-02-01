@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Project, BlogPost, Subscriber } from '../../types';
 import { Link } from 'react-router-dom';
-import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { backupImageToSupabase } from '../../utils/imageBackup';
 import {
   DndContext,
@@ -71,6 +71,15 @@ function SortableProjectRow({
       <td className="px-6 py-4 text-gray-500">{project.category}</td>
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2">
+          {project.backup_image_url ? (
+            <div title="Image backed up (China accessible)" className="p-2 text-green-600">
+              <ShieldCheck size={18} />
+            </div>
+          ) : (
+            <div title="Using original Behance URL" className="p-2 text-gray-300">
+               <ShieldCheck size={18} />
+            </div>
+          )}
           <button 
             onClick={() => onToggleVisibility(project.id, project.is_visible !== false)}
             className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${isHidden ? 'text-gray-400' : 'text-gray-600'}`}
@@ -147,6 +156,15 @@ function SortablePostRow({
       </td>
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2">
+          {post.backup_image_url ? (
+            <div title="Image backed up (China accessible)" className="p-2 text-green-600">
+              <ShieldCheck size={18} />
+            </div>
+          ) : (
+             <div title="Using original URL" className="p-2 text-gray-300">
+               <ShieldCheck size={18} />
+            </div>
+          )}
           <button 
             onClick={() => onToggleVisibility(post.id, post.is_visible !== false)}
             className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${isHidden ? 'text-gray-400' : 'text-gray-600'}`}
