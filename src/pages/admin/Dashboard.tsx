@@ -418,15 +418,12 @@ export default function Dashboard() {
           const exists = projects.some(p => p.id === id);
           
           if (!exists) {
+            // New project: Backup image and insert
             const { data } = await supabase.from('projects').select('id').eq('id', id).single();
             
             if (!data) {
-              // Auto-backup image to Supabase for China accessibility
               let finalImageUrl = imageUrl;
               try {
-                // Show a mini toast or update loading text? 
-                // Since this is in a loop, we don't want to spam toasts.
-                // Just log it or rely on the final success message.
                 finalImageUrl = await backupImageToSupabase(imageUrl, id);
               } catch (err) {
                 console.warn(`Failed to backup image for project ${id}, using original URL`, err);
@@ -442,15 +439,29 @@ export default function Dashboard() {
               });
               count++;
             }
+          } else {
+            // Existing project: Check if image needs backup (still on Behance CDN)
+            const existingProject = projects.find(p => p.id === id);
+            if (existingProject && existingProject.imageUrl.includes('behance.net')) {
+              try {
+                const finalImageUrl = await backupImageToSupabase(imageUrl, id);
+                if (finalImageUrl !== existingProject.imageUrl) {
+                  await supabase.from('projects').update({ imageUrl: finalImageUrl }).eq('id', id);
+                  count++; // Count as updated
+                }
+              } catch (err) {
+                console.warn(`Failed to update backup for existing project ${id}`, err);
+              }
+            }
           }
         }
       }
 
       if (count > 0) {
-        toast.success(`Synced! Added ${count} new projects`, { id: toastId });
+        toast.success(`Synced! Processed ${count} projects`, { id: toastId });
         fetchData();
       } else {
-        toast.success('Already up to date', { id: toastId });
+        toast.success('All projects up to date', { id: toastId });
       }
 
     } catch (error: any) {
