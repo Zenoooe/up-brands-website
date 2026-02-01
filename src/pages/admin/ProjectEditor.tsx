@@ -33,8 +33,15 @@ export default function ProjectEditor() {
   }, [id]);
 
   const loadProject = async (projectId: string) => {
+    // Explicitly select all columns including backup_image_url
     const { data } = await supabase.from('projects').select('*').eq('id', projectId).single();
-    if (data) setFormData(data);
+    if (data) {
+      // Ensure backup_image_url is loaded even if it's null in DB (set to empty string for controlled input)
+      setFormData({
+        ...data,
+        backup_image_url: data.backup_image_url || ''
+      });
+    }
   };
 
   const handleBackupImage = async () => {
@@ -55,7 +62,12 @@ export default function ProjectEditor() {
       // Update backup URL specifically
       setFormData(prev => ({ ...prev, backup_image_url: newUrl }));
       
-      toast.success('Image backed up successfully! Backup URL updated.', { id: toastId });
+      // Auto-save the backup URL immediately to DB so it persists even without clicking Save Project
+      if (!isNew && id) {
+        await supabase.from('projects').update({ backup_image_url: newUrl }).eq('id', id);
+      }
+      
+      toast.success('Image backed up successfully! Backup URL saved.', { id: toastId });
     } catch (error) {
       toast.error('Failed to backup image', { id: toastId });
     } finally {
