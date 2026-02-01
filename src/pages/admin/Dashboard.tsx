@@ -520,11 +520,39 @@ export default function Dashboard() {
         }
       }
 
+      // Phase 3: Scan ALL Blog Posts for missing backups
+      const { data: allPosts } = await supabase.from('posts').select('*');
+      
+      if (allPosts) {
+        const pendingPostBackup = allPosts.filter(p => p.imageUrl && !p.backup_image_url);
+        
+        if (pendingPostBackup.length > 0) {
+           const loadingMsg = toast.loading(`Backing up ${pendingPostBackup.length} posts...`, { id: toastId });
+           
+           for (const post of pendingPostBackup) {
+             try {
+               // Use slug as part of ID or fallback to random
+               const imageId = `post_${post.slug || 'untitled'}_${Date.now()}`;
+               const newBackupUrl = await backupImageToSupabase(post.imageUrl, imageId);
+               
+               if (newBackupUrl) {
+                 await supabase.from('posts')
+                   .update({ backup_image_url: newBackupUrl })
+                   .eq('id', post.id);
+                 count++;
+               }
+             } catch (err) {
+               console.warn(`Failed to backup post ${post.id}`, err);
+             }
+           }
+        }
+      }
+
       if (count > 0) {
-        toast.success(`Synced! Processed ${count} projects`, { id: toastId });
+        toast.success(`Synced! Processed ${count} items`, { id: toastId });
         fetchData();
       } else {
-        toast.success('All projects up to date', { id: toastId });
+        toast.success('All items up to date', { id: toastId });
       }
 
     } catch (error: any) {
