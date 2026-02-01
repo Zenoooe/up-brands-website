@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Project } from '../../types';
 import { Helmet } from 'react-helmet-async';
+import { Upload, RefreshCw } from 'lucide-react';
+import { backupImageToSupabase } from '../../utils/imageBackup';
+import toast from 'react-hot-toast';
 
 export default function ProjectEditor() {
   const { id } = useParams();
@@ -10,6 +13,7 @@ export default function ProjectEditor() {
   const isNew = id === 'new';
   
   const [loading, setLoading] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
   const [formData, setFormData] = useState<Partial<Project>>({
     id: '',
     title: '',
@@ -30,6 +34,29 @@ export default function ProjectEditor() {
   const loadProject = async (projectId: string) => {
     const { data } = await supabase.from('projects').select('*').eq('id', projectId).single();
     if (data) setFormData(data);
+  };
+
+  const handleBackupImage = async () => {
+    if (!formData.imageUrl) {
+      toast.error('Please enter an Image URL first');
+      return;
+    }
+
+    // Ensure we have an ID for the filename
+    const projectId = formData.id || crypto.randomUUID();
+    
+    setBackingUp(true);
+    const toastId = toast.loading('Backing up image...');
+
+    try {
+      const newUrl = await backupImageToSupabase(formData.imageUrl, projectId);
+      setFormData(prev => ({ ...prev, imageUrl: newUrl }));
+      toast.success('Image backed up successfully!', { id: toastId });
+    } catch (error) {
+      toast.error('Failed to backup image', { id: toastId });
+    } finally {
+      setBackingUp(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,13 +144,28 @@ export default function ProjectEditor() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-          <input
-            type="url"
-            value={formData.imageUrl}
-            onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-            className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-            required
-          />
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={formData.imageUrl}
+              onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+              className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+              required
+            />
+            <button
+              type="button"
+              onClick={handleBackupImage}
+              disabled={backingUp || !formData.imageUrl}
+              className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+              title="Backup image to Supabase for reliable access in China"
+            >
+              <Upload size={16} />
+              {backingUp ? 'Backing up...' : 'Backup'}
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Tip: Click "Backup" to save the image to your own server. This ensures it loads fast in China.
+          </p>
         </div>
 
         <div className="space-y-4 pt-4 border-t border-gray-100">

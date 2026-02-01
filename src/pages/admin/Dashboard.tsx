@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Project, BlogPost, Subscriber } from '../../types';
 import { Link } from 'react-router-dom';
 import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff } from 'lucide-react';
+import { backupImageToSupabase } from '../../utils/imageBackup';
 import {
   DndContext,
   closestCenter,
@@ -420,11 +421,22 @@ export default function Dashboard() {
             const { data } = await supabase.from('projects').select('id').eq('id', id).single();
             
             if (!data) {
+              // Auto-backup image to Supabase for China accessibility
+              let finalImageUrl = imageUrl;
+              try {
+                // Show a mini toast or update loading text? 
+                // Since this is in a loop, we don't want to spam toasts.
+                // Just log it or rely on the final success message.
+                finalImageUrl = await backupImageToSupabase(imageUrl, id);
+              } catch (err) {
+                console.warn(`Failed to backup image for project ${id}, using original URL`, err);
+              }
+
               await supabase.from('projects').insert({
                 id,
                 title,
                 category,
-                imageUrl,
+                imageUrl: finalImageUrl,
                 link,
                 sort_order: maxSortOrder + count + 1
               });
