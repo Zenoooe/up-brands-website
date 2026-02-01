@@ -488,6 +488,38 @@ export default function Dashboard() {
         }
       }
 
+      // Phase 2: Scan ALL local projects for missing backups
+      // This ensures we backup everything even if it's not in the latest RSS feed
+      // Refresh local projects first to include any newly added ones
+      const { data: allProjects } = await supabase.from('projects').select('*');
+      
+      if (allProjects) {
+        // Find projects that have imageUrl but NO backup_image_url
+        const pendingBackup = allProjects.filter(p => p.imageUrl && !p.backup_image_url);
+        
+        if (pendingBackup.length > 0) {
+          const loadingMsg = toast.loading(`Backing up ${pendingBackup.length} remaining projects...`, { id: toastId });
+          
+          for (const project of pendingBackup) {
+            try {
+              // Double check if we need to backup
+              if (!project.backup_image_url) {
+                const newBackupUrl = await backupImageToSupabase(project.imageUrl, project.id);
+                if (newBackupUrl) {
+                  await supabase.from('projects')
+                    .update({ backup_image_url: newBackupUrl })
+                    .eq('id', project.id);
+                  count++;
+                }
+              }
+            } catch (err) {
+              console.warn(`Failed to backup existing project ${project.id}`, err);
+              // Continue to next even if one fails
+            }
+          }
+        }
+      }
+
       if (count > 0) {
         toast.success(`Synced! Processed ${count} projects`, { id: toastId });
         fetchData();
