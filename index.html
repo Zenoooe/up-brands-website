@@ -41,6 +41,13 @@
           // 360 Auto Push
           var src = (document.location.protocol == "http:") ? "http://js.passport.qihucdn.com/11.0.1.js?27776f7007775556755c097775555555":"https://jspassport.ssl.qhimg.com/11.0.1.js?27776f7007775556755c097775555555";
           document.write('<script src="' + src + '" id="sozz"><\/script>');
+
+          // ByteDance (Toutiao) Auto Push
+          var el = document.createElement("script");
+          el.src = "https://lf1-cdn-tos.bytegoofy.com/goofy/ttzz/push.js?8f8a01711d522217e3c2d2b5490db969bedf721a3e0651ad62ec883b245739ba65e0a2ada1d5e86b11e7de7c1a83287d04743a02fd1ee8dd8558a8cad50e91cb354f8c6f3f78e5fd97613c481f678e6d";
+          el.id = "ttzz";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(el, s);
       })();
     </script>
   </head>
