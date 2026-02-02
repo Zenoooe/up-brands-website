@@ -10,6 +10,7 @@ import { FaBehance, FaWeixin } from 'react-icons/fa';
 import { SiXiaohongshu } from 'react-icons/si';
 import { ContactModal } from '../components/ui/ContactModal';
 import { SEO } from '../components/common/SEO';
+import wechatQr from '../assets/wechat-qr.jpg';
 
 function toWpImageProxyUrl(url: string) {
   const cleaned = url.replace(/^https?:\/\//, '');
