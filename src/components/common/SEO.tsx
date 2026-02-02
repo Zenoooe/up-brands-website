@@ -100,6 +100,15 @@ export function SEO({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
 
+      {/* ByteDance (Toutiao) Time Factor */}
+      {publishedTime && (
+        <>
+          <meta property="bytedance:published_time" content={new Date(publishedTime).toISOString()} />
+          <meta property="bytedance:updated_time" content={new Date(publishedTime).toISOString()} />
+          <meta property="bytedance:lrDate_time" content={new Date(publishedTime).toISOString()} />
+        </>
+      )}
+
       {/* Structured Data */}
       <script type="application/ld+json">
         {JSON.stringify(jsonLd)}
