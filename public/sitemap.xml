@@ -1,1 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"><url><loc>https://up-brands.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url><url><loc>https://up-brands.com/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url><url><loc>https://up-brands.com/blog</loc><changefreq>daily</changefreq><priority>0.9</priority></url><url><loc>https://up-brands.com/blog/lincoffee-oriental-aesthetics</loc><lastmod>2025-01-15T00:00:00.000Z</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url><url><loc>https://up-brands.com/blog/mysterium-wine-branding</loc><lastmod>2024-12-10T00:00:00.000Z</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url><url><loc>https://up-brands.com/blog/mist-haven-spa-identity</loc><lastmod>2024-11-20T00:00:00.000Z</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url><url><loc>https://up-brands.com/blog/bitejoy-pastry-branding</loc><lastmod>2024-10-05T00:00:00.000Z</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url><url><loc>https://up-brands.com/blog/vondara-marble-luxury</loc><lastmod>2024-09-15T00:00:00.000Z</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url></urlset>
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.up-brands.com/</loc>
+    <lastmod>2024-05-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.up-brands.com/about</loc>
+    <lastmod>2024-05-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.up-brands.com/blog</loc>
+    <lastmod>2024-05-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>
