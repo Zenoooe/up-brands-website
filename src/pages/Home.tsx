@@ -218,13 +218,8 @@ export default function Home() {
   const { projects, loading } = useBehanceProjects();
 
   // Custom SEO for Home
-  const seoTitle = i18n.language.startsWith('zh') 
-    ? "上游文创Up-Brands - 大湾区领先的品牌策略与创意营销解决方案"
-    : "Up-Brands - Leading Brand Strategy & Creative Marketing in GBA";
-    
-  const seoDesc = i18n.language.startsWith('zh')
-    ? "位于大湾区的上游文创专注于品牌策略和创意视觉，为企业提供从品牌升级到全网营销的一站式服务，助力品牌全面提升。"
-    : "Based in GBA, Up-Brands specializes in brand strategy and creative vision, providing one-stop services from brand upgrade to digital marketing.";
+  const seoTitle = t('seo.home.title', "Up-Brands - Leading Brand Strategy & Creative Marketing in GBA");
+  const seoDesc = t('seo.home.description', "Based in GBA, Up-Brands specializes in brand strategy and creative vision, providing one-stop services from brand upgrade to digital marketing.");
   
   // Interactive Hero State
   const [spawnedImages, setSpawnedImages] = useState<SpawnedImage[]>([]);
