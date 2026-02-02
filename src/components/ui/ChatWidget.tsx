@@ -201,14 +201,14 @@ export const ChatWidget = () => {
                              alt="WeChat QR" 
                              className="w-32 h-32 object-contain mix-blend-multiply"
                              onError={(e) => {
-                               (e.target as HTMLImageElement).src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Up-Brands-WeChat';
+                               (e.target as HTMLImageElement).src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DANISEBD';
                              }}
                            />
-                           <p className="text-xs text-center text-gray-500 mt-1">WeChat ID: Up-Brands</p>
+                           <p className="text-xs text-center text-gray-500 mt-1 select-all">WeChat ID: DANISEBD</p>
                          </div>
                          
                          <a 
-                           href="https://wa.me/8613800138000" 
+                           href="https://wa.me/85253311007" 
                            target="_blank" 
                            rel="noreferrer"
                            className="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#128C7E] transition-colors"
