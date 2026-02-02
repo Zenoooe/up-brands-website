@@ -58,11 +58,21 @@ export function SEO({
     url: 'https://up-brands.com',
     logo: 'https://up-brands.com/favicon.svg',
     name: 'Up-Brands',
+    alternateName: ['Up-Brands Agency', '上游文创', 'Up Brands'],
     description: 'Specializing in brand strategy and visual identity for cross-border success.',
     sameAs: [
       'https://www.behance.net/up-brands',
-      'https://www.linkedin.com/company/up-brands'
-    ]
+      'https://www.linkedin.com/company/up_brands/',
+      'https://www.instagram.com/up.brands_/',
+      'https://mp.weixin.qq.com/s/bSMmQyzfit5OIACx9uZ8kw',
+      'https://www.xiaohongshu.com/user/profile/663a1f290000000007005cc2'
+    ],
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'up-brands@hotmail.com',
+      contactType: 'customer service',
+      availableLanguage: ['en', 'zh']
+    }
   };
 
   return (
