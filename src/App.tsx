@@ -60,8 +60,12 @@ function App() {
           {/* Catch all for 404 - redirect old routes to home or about */}
           <Route path="/services" element={<About />} />
           <Route path="/service/*" element={<About />} />
+          <Route path="/company" element={<About />} />
           <Route path="/project/*" element={<Home />} />
           <Route path="/projects" element={<Home />} />
+          <Route path="/gallery" element={<Home />} />
+          <Route path="/store" element={<Home />} />
+          <Route path="/detail_*" element={<Home />} />
           <Route path="*" element={<Home />} />
         </Routes>
       </Router>
