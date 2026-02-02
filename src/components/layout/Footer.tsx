@@ -113,10 +113,10 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Column 3: Contact & Location (Span 4) */}
+          {/* Contact & Location (Span 4) */}
         <div className="md:col-span-4 grid grid-cols-2 gap-8">
           {/* Let's Talk */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 h-full">
             <h3 className="text-lg font-medium">{t('footer.lets_talk')}</h3>
             
             <div className="flex flex-col gap-1">
@@ -129,6 +129,13 @@ export function Footer() {
             <div className="flex flex-col gap-1">
               <span className="text-xs text-[#F3EFEA]/60 mb-1">{t('footer.careers')}</span>
               <a href="mailto:up-brands@hotmail.com" className="text-sm hover:underline">up-brands@hotmail.com</a>
+            </div>
+            
+            {/* Minimalist SEO Info (Moved to align with Careers) */}
+            <div className="mt-auto text-[10px] text-[#F3EFEA]/30 leading-relaxed pt-8">
+              <p>Up-Brands: Brand Strategy & Creative Design Agency based in GBA.</p>
+              <p>Zhuhai | Hong Kong | Macau | Global</p>
+              <p>Brand Strategy • Visual Identity • Digital Marketing</p>
             </div>
           </div>
 
@@ -143,13 +150,6 @@ export function Footer() {
                 {t('footer.address_line3')}<br />
                 {t('footer.address_line4')}
               </p>
-            </div>
-
-            {/* Minimalist SEO Info (Moved to right column bottom) */}
-            <div className="mt-auto text-[10px] text-[#F3EFEA]/30 leading-relaxed pt-8">
-              <p>Up-Brands: Brand Strategy & Creative Design Agency based in GBA.</p>
-              <p>Zhuhai | Hong Kong | Macau | Global</p>
-              <p>Brand Strategy • Visual Identity • Digital Marketing</p>
             </div>
           </div>
         </div>
