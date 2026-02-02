@@ -85,12 +85,6 @@ export function Footer() {
           
           <div className="mt-auto text-xs text-[#F3EFEA]/60 font-light pt-8">
             ©Up-Brands {currentYear}. {t('footer.rights')}
-            {/* Minimalist SEO Info (Visible but unobtrusive) */}
-            <div className="mt-4 pt-4 border-t border-[#F3EFEA]/10 text-[10px] text-[#F3EFEA]/30 leading-relaxed max-w-[300px]">
-              <p>Up-Brands: Brand Strategy & Creative Design Agency based in GBA.</p>
-              <p>Zhuhai | Hong Kong | Macau | Global</p>
-              <p>Brand Strategy • Visual Identity • Digital Marketing</p>
-            </div>
           </div>
         </div>
 
@@ -149,6 +143,13 @@ export function Footer() {
                 {t('footer.address_line3')}<br />
                 {t('footer.address_line4')}
               </p>
+            </div>
+
+            {/* Minimalist SEO Info (Moved to right column bottom) */}
+            <div className="mt-auto text-[10px] text-[#F3EFEA]/30 leading-relaxed pt-8">
+              <p>Up-Brands: Brand Strategy & Creative Design Agency based in GBA.</p>
+              <p>Zhuhai | Hong Kong | Macau | Global</p>
+              <p>Brand Strategy • Visual Identity • Digital Marketing</p>
             </div>
           </div>
         </div>
