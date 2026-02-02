@@ -55,10 +55,17 @@ const SpawnedPreviewImage = ({ src }: { src: string }) => {
   );
 };
 
-const ProjectCard = ({ project, index, onClick }: { project: Project; index: number; onClick: (project: Project, e: React.MouseEvent) => void }) => {
+const ProjectCard = ({ project, index, onClick, priority = false }: { project: Project; index: number; onClick: (project: Project, e: React.MouseEvent) => void; priority?: boolean }) => {
   // Use backup URL if available, otherwise fallback to original imageUrl
+  let displayUrl = project.backup_image_url || project.imageUrl;
+  
+  // Optimize Supabase images
+  if (displayUrl.includes('supabase.co')) {
+     const separator = displayUrl.includes('?') ? '&' : '?';
+     displayUrl = `${displayUrl}${separator}width=800&quality=80&format=webp`;
+  }
+
   // And use smart loader for further fallback (wp proxy) if needed
-  const displayUrl = project.backup_image_url || project.imageUrl;
   const smart = useSmartImageSrc(displayUrl);
   
   return (
@@ -81,6 +88,8 @@ const ProjectCard = ({ project, index, onClick }: { project: Project; index: num
           onLoad={smart.onLoad}
           onError={smart.onError}
           referrerPolicy="no-referrer"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
         />
       </div>
       
@@ -426,6 +435,7 @@ export default function Home() {
                   project={project} 
                   index={i} 
                   onClick={handleProjectClick}
+                  priority={i === 0}
                 />
               ))}
             </div>
@@ -438,6 +448,7 @@ export default function Home() {
                   project={project} 
                   index={i} 
                   onClick={handleProjectClick}
+                  priority={i === 0}
                 />
               ))}
             </div>

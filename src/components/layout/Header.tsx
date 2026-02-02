@@ -113,6 +113,7 @@ export function Header() {
           <button
             className="md:hidden z-50 p-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle Menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
