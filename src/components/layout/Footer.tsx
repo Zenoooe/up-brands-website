@@ -89,15 +89,17 @@ export function Footer() {
         </div>
 
         {/* Column 2: Newsletter (Span 5) */}
-        <div className="md:col-span-5 flex flex-col justify-end">
+        <div className="md:col-span-5 flex flex-col justify-between">
           <div className="w-full max-w-md">
-            {/* Minimalist SEO Info (Moved above Keep in Touch) */}
-            <div className="mb-8 text-[10px] text-[#F3EFEA]/30 leading-relaxed">
+            {/* Minimalist SEO Info (Aligned top) */}
+            <div className="text-[10px] text-[#F3EFEA]/30 leading-relaxed mb-12">
               <p>Up-Brands: Brand Strategy & Creative Design Agency based in GBA.</p>
               <p>Zhuhai | Hong Kong | Macau | Global</p>
               <p>Brand Strategy • Visual Identity • Digital Marketing</p>
             </div>
+          </div>
 
+          <div className="w-full max-w-md">
             <h3 className="text-sm font-medium mb-6">{t('footer.keep_touch')}</h3>
             <form onSubmit={handleSubscribe} className="relative border-b border-[#F3EFEA] pb-2 group flex items-center">
               <input 
