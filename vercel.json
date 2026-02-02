@@ -1,4 +1,15 @@
 {
+  "headers": [
+    {
+      "source": "/sogousiteverification.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
