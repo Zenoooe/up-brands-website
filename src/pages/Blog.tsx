@@ -49,7 +49,7 @@ export default function Blog() {
           transition={{ duration: 0.8 }}
           className="max-w-6xl mx-auto"
         >
-          <h1 className="text-5xl md:text-7xl font-bold mb-16 tracking-tighter uppercase">
+          <h1 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-20">
             {t('blog.title')}
           </h1>
 

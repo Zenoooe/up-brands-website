@@ -37,7 +37,10 @@ export default function AdminLogin() {
       </Helmet>
       
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-2xl font-bold mb-6 text-center uppercase tracking-wider">Up-Brands CMS</h1>
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold mb-2">Admin Login</h1>
+          <p className="text-gray-500 text-sm">Sign in to manage your content</p>
+        </div>
         
         {error && (
           <div className="bg-red-50 text-red-500 p-3 rounded mb-4 text-sm">

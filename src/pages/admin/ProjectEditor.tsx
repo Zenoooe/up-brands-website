@@ -103,13 +103,13 @@ export default function ProjectEditor() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-8">
+    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-8">
       <Helmet>
         <title>{isNew ? 'New Project' : 'Edit Project'} | Admin</title>
       </Helmet>
 
-      <h1 className="text-2xl font-bold mb-8 uppercase tracking-tight">
-        {isNew ? 'Create New Project' : 'Edit Project'}
+      <h1 className="text-2xl font-bold mb-6">
+        {isNew ? 'New Project' : 'Edit Project'}
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">

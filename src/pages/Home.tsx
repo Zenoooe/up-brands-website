@@ -85,9 +85,9 @@ const ProjectCard = ({ project, index, onClick }: { project: Project; index: num
       </div>
       
       <div className="mt-4 md:mt-6 flex flex-col items-start">
-        <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight group-hover:underline decoration-2 underline-offset-4 decoration-black">
+        <h3 className="text-2xl md:text-3xl font-bold uppercase tracking-tight group-hover:underline decoration-2 underline-offset-4 decoration-black">
           {project.title}
-        </h2>
+        </h3>
         <p className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-widest mt-2">
           {project.category}
         </p>
