@@ -68,12 +68,6 @@ export const ChatWidget = () => {
       
       if (error) throw error;
 
-      fetch('/api/notify-lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact, message: msg })
-      });
-
     } catch (err) {
       console.error('Error saving lead:', err);
     }
