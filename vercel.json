@@ -1,15 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/sogousiteverification.txt",
-      "destination": "/sogousiteverification.txt"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!api/|sogousiteverification\\.txt|.*\\..*).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
