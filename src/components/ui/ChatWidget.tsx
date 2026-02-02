@@ -195,15 +195,11 @@ export const ChatWidget = () => {
                     {/* Special Contact Info Display */}
                     {msg.isContactInfo && (
                        <div className="mt-2 flex flex-col gap-2 max-w-[85%]">
-                         {/* WeChat QR Placeholder - Replace src with actual QR code */}
                          <div className="bg-gray-50 p-2 rounded-xl border border-gray-100">
                            <img 
-                             src="https://sbnnpbtvdvggpqesohxa.supabase.co/storage/v1/object/public/project-images/wechat-qr-placeholder.png" 
+                             src={wechatQr}
                              alt="WeChat QR" 
                              className="w-32 h-32 object-contain mix-blend-multiply"
-                             onError={(e) => {
-                               (e.target as HTMLImageElement).src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DANISEBD';
-                             }}
                            />
                            <p className="text-xs text-center text-gray-500 mt-1 select-all">WeChat ID: DANISEBD</p>
                          </div>
