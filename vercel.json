@@ -1,1 +1,29 @@
-{"rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/company",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/services",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/projects",
+      "destination": "/",
+      "permanent": true
+    }
+  ]
+}
