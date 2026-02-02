@@ -1,0 +1,11 @@
+<svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="150" height="150" fill="#F3F4F6"/>
+  <path d="M40 40H60V60H40V40Z" fill="black"/>
+  <path d="M90 40H110V60H90V40Z" fill="black"/>
+  <path d="M40 90H60V110H40V90Z" fill="black"/>
+  <path d="M70 70H80V80H70V70Z" fill="black"/>
+  <rect x="35" y="35" width="30" height="30" stroke="black" stroke-width="2"/>
+  <rect x="85" y="35" width="30" height="30" stroke="black" stroke-width="2"/>
+  <rect x="35" y="85" width="30" height="30" stroke="black" stroke-width="2"/>
+  <text x="75" y="130" font-family="Arial" font-size="10" text-anchor="middle" fill="#6B7280">Replace with your QR</text>
+</svg>

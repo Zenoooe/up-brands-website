@@ -3,6 +3,7 @@ import { MessageCircle, X, ChevronDown, Send, UserPlus, MessageSquare } from 'lu
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from 'react-i18next';
+import wechatQr from '../../assets/wechat-qr.jpg';
 
 interface Message {
   id: string;
@@ -236,10 +237,10 @@ export const ChatWidget = () => {
                   </div>
                 )}
                 
-                {/* Let's Create Together Button (Always visible at bottom of chat if not user typing) */}
+                {/* Let's Create Together Button */}
                 <button
                     onClick={handleCreateTogether}
-                    className="w-full mt-4 bg-black text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg"
+                    className="w-full mt-4 bg-black text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg ring-2 ring-offset-2 ring-orange-400/50"
                 >
                     <UserPlus size={16} />
                     {t('chat.create_together')}
