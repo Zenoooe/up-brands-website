@@ -104,6 +104,7 @@ export function Footer() {
               <button 
                 type="submit"
                 disabled={loading}
+                aria-label="Subscribe"
                 className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full border border-[#F3EFEA] hover:bg-[#F3EFEA] hover:text-[#1f2021] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}

@@ -69,7 +69,13 @@ export function Header() {
         <div className="container mx-auto px-4 md:px-8 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="z-50">
-            <img src={UpBrandsLogo} alt="Up-Brands" className="h-10 w-auto" />
+            <img 
+              src={UpBrandsLogo} 
+              alt="Up-Brands" 
+              className="h-10 w-auto"
+              width="150"
+              height="40"
+            />
           </Link>
 
           {/* Desktop Nav */}
