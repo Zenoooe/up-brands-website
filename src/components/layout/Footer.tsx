@@ -91,6 +91,13 @@ export function Footer() {
         {/* Column 2: Newsletter (Span 5) */}
         <div className="md:col-span-5 flex flex-col justify-end">
           <div className="w-full max-w-md">
+            {/* Minimalist SEO Info (Moved above Keep in Touch) */}
+            <div className="mb-8 text-[10px] text-[#F3EFEA]/30 leading-relaxed">
+              <p>Up-Brands: Brand Strategy & Creative Design Agency based in GBA.</p>
+              <p>Zhuhai | Hong Kong | Macau | Global</p>
+              <p>Brand Strategy • Visual Identity • Digital Marketing</p>
+            </div>
+
             <h3 className="text-sm font-medium mb-6">{t('footer.keep_touch')}</h3>
             <form onSubmit={handleSubscribe} className="relative border-b border-[#F3EFEA] pb-2 group flex items-center">
               <input 
@@ -129,13 +136,6 @@ export function Footer() {
             <div className="flex flex-col gap-1">
               <span className="text-xs text-[#F3EFEA]/60 mb-1">{t('footer.careers')}</span>
               <a href="mailto:up-brands@hotmail.com" className="text-sm hover:underline">up-brands@hotmail.com</a>
-            </div>
-            
-            {/* Minimalist SEO Info (Moved to align with Careers) */}
-            <div className="mt-auto text-[10px] text-[#F3EFEA]/30 leading-relaxed pt-8">
-              <p>Up-Brands: Brand Strategy & Creative Design Agency based in GBA.</p>
-              <p>Zhuhai | Hong Kong | Macau | Global</p>
-              <p>Brand Strategy • Visual Identity • Digital Marketing</p>
             </div>
           </div>
 
