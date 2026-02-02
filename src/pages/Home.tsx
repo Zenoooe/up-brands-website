@@ -236,6 +236,13 @@ export default function Home() {
   const [modalPosition, setModalPosition] = useState<{ x: number, y: number } | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
 
+  // Auto open modal for specific URL hash (legacy support)
+  useEffect(() => {
+    if (window.location.hash === '#contact') {
+      setShowContactModal(true);
+    }
+  }, []);
+
   const handleProjectClick = (project: Project, e: React.MouseEvent) => {
     // Get click coordinates relative to viewport
     const x = e.clientX;
