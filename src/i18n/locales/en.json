@@ -71,5 +71,27 @@
     "address_line4": "China",
     "wechat": "WeChat",
     "xiaohongshu": "Xiaohongshu"
+  },
+  "chat": {
+    "header": "Studio Support",
+    "bot_name": "Studio Support Bot",
+    "status": "Automated",
+    "welcome": "Hello! Welcome to Up-Brands. How can we help you today?",
+    "prompt": "Please select a topic or leave your contact info.",
+    "input_placeholder": "Type a message...",
+    "powered_by": "Powered by Up-Brands",
+    "actions": {
+      "strategy": "Brand Strategy",
+      "identity": "Visual Identity",
+      "marketing": "Marketing",
+      "cooperation": "Cooperation",
+      "other": "Other"
+    },
+    "create_together": "Let's Create Together",
+    "contact_methods": "Scan QR code to add WeChat or click to chat on WhatsApp",
+    "responses": {
+      "contact_received": "Thanks! We have received your contact info and will get back to you shortly.",
+      "ask_contact": "Could you please leave your email or phone number so we can contact you?"
+    }
   }
 }

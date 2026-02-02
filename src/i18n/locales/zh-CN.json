@@ -71,5 +71,27 @@
     "address_line4": "",
     "wechat": "微信公众号",
     "xiaohongshu": "小红书"
+  },
+  "chat": {
+    "header": "在线咨询",
+    "bot_name": "Up-Brands 客服",
+    "status": "自动回复",
+    "welcome": "您好！欢迎来到 Up-Brands。请问有什么可以帮您？",
+    "prompt": "请选择咨询主题或留下您的联系方式。",
+    "input_placeholder": "输入消息...",
+    "powered_by": "Up-Brands 提供技术支持",
+    "actions": {
+      "strategy": "品牌策略",
+      "identity": "视觉设计",
+      "marketing": "市场营销",
+      "cooperation": "商务合作",
+      "other": "其他"
+    },
+    "create_together": "让我们共创未来",
+    "contact_methods": "扫码添加微信或点击联系 WhatsApp",
+    "responses": {
+      "contact_received": "谢谢！我们已收到您的联系方式，会尽快与您取得联系。",
+      "ask_contact": "请留下您的邮箱或电话号码，以便我们可以联系到您。"
+    }
   }
 }

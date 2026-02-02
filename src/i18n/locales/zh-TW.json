@@ -71,5 +71,27 @@
     "address_line4": "",
     "wechat": "微信公眾號",
     "xiaohongshu": "小紅書"
+  },
+  "chat": {
+    "header": "線上咨詢",
+    "bot_name": "Up-Brands 客服",
+    "status": "自動回覆",
+    "welcome": "您好！歡迎來到 Up-Brands。請問有什麼可以幫您？",
+    "prompt": "請選擇咨詢主題或留下您的聯絡方式。",
+    "input_placeholder": "輸入訊息...",
+    "powered_by": "Up-Brands 提供技術支援",
+    "actions": {
+      "strategy": "品牌策略",
+      "identity": "視覺設計",
+      "marketing": "市場營銷",
+      "cooperation": "商務合作",
+      "other": "其他"
+    },
+    "create_together": "讓我們共創未來",
+    "contact_methods": "掃碼添加微信或點擊聯繫 WhatsApp",
+    "responses": {
+      "contact_received": "謝謝！我們已收到您的聯絡方式，會盡快與您取得聯繫。",
+      "ask_contact": "請留下您的郵箱或電話號碼，以便我們可以聯繫到您。"
+    }
   }
 }

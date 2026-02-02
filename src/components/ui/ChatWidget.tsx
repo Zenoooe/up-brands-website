@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, ChevronDown, Send } from 'lucide-react';
+import { MessageCircle, X, ChevronDown, Send, UserPlus, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   id: string;
   type: 'bot' | 'user';
   text: string;
   timestamp: Date;
+  isContactInfo?: boolean;
 }
 
 interface QuickAction {
@@ -16,31 +18,37 @@ interface QuickAction {
 }
 
 export const ChatWidget = () => {
+  const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'bot',
-      text: 'Hello! Welcome to Up-Brands. How can we help you today?',
-      timestamp: new Date()
-    },
-    {
-      id: '2',
-      type: 'bot',
-      text: 'Please select a topic or leave your contact info.',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Initialize messages when language changes or first load
+  useEffect(() => {
+    setMessages([
+      {
+        id: '1',
+        type: 'bot',
+        text: t('chat.welcome'),
+        timestamp: new Date()
+      },
+      {
+        id: '2',
+        type: 'bot',
+        text: t('chat.prompt'),
+        timestamp: new Date()
+      }
+    ]);
+  }, [i18n.language, t]);
+
   const quickActions: QuickAction[] = [
-    { label: 'Brand Strategy', action: 'strategy' },
-    { label: 'Visual Identity', action: 'identity' },
-    { label: 'Marketing', action: 'marketing' },
-    { label: 'Cooperation', action: 'cooperation' },
-    { label: 'Other', action: 'other' }
+    { label: t('chat.actions.strategy'), action: 'strategy' },
+    { label: t('chat.actions.identity'), action: 'identity' },
+    { label: t('chat.actions.marketing'), action: 'marketing' },
+    { label: t('chat.actions.cooperation'), action: 'cooperation' },
+    { label: t('chat.actions.other'), action: 'other' }
   ];
 
   const scrollToBottom = () => {
@@ -53,14 +61,12 @@ export const ChatWidget = () => {
 
   const saveLead = async (contact: string, msg: string) => {
     try {
-      // 1. Save to Supabase
       const { error } = await supabase
         .from('leads')
         .insert([{ contact_info: contact, message: msg }]);
       
       if (error) throw error;
 
-      // 2. Trigger Vercel Function for WeChat Push (Fire and forget)
       fetch('/api/notify-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,10 +78,32 @@ export const ChatWidget = () => {
     }
   };
 
+  const handleCreateTogether = () => {
+    // Add user action
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      text: t('chat.create_together'),
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMsg]);
+
+    // Bot response with contact info
+    setTimeout(() => {
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        text: t('chat.contact_methods'),
+        timestamp: new Date(),
+        isContactInfo: true
+      };
+      setMessages(prev => [...prev, botMsg]);
+    }, 600);
+  };
+
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Add user message
     const userMsg: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -86,7 +114,6 @@ export const ChatWidget = () => {
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
 
-    // Check if input looks like contact info (email or phone)
     const isContactInfo = /[@]/.test(text) || /\d{8,}/.test(text);
     
     setIsSubmitting(true);
@@ -95,11 +122,10 @@ export const ChatWidget = () => {
       let botResponseText = '';
       
       if (isContactInfo) {
-        // Save to DB
         await saveLead(text, messages.map(m => m.text).join('\n'));
-        botResponseText = 'Thanks! We have received your contact info and will get back to you shortly.';
+        botResponseText = t('chat.responses.contact_received');
       } else {
-        botResponseText = 'Could you please leave your email or phone number so we can contact you?';
+        botResponseText = t('chat.responses.ask_contact');
       }
 
       const botMsg: Message = {
@@ -126,7 +152,7 @@ export const ChatWidget = () => {
           >
             {/* Header */}
             <div className="bg-black text-white p-4 flex justify-between items-center shrink-0">
-              <h3 className="font-bold text-lg">Studio Support</h3>
+              <h3 className="font-bold text-lg">{t('chat.header')}</h3>
               <button 
                 onClick={() => setIsOpen(false)}
                 className="hover:bg-white/20 p-1 rounded-full transition-colors"
@@ -144,8 +170,8 @@ export const ChatWidget = () => {
                     <MessageCircle size={16} className="text-white" />
                   </div>
                   <div>
-                    <p className="font-bold text-sm">Studio Support Bot</p>
-                    <p className="text-xs text-gray-500">Automated</p>
+                    <p className="font-bold text-sm">{t('chat.bot_name')}</p>
+                    <p className="text-xs text-gray-500">{t('chat.status')}</p>
                   </div>
                 </div>
 
@@ -153,7 +179,7 @@ export const ChatWidget = () => {
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
                   >
                     <div
                       className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
@@ -164,11 +190,39 @@ export const ChatWidget = () => {
                     >
                       {msg.text}
                     </div>
+                    
+                    {/* Special Contact Info Display */}
+                    {msg.isContactInfo && (
+                       <div className="mt-2 flex flex-col gap-2 max-w-[85%]">
+                         {/* WeChat QR Placeholder - Replace src with actual QR code */}
+                         <div className="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                           <img 
+                             src="https://sbnnpbtvdvggpqesohxa.supabase.co/storage/v1/object/public/project-images/wechat-qr-placeholder.png" 
+                             alt="WeChat QR" 
+                             className="w-32 h-32 object-contain mix-blend-multiply"
+                             onError={(e) => {
+                               (e.target as HTMLImageElement).src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Up-Brands-WeChat';
+                             }}
+                           />
+                           <p className="text-xs text-center text-gray-500 mt-1">WeChat ID: Up-Brands</p>
+                         </div>
+                         
+                         <a 
+                           href="https://wa.me/8613800138000" 
+                           target="_blank" 
+                           rel="noreferrer"
+                           className="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#128C7E] transition-colors"
+                         >
+                           <MessageSquare size={16} />
+                           Chat on WhatsApp
+                         </a>
+                       </div>
+                    )}
                   </div>
                 ))}
 
-                {/* Quick Actions (Only show if last message is from bot) */}
-                {messages[messages.length - 1].type === 'bot' && (
+                {/* Quick Actions */}
+                {messages.length > 0 && messages[messages.length - 1].type === 'bot' && !messages[messages.length - 1].isContactInfo && (
                   <div className="flex flex-wrap gap-2 mt-4">
                     {quickActions.map((action) => (
                       <button
@@ -181,6 +235,16 @@ export const ChatWidget = () => {
                     ))}
                   </div>
                 )}
+                
+                {/* Let's Create Together Button (Always visible at bottom of chat if not user typing) */}
+                <button
+                    onClick={handleCreateTogether}
+                    className="w-full mt-4 bg-black text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg"
+                >
+                    <UserPlus size={16} />
+                    {t('chat.create_together')}
+                </button>
+
                 <div ref={messagesEndRef} />
               </div>
             </div>
@@ -198,7 +262,7 @@ export const ChatWidget = () => {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Type a message..."
+                  placeholder={t('chat.input_placeholder')}
                   className="w-full pl-4 pr-12 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
                 />
                 <button
@@ -211,7 +275,7 @@ export const ChatWidget = () => {
               </form>
               <div className="text-center mt-2">
                 <a href="#" className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
-                  Powered by Up-Brands
+                  {t('chat.powered_by')}
                 </a>
               </div>
             </div>
