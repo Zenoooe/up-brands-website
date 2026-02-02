@@ -8,15 +8,23 @@ import { useState } from 'react';
 import { SEO } from '../components/common/SEO';
 
 export default function About() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showContactModal, setShowContactModal] = useState(false);
+
+  // Custom SEO for About
+  const seoTitle = i18n.language.startsWith('zh')
+    ? "关于我们 - 上游文创Up-Brands | 品牌提升专家"
+    : "About Us - Up-Brands | Brand Enhancement Experts";
+
+  const seoDesc = i18n.language.startsWith('zh')
+    ? "基本介绍：上游致力为企业提供一套可执行的、有效率的全套品牌核心解决方案，以品牌战略+创意视觉+全网营销为核心路径，实现品牌更新和重塑之路。"
+    : "Up-Brands is dedicated to providing efficient brand core solutions, focusing on Brand Strategy + Creative Vision + Digital Marketing to achieve brand renewal and reshaping.";
 
   return (
     <Layout>
       <SEO 
-        title={t('about.seo_title') || "About Us | Up-Brands"}
-        description={t('about.seo_desc') || "Learn about Up-Brands, a team of creative strategists helping brands grow globally through design and innovation."}
-        keywords={['About Up-Brands', 'Creative Team', 'Brand Agency', 'Design Studio', '关于我们', '设计团队', '品牌机构']}
+        title={seoTitle}
+        description={seoDesc}
       />
       <div className="container mx-auto px-4 md:px-8 py-20">
         <motion.div

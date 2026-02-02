@@ -204,8 +204,17 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
 };
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { projects, loading } = useBehanceProjects();
+
+  // Custom SEO for Home
+  const seoTitle = i18n.language.startsWith('zh') 
+    ? "上游文创Up-Brands - 大湾区领先的品牌策略与创意营销解决方案"
+    : "Up-Brands - Leading Brand Strategy & Creative Marketing in GBA";
+    
+  const seoDesc = i18n.language.startsWith('zh')
+    ? "位于大湾区的上游文创专注于品牌策略和创意视觉，为企业提供从品牌升级到全网营销的一站式服务，助力品牌全面提升。"
+    : "Based in GBA, Up-Brands specializes in brand strategy and creative vision, providing one-stop services from brand upgrade to digital marketing.";
   
   // Interactive Hero State
   const [spawnedImages, setSpawnedImages] = useState<SpawnedImage[]>([]);
@@ -306,8 +315,8 @@ export default function Home() {
   return (
     <Layout>
       <SEO 
-        title={t('home.seo_title') || "Up-Brands | Brand Strategy & Creative Design Agency"}
-        description={t('home.seo_desc') || "Up-Brands is a brand strategy and creative design agency based in the Greater Bay Area. We help businesses discover unique brand values through systematic visual language."}
+        title={seoTitle}
+        description={seoDesc}
         keywords={['Brand Strategy', 'Creative Design', 'Visual Identity', 'Digital Marketing', 'Greater Bay Area', 'Up-Brands', '品牌咨询', '品牌策略', '创意视觉', '珠海品牌设计', '大湾区设计']}
       />
 

@@ -17,6 +17,15 @@ export default function Blog() {
   const isZh = i18n.language.startsWith('zh');
   const isSimplified = i18n.language === 'zh-CN' || i18n.language === 'zh';
   
+  // Custom SEO for Blog
+  const seoTitle = i18n.language.startsWith('zh')
+    ? "创意视觉与品牌策略 - 上游文创Up-Brands | 品牌提升专家"
+    : "Creative Vision & Brand Strategy - Up-Brands | Brand Enhancement Experts";
+
+  const seoDesc = i18n.language.startsWith('zh')
+    ? "上游文创Up-Brands提供专业的品牌策略和创意视觉服务，帮助大湾区企业通过精准的市场定位和创意设计实现品牌升级和业务增长。"
+    : "Up-Brands provides professional brand strategy and creative vision services, helping GBA enterprises achieve brand upgrades and business growth through precise positioning and design.";
+
   // Helper to handle text conversion
   const getLocalizedText = (text: string) => {
     if (!isZh) return text;
@@ -24,12 +33,13 @@ export default function Blog() {
     return isSimplified ? convertToSimplified(text) : text;
   };
 
+  if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+
   return (
     <Layout>
       <SEO 
-        title={t('blog.seo_title') || "Blog & Insights | Up-Brands"}
-        description={t('blog.seo_desc') || "Explore our latest thoughts on brand strategy, design trends, and marketing insights."}
-        keywords={['Brand Insights', 'Design Blog', 'Marketing Trends', '品牌洞察', '设计博客', '营销趋势']}
+        title={seoTitle}
+        description={seoDesc}
       />
 
       <section className="w-full pt-32 pb-16 px-4 md:px-8 bg-white min-h-screen">

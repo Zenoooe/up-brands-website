@@ -29,7 +29,8 @@ export function SEO({
   const currentUrl = url || window.location.href;
   const lang = i18n.language;
 
-  const fullTitle = title ? `${title} | Up-Brands` : siteTitle;
+  // Allow overriding the title template completely if needed, otherwise append site name
+  const fullTitle = title?.includes('Up-Brands') ? title : (title ? `${title} | Up-Brands` : siteTitle);
 
   // JSON-LD Structured Data
   const jsonLd = type === 'article' ? {
