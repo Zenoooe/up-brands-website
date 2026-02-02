@@ -21,7 +21,7 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!api/|sogousiteverification\\.txt|.*\\..*).*)",
+      "source": "/((?!api/|.*\\.txt|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
