@@ -83,6 +83,21 @@ export default function PostEditor() {
       } else {
         await supabase.from('posts').update(payload).eq('id', id);
       }
+
+      // Notify Bing IndexNow
+      try {
+        const postUrl = `https://www.up-brands.com/blog/${payload.slug}`;
+        const key = 'B206303A7C114A33B370DE795A9821BE';
+        const indexNowUrl = `https://www.bing.com/indexnow?url=${encodeURIComponent(postUrl)}&key=${key}`;
+        
+        // Fire and forget - don't await response to speed up UI
+        fetch(indexNowUrl, { mode: 'no-cors' }).catch(err => console.warn('IndexNow failed', err));
+        
+        toast.success('Post saved & IndexNow notified!');
+      } catch (err) {
+        // Ignore IndexNow errors, post is already saved
+      }
+
       navigate('/admin');
     } catch (error) {
       console.error('Error saving post:', error);
