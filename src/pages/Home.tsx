@@ -62,7 +62,7 @@ const ProjectCard = ({ project, index, onClick, priority = false }: { project: P
   // Optimize Supabase images
   if (displayUrl.includes('supabase.co')) {
      const separator = displayUrl.includes('?') ? '&' : '?';
-     displayUrl = `${displayUrl}${separator}width=800&quality=80&format=webp`;
+     displayUrl = `${displayUrl}${separator}width=600&quality=80&format=webp`;
   }
 
   // And use smart loader for further fallback (wp proxy) if needed
