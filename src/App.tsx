@@ -56,6 +56,13 @@ function App() {
             <Route path="projects/:id" element={<ProjectEditor />} />
             <Route path="posts/:id" element={<PostEditor />} />
           </Route>
+
+          {/* Catch all for 404 - redirect old routes to home or about */}
+          <Route path="/services" element={<About />} />
+          <Route path="/service/*" element={<About />} />
+          <Route path="/project/*" element={<Home />} />
+          <Route path="/projects" element={<Home />} />
+          <Route path="*" element={<Home />} />
         </Routes>
       </Router>
     </AuthProvider>
