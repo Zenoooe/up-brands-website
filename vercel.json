@@ -24,47 +24,5 @@
       "source": "/((?!api/|.*\\.txt|.*\\..*).*)",
       "destination": "/index.html"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/company",
-      "destination": "/about",
-      "permanent": true
-    },
-    {
-      "source": "/services",
-      "destination": "/about",
-      "permanent": true
-    },
-    {
-      "source": "/service/(.*)",
-      "destination": "/about",
-      "permanent": true
-    },
-    {
-      "source": "/projects",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/project/(.*)",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/gallery",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/store",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/detail_(.*)",
-      "destination": "/",
-      "permanent": true
-    }
   ]
 }
