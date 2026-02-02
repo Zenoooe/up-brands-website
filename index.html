@@ -24,6 +24,7 @@
     </script>
     <script>
       (function(){
+          // Baidu Auto Push
           var bp = document.createElement('script');
           var curProtocol = window.location.protocol.split(':')[0];
           if (curProtocol === 'https') {
@@ -34,6 +35,10 @@
           }
           var s = document.getElementsByTagName("script")[0];
           s.parentNode.insertBefore(bp, s);
+
+          // 360 Auto Push
+          var src = (document.location.protocol == "http:") ? "http://js.passport.qihucdn.com/11.0.1.js?27776f7007775556755c097775555555":"https://jspassport.ssl.qhimg.com/11.0.1.js?27776f7007775556755c097775555555";
+          document.write('<script src="' + src + '" id="sozz"><\/script>');
       })();
     </script>
   </head>
