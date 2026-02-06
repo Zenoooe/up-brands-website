@@ -9,14 +9,16 @@ const SITE_URL = 'https://www.up-brands.com';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Debug: Log availability (do not log actual keys)
   // We prefer standard SUPABASE_URL without VITE_ prefix for backend
+  // Note: Vercel environment variables are process.env properties
+  const availableKeys = Object.keys(process.env);
+  console.log('API Sitemap: Checking Env Vars. Available keys count:', availableKeys.length);
+  
   const hasUrl = !!(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
   const hasKey = !!(process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY);
 
   if (!hasUrl || !hasKey) {
     console.error('Sitemap Configuration Error: Missing Env Vars');
-    // Log all available keys to help debug (security: only keys, not values)
-    const availableEnvKeys = Object.keys(process.env);
-    console.error('Available Env Keys:', availableEnvKeys);
+    console.error('Available Env Keys:', availableKeys);
     
     return res.status(500).json({ 
       error: 'Configuration Error', 
@@ -25,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       debug: { 
         missingUrl: !hasUrl, 
         missingKey: !hasKey,
-        availableKeysSample: availableEnvKeys.slice(0, 5) // Show first 5 keys to prove env is loaded
+        availableKeysSample: availableKeys // Show all keys for now to debug
       } 
     });
   }
