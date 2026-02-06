@@ -7,10 +7,24 @@ const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_
 const SITE_URL = 'https://www.up-brands.com';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('Sitemap Error: Missing Supabase credentials');
-    return res.status(500).json({ error: 'Internal Server Error: Configuration' });
+  // Debug: Log availability (do not log actual keys)
+  const hasUrl = !!(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+  const hasKey = !!(process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY);
+
+  if (!hasUrl || !hasKey) {
+    console.error('Sitemap Configuration Error:', { hasUrl, hasKey });
+    return res.status(500).json({ 
+      error: 'Configuration Error', 
+      details: { 
+        missingUrl: !hasUrl, 
+        missingKey: !hasKey,
+        envKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE'))
+      } 
+    });
   }
+
+  const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) as string;
+  const SUPABASE_KEY = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) as string;
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
