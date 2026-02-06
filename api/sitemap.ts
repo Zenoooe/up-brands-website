@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Add Static Routes
     // Use the latest content update as the lastmod for static pages to signal freshness
-    const allItems = [...(projects || []), ...(posts || [])];
+    const allItems: any[] = [...(projects || []), ...(posts || [])];
     const latestUpdate = allItems.length 
       ? allItems.reduce((max, item) => {
           const date = new Date(item.updated_at || item.created_at || item.date || 0);
