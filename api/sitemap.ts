@@ -1,30 +1,36 @@
 import { createClient } from '@supabase/supabase-js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+// Support both Vercel Integration env vars and Vite-style env vars
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = 'https://www.up-brands.com';
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return res.status(500).json({ error: 'Missing Supabase credentials' });
+    console.error('Sitemap Error: Missing Supabase credentials');
+    return res.status(500).json({ error: 'Internal Server Error: Configuration' });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   try {
     // Fetch projects with updated_at
+    // We check for is_visible is NOT false (so true or null/undefined are included if default is true)
+    // But safer to just check eq true if we trust the default. 
+    // Let's use .or to be safe: is_visible.eq.true,is_visible.is.null
     const { data: projects, error: projectsError } = await supabase
       .from('projects')
-      .select('id, slug, created_at, updated_at')
-      .eq('is_visible', true);
+      .select('id, slug, created_at, updated_at, is_visible')
+      .or('is_visible.eq.true,is_visible.is.null');
 
     if (projectsError) throw projectsError;
 
     // Fetch blog posts
     const { data: posts, error: postsError } = await supabase
       .from('posts')
-      .select('slug, created_at, updated_at, date')
-      .eq('is_visible', true);
+      .select('slug, created_at, updated_at, date, is_visible')
+      .or('is_visible.eq.true,is_visible.is.null');
 
     if (postsError) throw postsError;
 
@@ -39,10 +45,11 @@ export default async function handler(req, res) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
 
     // Add Static Routes
-    // For static routes, we use the latest project update time as a proxy for site freshness
-    const latestUpdate = projects?.length 
-      ? projects.reduce((max, p) => {
-          const date = new Date(p.updated_at || p.created_at);
+    // Use the latest content update as the lastmod for static pages to signal freshness
+    const allItems = [...(projects || []), ...(posts || [])];
+    const latestUpdate = allItems.length 
+      ? allItems.reduce((max, item) => {
+          const date = new Date(item.updated_at || item.created_at || item.date || 0);
           return date > max ? date : max;
         }, new Date(0))
       : new Date();
@@ -94,8 +101,8 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=0, must-revalidate');
     res.status(200).send(xml);
 
-  } catch (e) {
-    console.error('Sitemap Error:', e);
-    res.status(500).end();
+  } catch (e: any) {
+    console.error('Sitemap Generation Error:', e);
+    res.status(500).json({ error: 'Failed to generate sitemap', details: e.message });
   }
 }
