@@ -23,16 +23,18 @@ export function Header() {
   }, []);
 
   const toggleLanguage = () => {
-    // Cycle between en -> zh-CN -> zh-TW -> en
+    // Cycle: en -> zh-TW -> zh-CN -> en
+    // Logic updated: 
+    // 1. English -> Traditional (Prioritize '繁' as requested)
+    // 2. Traditional -> Simplified
+    // 3. Simplified -> English (Show 'EN' as requested)
     const currentLang = i18n.language;
     let newLang = 'en';
     
     if (currentLang.startsWith('en')) {
-      newLang = 'zh-CN';
-    } else if (currentLang === 'zh-CN' || currentLang === 'zh') {
       newLang = 'zh-TW';
-    } else if (currentLang === 'zh-TW') {
-      newLang = 'en';
+    } else if (currentLang === 'zh-TW' || currentLang === 'zh-HK' || currentLang === 'zh-MO') {
+      newLang = 'zh-CN';
     } else {
       newLang = 'en';
     }
@@ -41,10 +43,16 @@ export function Header() {
   };
 
   const getLangLabel = () => {
-    const lang = i18n.language;
-    if (lang.startsWith('en')) return 'EN';
-    if (lang === 'zh-TW' || lang === 'zh-HK') return '繁';
-    return '简';
+    // Show the label of the NEXT language (Target Language)
+    const currentLang = i18n.language;
+    
+    if (currentLang.startsWith('en')) {
+      return '繁'; // Current is EN, Next is Traditional
+    }
+    if (currentLang === 'zh-TW' || currentLang === 'zh-HK' || currentLang === 'zh-MO') {
+      return '简'; // Current is Trad, Next is Simplified
+    }
+    return 'EN'; // Current is Simp, Next is English
   };
 
   const navItems = [
