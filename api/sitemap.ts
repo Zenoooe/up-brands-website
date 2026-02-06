@@ -1,9 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Try to load .env from various locations
+dotenv.config(); // Default
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
 // Support both Vercel Integration env vars and Vite-style env vars
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = 'https://www.up-brands.com';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -25,6 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: 'Environment variables are missing on the server.',
       suggestion: 'Please add SUPABASE_URL and SUPABASE_ANON_KEY to Vercel Environment Variables.',
       debug: { 
+        cwd: process.cwd(),
         missingUrl: !hasUrl, 
         missingKey: !hasKey,
         availableKeysSample: availableKeys // Show all keys for now to debug
