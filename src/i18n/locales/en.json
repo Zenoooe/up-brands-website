@@ -5,6 +5,14 @@
       "description": "Rooted in Zhuhai, Up-Brands serves the Greater Bay Area and global clients with bilingual brand strategy, creative design, and digital marketing services."
     }
   },
+  "common": {
+    "linkCopied": "Link copied to clipboard!",
+    "backToHome": "Back to Home"
+  },
+  "project": {
+    "viewOnBehance": "View on Behance",
+    "share": "Share this project"
+  },
   "nav": {
     "work": "Work",
     "about": "About",

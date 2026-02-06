@@ -1,5 +1,6 @@
 export interface Project {
   id: string;
+  slug?: string; // Custom URL slug (optional, but recommended)
   title: string;
   category: string;
   imageUrl: string;
@@ -7,6 +8,12 @@ export interface Project {
   link: string; // Behance Link
   wechatLink?: string; // WeChat Article Link
   redNoteLink?: string; // RedNote (Xiaohongshu) Link
+  images?: string[]; // Array of project detail images
+  description?: string; // Full project description (Default/Chinese)
+  description_en?: string; // English description
+  credits?: Record<string, string>; // e.g. { "Production": "Calitho", "Photographer": "Rob" }
+  gallery_layout?: 'full' | 'grid' | 'centered';
+  image_gap?: number;
   sort_order?: number;
   is_visible?: boolean;
 }

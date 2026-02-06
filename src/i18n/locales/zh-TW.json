@@ -5,6 +5,14 @@
       "description": "上游文創 Up-Brands 根植珠海，專注服務粵港澳大灣區及全球企業。以中英雙語提供專業品牌策略、創意視覺設計與數碼營銷服務，助力企業實現品牌煥新與持續增長。"
     }
   },
+  "common": {
+    "linkCopied": "連結已複製到剪貼簿！",
+    "backToHome": "返回首頁"
+  },
+  "project": {
+    "viewOnBehance": "前往 Behance 查看",
+    "share": "分享此項目"
+  },
   "nav": {
     "work": "案例",
     "about": "關於",

@@ -1,0 +1,5 @@
+ALTER TABLE public.projects 
+ADD COLUMN IF NOT EXISTS "description" TEXT,
+ADD COLUMN IF NOT EXISTS "credits" JSONB DEFAULT '{}'::jsonb,
+ADD COLUMN IF NOT EXISTS "gallery_layout" TEXT DEFAULT 'full',
+ADD COLUMN IF NOT EXISTS "image_gap" INTEGER DEFAULT 0;

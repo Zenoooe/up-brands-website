@@ -6,11 +6,13 @@ import { Project } from '../types';
 import { useState, useRef, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { X } from 'lucide-react';
-import { FaBehance, FaWeixin } from 'react-icons/fa';
+import { FaBehance, FaWeixin, FaPinterest, FaLink } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import { SiXiaohongshu } from 'react-icons/si';
 import { ContactModal } from '../components/ui/ContactModal';
 import { SEO } from '../components/common/SEO';
 import wechatQr from '../assets/wechat-qr.jpg';
+import { toast } from 'react-hot-toast';
 
 function toWpImageProxyUrl(url: string) {
   const cleaned = url.replace(/^https?:\/\//, '');
@@ -90,7 +92,8 @@ const ProjectCard = ({ project, index, onClick, priority = false }: { project: P
           onError={smart.onError}
           referrerPolicy="no-referrer"
           loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
+          // @ts-ignore
+          fetchpriority={priority ? "high" : "auto"}
         />
       </div>
       
@@ -101,6 +104,17 @@ const ProjectCard = ({ project, index, onClick, priority = false }: { project: P
         <p className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-widest mt-2">
           {project.category}
         </p>
+        
+        <a 
+          href={project.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider bg-black text-white px-4 py-2 rounded-full hover:bg-[#1769FF] transition-colors opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
+        >
+          <FaBehance size={14} />
+          View on Behance
+        </a>
       </div>
     </motion.div>
   );
@@ -136,6 +150,30 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
   const { t } = useTranslation();
   if (!project || !position) return null;
 
+  const projectUrl = `/project/${project.slug || project.id}`;
+  const imageUrl = project.backup_image_url || project.imageUrl;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(projectUrl);
+    toast.success(t('common.linkCopied', 'Link copied!'));
+  };
+
+  const handlePinterestShare = () => {
+    // Pinterest requires an absolute URL for the image
+    // If it's a relative path or local, it won't work well. 
+    // Assuming backup_image_url is a full Supabase URL or similar public URL.
+    const url = encodeURIComponent(window.location.origin + projectUrl);
+    const media = encodeURIComponent(imageUrl);
+    const description = encodeURIComponent(project.title + " by Up-Brands");
+    window.open(`https://pinterest.com/pin/create/button/?url=${url}&media=${media}&description=${description}`, '_blank');
+  };
+
+  const handleTwitterShare = () => {
+    const text = encodeURIComponent(`Check out ${project.title} by Up-Brands`);
+    const url = encodeURIComponent(window.location.origin + projectUrl);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+  };
+
   return (
     <>
       <div 
@@ -154,21 +192,24 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
           translateX: '-50%',
           translateY: '-50%',
         }}
-        className="z-[101] bg-white shadow-xl rounded-xl p-4 min-w-[280px] border border-gray-100"
+        className="z-[101] bg-white shadow-xl rounded-xl p-4 min-w-[320px] border border-gray-100"
       >
         <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
-            {t('home.modal.title')}
-          </span>
+          <a 
+            href={projectUrl}
+            className="text-sm font-black uppercase tracking-widest text-gray-900 hover:opacity-70 transition-opacity flex items-center gap-1"
+          >
+            {t('home.modal.title')} ↗
+          </a>
           <button 
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X size={16} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="flex justify-around items-center gap-4">
+        <div className="flex justify-around items-center gap-4 mb-5">
           <a
             href={project.link}
             target="_blank"
@@ -207,6 +248,23 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black">RedNote</span>
           </a>
+        </div>
+
+        {/* Share Section */}
+        <div className="border-t border-gray-100 pt-3">
+          {/* Removed title per request to reduce height */}
+          {/* <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 text-center mb-2">SHARE PROJECT</p> */}
+          <div className="flex justify-center gap-3 pt-1">
+            <button onClick={handlePinterestShare} className="text-gray-400 hover:text-[#E60023] transition-colors" title="Pin on Pinterest">
+              <FaPinterest size={18} />
+            </button>
+            <button onClick={handleTwitterShare} className="text-gray-400 hover:text-black transition-colors" title="Share on X">
+              <FaXTwitter size={18} />
+            </button>
+            <button onClick={handleCopyLink} className="text-gray-400 hover:text-black transition-colors" title="Copy Link">
+              <FaLink size={18} />
+            </button>
+          </div>
         </div>
       </motion.div>
     </>

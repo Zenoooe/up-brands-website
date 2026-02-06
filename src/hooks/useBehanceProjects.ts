@@ -8,6 +8,18 @@ export function useBehanceProjects() {
 
   useEffect(() => {
     async function fetchProjects() {
+      // Check cache first
+      const cached = sessionStorage.getItem('behance_projects_cache');
+      const cacheTime = sessionStorage.getItem('behance_projects_timestamp');
+      const now = Date.now();
+      
+      // Use cache if less than 1 hour old
+      if (cached && cacheTime && (now - parseInt(cacheTime) < 3600000)) {
+        setProjects(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('projects')
@@ -18,7 +30,11 @@ export function useBehanceProjects() {
         if (error) {
           console.error('Error fetching projects:', error);
         } else if (data) {
-          setProjects(data as Project[]);
+          const projectsData = data as Project[];
+          setProjects(projectsData);
+          // Update cache
+          sessionStorage.setItem('behance_projects_cache', JSON.stringify(projectsData));
+          sessionStorage.setItem('behance_projects_timestamp', now.toString());
         }
       } catch (e) {
         console.error('Exception fetching projects:', e);

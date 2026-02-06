@@ -18,9 +18,30 @@ export async function backupImageToSupabase(imageUrl: string, projectId: string)
     
     // Fallback to public proxy if our API fails (e.g. 404 in local dev without vercel functions)
     if (!response.ok && isLocal) {
-      console.warn('Local API proxy failed, trying public proxy...');
-      proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
-      response = await fetch(proxyUrl);
+      console.warn('Local API proxy failed, trying Vite local proxy...');
+      
+      // If we are on localhost, we can use the Vite proxy we configured in vite.config.ts
+      // to route requests to /behance-cdn/...
+      // Original: https://mir-s3-cdn-cf.behance.net/project_modules/...
+      // Proxy: /behance-cdn/project_modules/...
+      
+      try {
+        const urlObj = new URL(imageUrl);
+        if (urlObj.hostname === 'mir-s3-cdn-cf.behance.net') {
+           proxyUrl = `/behance-cdn${urlObj.pathname}`;
+           console.log('Using Vite proxy for image:', proxyUrl);
+           response = await fetch(proxyUrl);
+        } else {
+           // If it's not a Behance CDN URL, fallback to AllOrigins as last resort
+           console.warn('Not a Behance CDN URL, falling back to AllOrigins');
+           proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+           response = await fetch(proxyUrl);
+        }
+      } catch (e) {
+         // Invalid URL or other error, fallback to AllOrigins
+         proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+         response = await fetch(proxyUrl);
+      }
     }
     
     if (!response.ok) {

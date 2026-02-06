@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Project, BlogPost, Subscriber } from '../../types';
 import { Link } from 'react-router-dom';
-import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff, CheckCircle2, ShieldCheck, ExternalLink } from 'lucide-react';
 import { backupImageToSupabase } from '../../utils/imageBackup';
 import {
   DndContext,
@@ -80,6 +80,15 @@ function SortableProjectRow({
                <ShieldCheck size={18} />
             </div>
           )}
+          <a 
+            href={`/project/${project.slug || project.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-black transition-colors"
+            title="View Live Page"
+          >
+            <ExternalLink size={18} />
+          </a>
           <button 
             onClick={() => onToggleVisibility(project.id, project.is_visible !== false)}
             className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${isHidden ? 'text-gray-400' : 'text-gray-600'}`}

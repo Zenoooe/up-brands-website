@@ -24,16 +24,13 @@ export function Header() {
 
   const toggleLanguage = () => {
     // Cycle: en -> zh-TW -> zh-CN -> en
-    // Logic updated: 
-    // 1. English -> Traditional (Prioritize '繁' as requested)
-    // 2. Traditional -> Simplified
-    // 3. Simplified -> English (Show 'EN' as requested)
     const currentLang = i18n.language;
     let newLang = 'en';
     
+    // Robust detection using startsWith/includes
     if (currentLang.startsWith('en')) {
       newLang = 'zh-TW';
-    } else if (currentLang === 'zh-TW' || currentLang === 'zh-HK' || currentLang === 'zh-MO') {
+    } else if (currentLang.includes('TW') || currentLang.includes('Hant') || currentLang === 'zh-HK') {
       newLang = 'zh-CN';
     } else {
       newLang = 'en';
@@ -49,7 +46,7 @@ export function Header() {
     if (currentLang.startsWith('en')) {
       return '繁'; // Current is EN, Next is Traditional
     }
-    if (currentLang === 'zh-TW' || currentLang === 'zh-HK' || currentLang === 'zh-MO') {
+    if (currentLang.includes('TW') || currentLang.includes('Hant') || currentLang === 'zh-HK') {
       return '简'; // Current is Trad, Next is Simplified
     }
     return 'EN'; // Current is Simp, Next is English

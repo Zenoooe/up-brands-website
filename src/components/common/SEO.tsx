@@ -29,30 +29,21 @@ export function SEO({
   const currentUrl = url || window.location.href;
   const lang = i18n.language;
 
+  const defaultKeywords = [
+    'Up-Brands', 'Brand Strategy', 'Visual Identity', 'Packaging Design', 
+    'Creative Agency', 'GBA Design', 'Shenzhen Design', 'Zhuhai Design',
+    '上游文创', '视觉设计', '包装设计', '品牌设计', '品牌更新', '品牌升级', '品牌战略', '品牌策划', '珠海设计', '广州设计', '深圳设计', '大湾区设计', '珠海品牌设计', '广州品牌设计', '深圳品牌设计', '大湾区品牌设计'
+  ];
+
+  const metaKeywords = keywords && keywords.length > 0 
+    ? [...keywords, ...defaultKeywords] 
+    : defaultKeywords;
+
   // Allow overriding the title template completely if needed, otherwise append site name
   const fullTitle = title?.includes('Up-Brands') ? title : (title ? `${title} | Up-Brands` : siteTitle);
 
   // JSON-LD Structured Data
-  const jsonLd = type === 'article' ? {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: title,
-    image: image ? [image] : [],
-    datePublished: publishedTime,
-    author: [{
-      '@type': 'Person',
-      name: author || 'Up-Brands Team',
-    }],
-    publisher: {
-      '@type': 'Organization',
-      name: 'Up-Brands',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://up-brands.com/favicon.svg'
-      }
-    },
-    description: description
-  } : {
+  let jsonLd: any = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     url: 'https://up-brands.com',
@@ -75,12 +66,55 @@ export function SEO({
     }
   };
 
+  if (type === 'article') {
+    jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      image: image ? [image] : [],
+      datePublished: publishedTime,
+      author: [{
+        '@type': 'Person',
+        name: author || 'Up-Brands Team',
+      }],
+      publisher: {
+        '@type': 'Organization',
+        name: 'Up-Brands',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://up-brands.com/favicon.svg'
+        }
+      },
+      description: description
+    };
+  } else if (type === 'website' && url && url.includes('/project/')) {
+     // Project Detail Schema
+     jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'CreativeWork',
+      name: title,
+      image: image,
+      description: description,
+      author: {
+        '@type': 'Organization',
+        name: 'Up-Brands'
+      },
+      provider: {
+        '@type': 'Organization',
+        name: 'Up-Brands',
+        sameAs: 'https://up-brands.com'
+      },
+      genre: keywords?.join(', ') || 'Design',
+      keywords: keywords?.join(', ')
+    };
+  }
+
   return (
     <Helmet>
       {/* Standard Metadata */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
-      {keywords && <meta name="keywords" content={keywords.join(', ')} />}
+      <meta name="keywords" content={metaKeywords.join(', ')} />
       <link rel="canonical" href={currentUrl} />
       <html lang={lang} />
 
