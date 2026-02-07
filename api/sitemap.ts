@@ -38,6 +38,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } 
     });
   }
+  
+  // Set Content-Type strictly to application/xml
+  res.setHeader('Content-Type', 'application/xml');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Disable Vercel Edge Cache for this route
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
 
   const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) as string;
   const SUPABASE_KEY = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) as string;
@@ -126,13 +135,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     xml += `
 </urlset>`;
 
-    res.setHeader('Content-Type', 'application/xml');
-    // Disable caching to ensure immediate updates
-    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=0, must-revalidate');
+    // Headers already set above, just send
     res.status(200).send(xml);
 
   } catch (e: any) {
     console.error('Sitemap Generation Error:', e);
-    res.status(500).json({ error: 'Failed to generate sitemap', details: e.message });
+    // Even in error, try to return XML so google doesn't index a JSON error page
+    res.setHeader('Content-Type', 'application/xml');
+    res.status(500).send(`<?xml version="1.0" encoding="UTF-8"?><error>Internal Server Error</error>`);
   }
 }
