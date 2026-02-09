@@ -442,6 +442,7 @@ export default function ProjectDetail() {
               className={`w-full grid ${
                  project.gallery_layout === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 
                  project.gallery_layout === 'centered' ? 'grid-cols-1 gap-y-12' : 
+                 project.gallery_layout === 'stack' ? 'grid-cols-1' :
                  'grid-cols-1 md:grid-cols-2' // Default 'full'
               }`}
               style={{ gap: project.image_gap ? `${project.image_gap}px` : '0px' }}
@@ -466,6 +467,7 @@ export default function ProjectDetail() {
                            project.gallery_layout === 'full' && (index + 1) % 3 !== 0 ? 'h-full' : 'h-auto'
                         }`}
                         loading="lazy"
+                        draggable={false}
                       />
                     )}
                   </div>

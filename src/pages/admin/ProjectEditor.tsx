@@ -410,6 +410,7 @@ export default function ProjectEditor() {
                   <option value="full">Full Screen (Zero Gap)</option>
                   <option value="grid">Grid (Columns)</option>
                   <option value="centered">Centered (White Borders)</option>
+                  <option value="stack">Stack (All Full Width)</option>
                 </select>
               </div>
               <div>
