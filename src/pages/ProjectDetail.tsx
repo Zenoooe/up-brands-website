@@ -11,6 +11,9 @@ import { supabase } from '../lib/supabase';
 import * as OpenCC from 'opencc-js';
 import DOMPurify from 'dompurify';
 
+import { Volume2, VolumeX } from 'lucide-react';
+import Player from '@vimeo/player';
+
 // Helper to extract Vimeo ID
 function getVimeoId(url: string) {
   if (!url) return null;
@@ -22,6 +25,9 @@ function getVimeoId(url: string) {
 // Vimeo Component to handle aspect ratio fetching
 function VimeoBlock({ videoId }: { videoId: string }) {
   const [aspectRatio, setAspectRatio] = useState(16 / 9); // Default to 16:9
+  const [isMuted, setIsMuted] = useState(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<Player | null>(null);
 
   useEffect(() => {
     async function fetchInfo() {
@@ -40,18 +46,59 @@ function VimeoBlock({ videoId }: { videoId: string }) {
     fetchInfo();
   }, [videoId]);
 
+  // Initialize Vimeo Player for custom control
+  useEffect(() => {
+    if (!iframeRef.current) return;
+
+    const player = new Player(iframeRef.current);
+    playerRef.current = player;
+
+    player.on('volumechange', (data) => {
+      setIsMuted(data.volume === 0);
+    });
+
+    return () => {
+      player.off('volumechange');
+      player.unload();
+    };
+  }, [videoId]);
+
+  const toggleMute = async () => {
+    if (!playerRef.current) return;
+    
+    if (isMuted) {
+      await playerRef.current.setVolume(1);
+      await playerRef.current.setMuted(false);
+      setIsMuted(false);
+    } else {
+      await playerRef.current.setVolume(0);
+      await playerRef.current.setMuted(true);
+      setIsMuted(true);
+    }
+  };
+
   return (
     <div 
-      className="w-full bg-black relative"
+      className="w-full bg-black relative group"
       style={{ aspectRatio: aspectRatio }}
     >
       <iframe 
-        src={`https://player.vimeo.com/video/${videoId}?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1`}
-        className="absolute inset-0 w-full h-full"
+        ref={iframeRef}
+        src={`https://player.vimeo.com/video/${videoId}?autoplay=1&loop=1&muted=1&controls=0&title=0&byline=0&portrait=0&playsinline=1`}
+        className="absolute inset-0 w-full h-full pointer-events-none" // Disable pointer events on iframe to let clicks pass through to our buttons if needed, BUT we need pointer events for the button. Actually pointer-events-none on iframe prevents pausing by click, which is good for background feel.
         frameBorder="0"
         allow="autoplay; fullscreen; picture-in-picture"
         allowFullScreen
       />
+      
+      {/* Custom Mute Toggle Button */}
+      <button
+        onClick={toggleMute}
+        className="absolute bottom-4 right-4 z-10 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm"
+        aria-label={isMuted ? "Unmute" : "Mute"}
+      >
+        {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+      </button>
     </div>
   );
 }
