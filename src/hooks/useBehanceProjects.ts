@@ -14,7 +14,8 @@ export function useBehanceProjects() {
       const now = Date.now();
       
       // Use cache if less than 1 hour old
-      if (cached && cacheTime && (now - parseInt(cacheTime) < 3600000)) {
+      // REDUCED CACHE TIME TO 1 MINUTE TO FIX SYNC ISSUES
+      if (cached && cacheTime && (now - parseInt(cacheTime) < 60000)) {
         setProjects(JSON.parse(cached));
         setLoading(false);
         return;
@@ -24,7 +25,8 @@ export function useBehanceProjects() {
         const { data, error } = await supabase
           .from('projects')
           .select('*')
-          .eq('is_visible', true) // Filter out hidden projects
+          // Removed strict .eq('is_visible', true) to handle NULL values (defaults)
+          .or('is_visible.eq.true,is_visible.is.null') 
           .order('sort_order', { ascending: true });
 
         if (error) {
