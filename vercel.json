@@ -19,6 +19,7 @@
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap?v=fresh" },
+    { "source": "/api/behance-rss", "destination": "/api/behance-rss" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

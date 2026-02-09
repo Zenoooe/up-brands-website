@@ -405,8 +405,9 @@ export default function Dashboard() {
     const toastId = toast.loading(`Syncing with Behance (@${username})...`);
 
     try {
-      const rssUrl = `https://www.behance.net/feeds/user?username=${username}`;
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}&timestamp=${Date.now()}`;
+      // Use local API proxy instead of AllOrigins to avoid CORS/Rate limits
+      // Behance RSS: https://www.behance.net/feeds/user?username=up-brands
+      const proxyUrl = `/api/behance-rss?username=${username}`;
       
       const response = await fetch(proxyUrl);
       
