@@ -57,6 +57,7 @@ export default function ProjectDetail() {
   };
 
   const onMouseLeave = () => {
+    if (!isDown.current) return;
     isDown.current = false;
     if (sliderRef.current) {
       sliderRef.current.style.scrollSnapType = 'x mandatory';
@@ -66,6 +67,7 @@ export default function ProjectDetail() {
   };
 
   const onMouseUp = () => {
+    if (!isDown.current) return;
     isDown.current = false;
     if (sliderRef.current) {
       sliderRef.current.style.scrollSnapType = 'x mandatory';
