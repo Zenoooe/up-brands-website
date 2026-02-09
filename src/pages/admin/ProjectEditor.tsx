@@ -554,7 +554,7 @@ export default function ProjectEditor() {
               type="text" 
               value={newImageUrl}
               onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="Paste image URL here..."
+              placeholder="Paste image URL or Vimeo link here..."
               className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage(newImageUrl))}
             />
@@ -598,7 +598,13 @@ export default function ProjectEditor() {
                           </div>
                           
                           <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0 border">
-                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            {url.includes('vimeo') ? (
+                              <div className="w-full h-full flex items-center justify-center bg-black text-white">
+                                <span className="font-bold text-xs">VIMEO</span>
+                              </div>
+                            ) : (
+                              <img src={url} alt="" className="w-full h-full object-cover" />
+                            )}
                           </div>
                           
                           <div className="flex-1 min-w-0">
@@ -606,6 +612,10 @@ export default function ProjectEditor() {
                             {url.includes('supabase.co') ? (
                                <span className="inline-flex items-center gap-1 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
                                  <Check size={10} /> Backed Up
+                               </span>
+                            ) : url.includes('vimeo') ? (
+                               <span className="inline-flex items-center gap-1 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                                 Video Embed
                                </span>
                             ) : (
                                <span className="inline-flex items-center gap-1 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">

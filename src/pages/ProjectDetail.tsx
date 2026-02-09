@@ -11,6 +11,14 @@ import { supabase } from '../lib/supabase';
 import * as OpenCC from 'opencc-js';
 import DOMPurify from 'dompurify';
 
+// Helper to extract Vimeo ID
+function getVimeoId(url: string) {
+  if (!url) return null;
+  // Matches: vimeo.com/123456, player.vimeo.com/video/123456
+  const match = url.match(/(?:vimeo\.com\/|video\/)(\d+)/);
+  return match ? match[1] : null;
+}
+
 export default function ProjectDetail() {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
@@ -354,24 +362,39 @@ export default function ProjectDetail() {
               }`}
               style={{ gap: project.image_gap ? `${project.image_gap}px` : '0px' }}
             >
-              {project.images.map((img: string, index: number) => (
-                <div 
-                  key={index} 
-                  className={`w-full relative ${
-                    // Hybrid rhythm for 'full' layout: alternating 2-col vs 1-col
-                    project.gallery_layout === 'full' && (index + 1) % 3 === 0 ? 'md:col-span-2' : 'h-full'
-                  }`}
-                >
-                  <img 
-                    src={img} 
-                    alt={`${project.title} detail ${index + 1}`}
-                    className={`w-full object-cover block ${
-                       project.gallery_layout === 'full' && (index + 1) % 3 !== 0 ? 'h-full' : 'h-auto'
+              {project.images.map((img: string, index: number) => {
+                const vimeoId = getVimeoId(img);
+                return (
+                  <div 
+                    key={index} 
+                    className={`w-full relative ${
+                      // Hybrid rhythm for 'full' layout: alternating 2-col vs 1-col
+                      project.gallery_layout === 'full' && (index + 1) % 3 === 0 ? 'md:col-span-2' : 'h-full'
                     }`}
-                    loading="lazy"
-                  />
-                </div>
-              ))}
+                  >
+                    {vimeoId ? (
+                      <div className="w-full aspect-video bg-black">
+                        <iframe 
+                          src={`https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0`}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : (
+                      <img 
+                        src={img} 
+                        alt={`${project.title} detail ${index + 1}`}
+                        className={`w-full object-cover block ${
+                           project.gallery_layout === 'full' && (index + 1) % 3 !== 0 ? 'h-full' : 'h-auto'
+                        }`}
+                        loading="lazy"
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
