@@ -189,8 +189,9 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
           position: 'fixed',
           left: position.x,
           top: position.y,
-          translateX: '-50%',
-          translateY: '-50%',
+          // Removed centering transforms to allow precise cursor positioning
+          // translateX: '-50%',
+          // translateY: '-50%',
         }}
         className="z-[101] bg-white shadow-xl rounded-xl p-4 min-w-[320px] border border-gray-100"
       >
@@ -302,9 +303,18 @@ export default function Home() {
     const x = e.clientX;
     const y = e.clientY;
     
-    // Clamp values to keep modal somewhat on screen if clicked near edges
-    const clampedX = Math.max(150, Math.min(window.innerWidth - 150, x));
-    const clampedY = Math.max(100, Math.min(window.innerHeight - 100, y));
+    // Calculate position to place "VIEW PROJECT" link directly under cursor
+    // Modal padding is p-4 (16px)
+    // Link is at top-left. We want cursor to be roughly over the text.
+    // Offset X: 40px (padding + start of text)
+    // Offset Y: 26px (padding + half line height)
+    const targetX = x - 40;
+    const targetY = y - 26;
+
+    // Basic clamping to prevent top-left from disappearing off-screen
+    // but allowing it to flow right/down naturally
+    const clampedX = Math.max(10, Math.min(window.innerWidth - 50, targetX));
+    const clampedY = Math.max(10, Math.min(window.innerHeight - 50, targetY));
 
     setModalPosition({ x: clampedX, y: clampedY });
     setSelectedProject(project);
