@@ -149,12 +149,17 @@ export default function ProjectDetail() {
   // 1. Sync with list data first
   useEffect(() => {
     if (projects.length > 0 && id) {
+      // Clear previous project to force "new page" feel
+      setProject(null);
+      setLoading(true);
+      
       // Find by ID OR Slug
       const currentIndex = projects.findIndex(p => p.id === id || p.slug === id);
       if (currentIndex !== -1) {
         setProject(projects[currentIndex]);
         setPrevProject(currentIndex > 0 ? projects[currentIndex - 1] : null);
         setNextProject(currentIndex < projects.length - 1 ? projects[currentIndex + 1] : null);
+        setLoading(false);
       }
     }
   }, [projects, id]);
@@ -163,6 +168,7 @@ export default function ProjectDetail() {
   useEffect(() => {
     async function fetchProjectDetail() {
       if (!id) return;
+      // Force loading state if not already handled by list sync
       if (!project) setLoading(true);
 
       try {
@@ -261,13 +267,14 @@ export default function ProjectDetail() {
         author="Up-Brands"
       />
 
-      <article className="w-full bg-[#F5F2EA] min-h-screen text-[#1A1A1A]">
+      <article className="w-full bg-[#F5F2EA] min-h-screen text-[#1A1A1A]" key={id}>
         {/* Full Screen Hero Image */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
           className="w-full h-screen relative"
+          key={`hero-${id}`} // Force re-mount of hero section
         >
           <img 
             src={imageUrl} 
