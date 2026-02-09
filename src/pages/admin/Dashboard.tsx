@@ -433,12 +433,13 @@ export default function Dashboard() {
         const link = item.querySelector('link')?.textContent || '';
         const description = item.querySelector('description')?.textContent || '';
         
+        // Match both single and double quotes for src attribute
+        const imgMatch = description.match(/src=["']([^"']+)["']/);
+        const imageUrl = imgMatch ? imgMatch[1] : '';
+
         const idMatch = link.match(/\/gallery\/(\d+)\//);
         if (!idMatch) continue;
         const id = idMatch[1];
-
-        const imgMatch = description.match(/src="([^"]+)"/);
-        const imageUrl = imgMatch ? imgMatch[1] : '';
 
         const category = item.querySelector('category')?.textContent || 'Branding';
 
