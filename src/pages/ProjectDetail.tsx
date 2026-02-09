@@ -382,12 +382,12 @@ export default function ProjectDetail() {
            {/* Left Column: Title */}
            <div className="md:col-span-7 relative">
              <div className="flex items-start gap-4">
-               <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-bold leading-[0.9] tracking-tighter break-words hyphens-auto">
+               <h1 className="text-7xl sm:text-7xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-bold leading-[0.9] tracking-tighter break-words hyphens-auto">
                  {project.title.split(' ').map((word: string, i: number) => (
                    <span key={i} className="block">{word}</span>
                  ))}
                </h1>
-               <div className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 bg-[#1A1A1A] rounded-full mt-2 sm:mt-3 md:mt-4 flex-shrink-0" />
+               <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 bg-[#1A1A1A] rounded-full mt-3 sm:mt-4 md:mt-4 flex-shrink-0" />
              </div>
              
              {/* Tags/Category */}
