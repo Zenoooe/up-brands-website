@@ -6,6 +6,7 @@ import BlogPost from './pages/BlogPost';
 import { useEffect } from 'react';
 import Lenis from 'lenis';
 import { Toaster } from 'react-hot-toast';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Admin Imports
 import { AuthProvider } from './contexts/AuthContext';
@@ -26,6 +27,9 @@ function App() {
       smoothWheel: true,
     });
 
+    // Expose lenis to window for ScrollToTop access
+    (window as any).lenis = lenis;
+
     function raf(time: number) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -35,6 +39,7 @@ function App() {
 
     return () => {
       lenis.destroy();
+      (window as any).lenis = null;
     };
   }, []);
 
@@ -42,6 +47,7 @@ function App() {
     <AuthProvider>
       <Toaster position="top-center" />
       <Router>
+        <ScrollToTop />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
