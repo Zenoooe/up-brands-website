@@ -19,6 +19,43 @@ function getVimeoId(url: string) {
   return match ? match[1] : null;
 }
 
+// Vimeo Component to handle aspect ratio fetching
+function VimeoBlock({ videoId }: { videoId: string }) {
+  const [aspectRatio, setAspectRatio] = useState(16 / 9); // Default to 16:9
+
+  useEffect(() => {
+    async function fetchInfo() {
+      try {
+        // Use our serverless function to avoid CORS issues
+        const res = await fetch(`/api/vimeo-info?id=${videoId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.width && data.height) {
+          setAspectRatio(data.width / data.height);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch Vimeo info', e);
+      }
+    }
+    fetchInfo();
+  }, [videoId]);
+
+  return (
+    <div 
+      className="w-full bg-black relative"
+      style={{ aspectRatio: aspectRatio }}
+    >
+      <iframe 
+        src={`https://player.vimeo.com/video/${videoId}?title=0&byline=0&portrait=0`}
+        className="absolute inset-0 w-full h-full"
+        frameBorder="0"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 export default function ProjectDetail() {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
@@ -373,15 +410,7 @@ export default function ProjectDetail() {
                     }`}
                   >
                     {vimeoId ? (
-                      <div className="w-full aspect-video bg-black">
-                        <iframe 
-                          src={`https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0`}
-                          className="w-full h-full"
-                          frameBorder="0"
-                          allow="autoplay; fullscreen; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
+                      <VimeoBlock videoId={vimeoId} />
                     ) : (
                       <img 
                         src={img} 
