@@ -69,11 +69,56 @@ export default function ProjectDetail() {
   const onMouseUp = () => {
     if (!isDown.current) return;
     isDown.current = false;
+    
     if (sliderRef.current) {
-      sliderRef.current.style.scrollSnapType = 'x mandatory';
-      sliderRef.current.style.scrollBehavior = 'smooth';
-      sliderRef.current.style.cursor = 'grab';
+      // Logic: If dragged left (moveDistance > 0), snap to next item
+      // If dragged right (moveDistance < 0), snap to prev item
+      // We calculate manually because standard snap will bounce back if < 50% width
+      const moveDistance = sliderRef.current.scrollLeft - scrollLeft.current;
+      const firstChild = sliderRef.current.children[0] as HTMLElement;
+      
+      if (firstChild) {
+          const itemWidth = firstChild.offsetWidth;
+          // gap is 32px (gap-8)
+          const gap = 32; 
+          const fullItemWidth = itemWidth + gap;
+          
+          // Current index based on where we started
+          const startIndex = Math.round(scrollLeft.current / fullItemWidth);
+          let targetIndex = startIndex;
+          
+          // Threshold to trigger "next/prev" (e.g. 20px - small but intentional)
+          const threshold = 20; 
+          
+          if (moveDistance > threshold) {
+              // Scrolled Right (Dragged Left) -> Next Item
+              targetIndex = startIndex + 1;
+          } else if (moveDistance < -threshold) {
+              // Scrolled Left (Dragged Right) -> Prev Item
+              targetIndex = startIndex - 1;
+          }
+          
+          // Clamp index
+          const maxIndex = sliderRef.current.children.length - 1;
+          targetIndex = Math.max(0, Math.min(targetIndex, maxIndex));
+          
+          // Manual Scroll to target
+          sliderRef.current.scrollTo({
+              left: targetIndex * fullItemWidth,
+              behavior: 'smooth'
+          });
+      }
+
+      // Re-enable snap after animation settles
+      setTimeout(() => {
+        if (sliderRef.current) {
+          sliderRef.current.style.scrollSnapType = 'x mandatory';
+          sliderRef.current.style.scrollBehavior = 'smooth';
+          sliderRef.current.style.cursor = 'grab';
+        }
+      }, 600);
     }
+    
     // Small timeout to prevent triggering click if it was a drag
     setTimeout(() => {
       isDragging.current = false;
