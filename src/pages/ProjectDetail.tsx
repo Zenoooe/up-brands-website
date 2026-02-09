@@ -6,7 +6,7 @@ import { SEO } from '../components/common/SEO';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { FaBehance, FaPinterest, FaTwitter, FaLink } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import * as OpenCC from 'opencc-js';
 import DOMPurify from 'dompurify';
@@ -26,7 +26,56 @@ export default function ProjectDetail() {
   const [nextProject, setNextProject] = useState<any>(null);
   const [prevProject, setPrevProject] = useState<any>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  const relatedProjects = useMemo(() => {
+    if (!projects) return [];
+    return projects.filter(p => p.id !== project?.id && p.is_visible !== false);
+  }, [projects, project]);
 
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    isDown.current = true;
+    if (sliderRef.current) {
+      sliderRef.current.style.scrollSnapType = 'none';
+      sliderRef.current.style.scrollBehavior = 'auto';
+      sliderRef.current.style.cursor = 'grabbing';
+      startX.current = e.pageX - sliderRef.current.offsetLeft;
+      scrollLeft.current = sliderRef.current.scrollLeft;
+    }
+  };
+
+  const onMouseLeave = () => {
+    isDown.current = false;
+    if (sliderRef.current) {
+      sliderRef.current.style.scrollSnapType = 'x mandatory';
+      sliderRef.current.style.scrollBehavior = 'smooth';
+      sliderRef.current.style.cursor = 'grab';
+    }
+  };
+
+  const onMouseUp = () => {
+    isDown.current = false;
+    if (sliderRef.current) {
+      sliderRef.current.style.scrollSnapType = 'x mandatory';
+      sliderRef.current.style.scrollBehavior = 'smooth';
+      sliderRef.current.style.cursor = 'grab';
+    }
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDown.current) return;
+    e.preventDefault();
+    if (sliderRef.current) {
+      const x = e.pageX - sliderRef.current.offsetLeft;
+      const walk = (x - startX.current) * 1.5;
+      sliderRef.current.scrollLeft = scrollLeft.current - walk;
+    }
+  };
+  
   // 1. Sync with list data first
   useEffect(() => {
     if (projects.length > 0 && id) {
@@ -250,62 +299,47 @@ export default function ProjectDetail() {
           )}
         </div>
 
-        {/* Related Work Section (Hybrid Style) */}
-        <div className="bg-[#F5F2EA] pt-32 pb-16 px-8 md:px-16 border-t border-gray-300 mt-0">
-          <div className="max-w-[1600px] mx-auto">
-            <div className="flex justify-between items-end mb-8 border-b border-gray-300 pb-4">
+        {/* Related Work Section (Carousel Style) */}
+        <div className="bg-[#F5F2EA] pt-32 pb-16 border-t border-gray-300 mt-0 overflow-hidden">
+          <div className="w-full">
+            <div className="max-w-[1600px] mx-auto px-8 md:px-16 flex justify-between items-end mb-8 border-b border-gray-300 pb-4">
                <h3 className="text-xl font-medium">Related Work</h3>
                <Link to="/" className="text-sm font-medium hover:opacity-60 transition-opacity">
                  View All Projects ↗
                </Link>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
-               {/* Previous Project Card */}
-               {prevProject && (
-                 <Link to={`/project/${prevProject.slug || prevProject.id}`} className="group block">
-                    <div className="flex flex-col h-full">
-                       <div className="aspect-[16/10] overflow-hidden bg-gray-200 mb-4">
-                         <img 
-                           src={prevProject.backup_image_url || prevProject.imageUrl} 
-                           alt={prevProject.title}
-                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                         />
+            <div 
+               ref={sliderRef}
+               className="flex overflow-x-auto snap-x snap-mandatory gap-8 px-8 md:px-16 pb-12 cursor-grab select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+               onMouseDown={onMouseDown}
+               onMouseLeave={onMouseLeave}
+               onMouseUp={onMouseUp}
+               onMouseMove={onMouseMove}
+            >
+               {relatedProjects.map(p => (
+                 <div key={p.id} className="snap-start shrink-0 w-full md:w-[calc(50%-1rem)]">
+                    <Link to={`/project/${p.slug || p.id}`} className="group block h-full">
+                       <div className="flex flex-col h-full">
+                          <div className="aspect-[3/2] overflow-hidden bg-gray-200 mb-6">
+                            <img 
+                              src={p.backup_image_url || p.imageUrl} 
+                              alt={p.title}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                          </div>
+                          <div className="flex flex-col items-start gap-1">
+                             <h4 className="text-xl md:text-2xl font-bold truncate pr-4">
+                               {p.title}
+                             </h4>
+                             <span className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                               {(p.category || 'Branding').split(',')[0]}
+                             </span>
+                          </div>
                        </div>
-                       <div className="flex justify-between items-baseline">
-                          <h4 className="text-2xl font-bold group-hover:underline decoration-2 underline-offset-4">
-                            {prevProject.title}
-                          </h4>
-                          <span className="text-xs text-gray-500 uppercase tracking-widest">
-                            {prevProject.category}
-                          </span>
-                       </div>
-                    </div>
-                 </Link>
-               )}
-
-               {/* Next Project Card */}
-               {nextProject && (
-                 <Link to={`/project/${nextProject.slug || nextProject.id}`} className="group block">
-                    <div className="flex flex-col h-full">
-                       <div className="aspect-[16/10] overflow-hidden bg-gray-200 mb-4">
-                         <img 
-                           src={nextProject.backup_image_url || nextProject.imageUrl} 
-                           alt={nextProject.title}
-                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                         />
-                       </div>
-                       <div className="flex justify-between items-baseline">
-                          <h4 className="text-2xl font-bold group-hover:underline decoration-2 underline-offset-4">
-                            {nextProject.title}
-                          </h4>
-                          <span className="text-xs text-gray-500 uppercase tracking-widest">
-                            {nextProject.category}
-                          </span>
-                       </div>
-                    </div>
-                 </Link>
-               )}
+                    </Link>
+                 </div>
+               ))}
             </div>
           </div>
         </div>

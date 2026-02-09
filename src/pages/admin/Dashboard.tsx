@@ -441,6 +441,7 @@ export default function Dashboard() {
         if (!idMatch) continue;
         const id = idMatch[1];
 
+        // Default to "Branding" if category is not found or empty
         const category = item.querySelector('category')?.textContent || 'Branding';
 
         if (id && imageUrl) {
