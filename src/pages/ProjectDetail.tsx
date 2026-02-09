@@ -49,6 +49,7 @@ export default function ProjectDetail() {
     if (sliderRef.current) {
       // Temporarily disable snap to allow smooth dragging
       sliderRef.current.style.scrollSnapType = 'none';
+      sliderRef.current.style.scrollBehavior = 'auto'; // Force instant update for drag
       sliderRef.current.style.cursor = 'grabbing';
       startX.current = e.pageX - sliderRef.current.offsetLeft;
       scrollLeft.current = sliderRef.current.scrollLeft;
@@ -59,6 +60,7 @@ export default function ProjectDetail() {
     isDown.current = false;
     if (sliderRef.current) {
       sliderRef.current.style.scrollSnapType = 'x mandatory';
+      sliderRef.current.style.scrollBehavior = 'smooth';
       sliderRef.current.style.cursor = 'grab';
     }
   };
@@ -67,6 +69,7 @@ export default function ProjectDetail() {
     isDown.current = false;
     if (sliderRef.current) {
       sliderRef.current.style.scrollSnapType = 'x mandatory';
+      sliderRef.current.style.scrollBehavior = 'smooth';
       sliderRef.current.style.cursor = 'grab';
     }
     // Small timeout to prevent triggering click if it was a drag
@@ -343,7 +346,7 @@ export default function ProjectDetail() {
                onClickCapture={onClickCapture}
             >
                {relatedProjects.map(p => (
-                 <div key={p.id} className="snap-center shrink-0 w-full md:snap-start md:w-[calc(50%-1rem)]">
+                 <div key={p.id} className="snap-center shrink-0 w-full lg:snap-start lg:w-[calc(50%-1rem)]">
                     <Link to={`/project/${p.slug || p.id}`} className="group block h-full" draggable={false}>
                        <div className="flex flex-col h-full">
                           <div className="aspect-[3/2] overflow-hidden bg-gray-200 mb-6">
