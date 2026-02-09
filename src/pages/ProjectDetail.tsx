@@ -36,12 +36,19 @@ export default function ProjectDetail() {
   const isDown = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
+  const isDragging = useRef(false);
+
+  // Scroll to top when project ID changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   const onMouseDown = (e: React.MouseEvent) => {
     isDown.current = true;
+    isDragging.current = false;
     if (sliderRef.current) {
+      // Temporarily disable snap to allow smooth dragging
       sliderRef.current.style.scrollSnapType = 'none';
-      sliderRef.current.style.scrollBehavior = 'auto';
       sliderRef.current.style.cursor = 'grabbing';
       startX.current = e.pageX - sliderRef.current.offsetLeft;
       scrollLeft.current = sliderRef.current.scrollLeft;
@@ -52,7 +59,6 @@ export default function ProjectDetail() {
     isDown.current = false;
     if (sliderRef.current) {
       sliderRef.current.style.scrollSnapType = 'x mandatory';
-      sliderRef.current.style.scrollBehavior = 'smooth';
       sliderRef.current.style.cursor = 'grab';
     }
   };
@@ -61,9 +67,12 @@ export default function ProjectDetail() {
     isDown.current = false;
     if (sliderRef.current) {
       sliderRef.current.style.scrollSnapType = 'x mandatory';
-      sliderRef.current.style.scrollBehavior = 'smooth';
       sliderRef.current.style.cursor = 'grab';
     }
+    // Small timeout to prevent triggering click if it was a drag
+    setTimeout(() => {
+      isDragging.current = false;
+    }, 50);
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
@@ -71,8 +80,19 @@ export default function ProjectDetail() {
     e.preventDefault();
     if (sliderRef.current) {
       const x = e.pageX - sliderRef.current.offsetLeft;
-      const walk = (x - startX.current) * 1.5;
+      // 1:1 movement feels more natural than 1.5 or 2
+      const walk = (x - startX.current) * 1; 
+      // If moved significantly, mark as dragging to prevent link click
+      if (Math.abs(walk) > 5) isDragging.current = true;
       sliderRef.current.scrollLeft = scrollLeft.current - walk;
+    }
+  };
+  
+  // Capture clicks to prevent navigation if dragging
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (isDragging.current) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
   
@@ -316,16 +336,18 @@ export default function ProjectDetail() {
                onMouseLeave={onMouseLeave}
                onMouseUp={onMouseUp}
                onMouseMove={onMouseMove}
+               onClickCapture={onClickCapture}
             >
                {relatedProjects.map(p => (
-                 <div key={p.id} className="snap-start shrink-0 w-full md:w-[calc(50%-1rem)]">
-                    <Link to={`/project/${p.slug || p.id}`} className="group block h-full">
+                 <div key={p.id} className="snap-center shrink-0 w-full md:snap-start md:w-[calc(50%-1rem)]">
+                    <Link to={`/project/${p.slug || p.id}`} className="group block h-full" draggable={false}>
                        <div className="flex flex-col h-full">
                           <div className="aspect-[3/2] overflow-hidden bg-gray-200 mb-6">
                             <img 
                               src={p.backup_image_url || p.imageUrl} 
                               alt={p.title}
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              draggable={false}
                             />
                           </div>
                           <div className="flex flex-col items-start gap-1">
