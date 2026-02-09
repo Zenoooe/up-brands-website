@@ -46,7 +46,7 @@ function VimeoBlock({ videoId }: { videoId: string }) {
       style={{ aspectRatio: aspectRatio }}
     >
       <iframe 
-        src={`https://player.vimeo.com/video/${videoId}?title=0&byline=0&portrait=0`}
+        src={`https://player.vimeo.com/video/${videoId}?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1`}
         className="absolute inset-0 w-full h-full"
         frameBorder="0"
         allow="autoplay; fullscreen; picture-in-picture"
