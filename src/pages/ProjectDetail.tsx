@@ -321,8 +321,9 @@ export default function ProjectDetail() {
 
         {/* Related Work Section (Carousel Style) */}
         <div className="bg-[#F5F2EA] pt-32 pb-16 border-t border-gray-300 mt-0 overflow-hidden">
-          <div className="w-full">
-            <div className="max-w-[1600px] mx-auto px-8 md:px-16 flex justify-between items-end mb-8 border-b border-gray-300 pb-4">
+          {/* Constrain the entire content to the max-width container */}
+          <div className="max-w-[1600px] mx-auto px-8 md:px-16 w-full">
+            <div className="flex justify-between items-end mb-8 border-b border-gray-300 pb-4">
                <h3 className="text-xl font-medium">Related Work</h3>
                <Link to="/" className="text-sm font-medium hover:opacity-60 transition-opacity">
                  View All Projects ↗
@@ -331,7 +332,10 @@ export default function ProjectDetail() {
             
             <div 
                ref={sliderRef}
-               className="flex overflow-x-auto snap-x snap-mandatory gap-8 px-8 md:px-16 pb-12 cursor-grab select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
+               // Removed px-8 md:px-16 from here because the parent container handles it
+               // Added negative margin to allow full-bleed scroll effect if desired, but user wants "grid" look
+               // So we keep it contained.
+               className="flex overflow-x-auto snap-x snap-mandatory gap-8 pb-12 cursor-grab select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth"
                onMouseDown={onMouseDown}
                onMouseLeave={onMouseLeave}
                onMouseUp={onMouseUp}
