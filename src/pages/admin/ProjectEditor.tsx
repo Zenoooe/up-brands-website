@@ -223,12 +223,20 @@ export default function ProjectEditor() {
           const newUrl = await backupImageToSupabase(item.url, projectId);
           newImages[item.index] = newUrl;
           successCount++;
+          
+          // Update local state immediately to show progress in UI
+          setFormData(prev => {
+            const currentImages = [...(prev.images || [])];
+            currentImages[item.index] = newUrl;
+            return { ...prev, images: currentImages };
+          });
+
         } catch (err) {
           console.error(`Failed to backup image at index ${item.index}`, err);
         }
       }
 
-      // Update state with new URLs
+      // Final update to ensure consistency (redundant but safe)
       setFormData(prev => ({ ...prev, images: newImages }));
 
       // Auto-save to DB
