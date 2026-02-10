@@ -1,18 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Project } from '../../types';
 import { Helmet } from 'react-helmet-async';
-import { Upload, X, Plus, GripVertical, Check } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { backupImageToSupabase } from '../../utils/imageBackup';
 import toast from 'react-hot-toast';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-
-// Strict Mode Fix for React Beautiful DnD
-// https://github.com/atlassian/react-beautiful-dnd/issues/2399
-import { StrictModeDroppable } from '../../components/common/StrictModeDroppable';
+import { GalleryEditor, GalleryEditorHandle } from './components/GalleryEditor';
 
 const modules = {
   toolbar: [
@@ -27,6 +23,8 @@ export default function ProjectEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
+  
+  const galleryEditorRef = useRef<GalleryEditorHandle>(null);
   
   const [loading, setLoading] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
@@ -50,8 +48,6 @@ export default function ProjectEditor() {
     is_visible: true
   });
 
-  const [newImageUrl, setNewImageUrl] = useState('');
-  const [newImageUrl2, setNewImageUrl2] = useState('');
   const [newCreditRole, setNewCreditRole] = useState('');
   const [newCreditName, setNewCreditName] = useState('');
 
@@ -131,169 +127,22 @@ export default function ProjectEditor() {
     }
   };
 
-  const handleAddImage = async (urlToAdd: string | React.MouseEvent | React.KeyboardEvent) => {
-    // If it's an event object (click/key), fallback to newImageUrl
-    const url = typeof urlToAdd === 'string' ? urlToAdd : newImageUrl;
-    if (!url) return;
-    
-    // Add to list immediately
-    const updatedImages = [...(formData.images || []), url];
-    setFormData(prev => ({
-      ...prev,
-      images: updatedImages
-    }));
-    setNewImageUrl('');
-    setNewImageUrl2('');
-
-    // Auto-save to DB to prevent loss on refresh
-    if (!isNew && id) {
-      await supabase.from('projects').update({ images: updatedImages }).eq('id', id);
-      toast.success('Image added and saved');
-    }
-  };
-
-  const handleRemoveImage = async (index: number) => {
-    const updatedImages = formData.images?.filter((_, i) => i !== index) || [];
-    setFormData(prev => ({
-      ...prev,
-      images: updatedImages
-    }));
-
-    // Auto-save to DB
-    if (!isNew && id) {
-      await supabase.from('projects').update({ images: updatedImages }).eq('id', id);
-      toast.success('Image removed and saved');
-    }
-  };
-
-  const handleBackupSingleGalleryImage = async (url: string, index: number) => {
-    const projectId = formData.id || crypto.randomUUID();
-    const toastId = toast.loading('Backing up image...');
-    
-    try {
-      const newUrl = await backupImageToSupabase(url, projectId);
-      
-      // Update local state
-      const updatedImages = [...(formData.images || [])];
-      updatedImages[index] = newUrl;
-      
-      setFormData(prev => ({ ...prev, images: updatedImages }));
-
-      // Auto-save to DB
-      if (!isNew && id) {
-         await supabase.from('projects').update({ images: updatedImages }).eq('id', id);
-      }
-
-      toast.success('Image backed up & saved!', { id: toastId });
-    } catch (error) {
-      console.error(error);
-      toast.error('Backup failed', { id: toastId });
-    }
-  };
-
-  const handleBackupAllImages = async () => {
-    if (!formData.images || formData.images.length === 0) return;
-
-    const projectId = formData.id || crypto.randomUUID();
-    // Filter out images that are already on Supabase or are Vimeo links
-    const imagesToBackup = formData.images
-      .map((url, index) => ({ url, index }))
-      .filter(item => !item.url.includes('supabase.co') && !item.url.includes('vimeo'));
-
-    if (imagesToBackup.length === 0) {
-      toast.success('All images are already backed up!');
-      return;
-    }
-
-    if (!window.confirm(`Found ${imagesToBackup.length} external images. Backup them all now? This might take a while.`)) return;
-
-    setBackingUp(true);
-    const toastId = toast.loading(`Starting backup for ${imagesToBackup.length} images...`);
-    let successCount = 0;
-    // Create a copy of the current images array
-    const newImages = [...formData.images];
-
-    try {
-      // Process sequentially to avoid overwhelming the server/network
-      for (let i = 0; i < imagesToBackup.length; i++) {
-        const item = imagesToBackup[i];
-        toast.loading(`Backing up ${i + 1}/${imagesToBackup.length}...`, { id: toastId });
-        
-        try {
-          const newUrl = await backupImageToSupabase(item.url, projectId);
-          newImages[item.index] = newUrl;
-          successCount++;
-          
-          // Update local state immediately to show progress in UI
-          setFormData(prev => {
-            const currentImages = [...(prev.images || [])];
-            currentImages[item.index] = newUrl;
-            return { ...prev, images: currentImages };
-          });
-
-        } catch (err) {
-          console.error(`Failed to backup image at index ${item.index}`, err);
-        }
-      }
-
-      // Final update to ensure consistency (redundant but safe)
-      setFormData(prev => ({ ...prev, images: newImages }));
-
-      // Auto-save to DB
-      if (!isNew && id) {
-        await supabase.from('projects').update({ images: newImages }).eq('id', id);
-      }
-
-      if (successCount === imagesToBackup.length) {
-        toast.success(`Successfully backed up all ${successCount} images!`, { id: toastId });
-      } else {
-        toast.error(`Finished with errors. Backed up ${successCount}/${imagesToBackup.length} images.`, { id: toastId });
-      }
-
-    } catch (error) {
-      console.error('Backup all process failed', error);
-      toast.error('Backup process failed unexpectedly', { id: toastId });
-    } finally {
-      setBackingUp(false);
-    }
-  };
-
-  const onDragEnd = async (result: any) => {
-    if (!result.destination) return;
-    
-    const items = Array.from(formData.images || []);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    setFormData(prev => ({ ...prev, images: items }));
-
-    // Auto-save order to DB
-    if (!isNew && id) {
-      const toastId = toast.loading('Saving new order...');
-      try {
-        const { error } = await supabase.from('projects').update({ images: items }).eq('id', id);
-        if (error) throw error;
-        toast.success('Order saved', { id: toastId });
-      } catch (e) {
-        console.error('Save failed', e);
-        toast.error('Failed to save order', { id: toastId });
-      }
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Get latest images from GalleryEditor
+      const currentImages = galleryEditorRef.current?.getImages() || formData.images || [];
+      const payload = { ...formData, images: currentImages };
+
       if (isNew) {
-        const payload = { ...formData };
         if (!payload.id) {
            payload.id = crypto.randomUUID();
         }
         await supabase.from('projects').insert(payload);
       } else {
-        await supabase.from('projects').update(formData).eq('id', id);
+        await supabase.from('projects').update(payload).eq('id', id);
       }
       
       sessionStorage.removeItem('behance_projects_cache');
@@ -301,7 +150,7 @@ export default function ProjectEditor() {
       
       // Ping search engines
       try {
-        const projectSlug = formData.slug || formData.id;
+        const projectSlug = payload.slug || payload.id;
         const projectUrl = `https://www.up-brands.com/project/${projectSlug}`;
         
         // Bing
@@ -615,152 +464,14 @@ export default function ProjectEditor() {
         </div>
 
         <div className="pt-6 border-t border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-gray-900">Gallery Images</h3>
-            <button
-              type="button"
-              onClick={handleBackupAllImages}
-              disabled={backingUp}
-              className="flex items-center gap-2 text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded transition-colors disabled:opacity-50"
-              title="Backup all external images to Supabase"
-            >
-              <Upload size={14} />
-              {backingUp ? 'Backing up...' : 'Backup All'}
-            </button>
-          </div>
-          
-          <div className="flex gap-2 mb-6">
-            <input 
-              type="text" 
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="Paste image URL or Vimeo link here..."
-              className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage(newImageUrl))}
-            />
-            <button 
-              type="button"
-              onClick={() => handleAddImage(newImageUrl)}
-              disabled={!newImageUrl}
-              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
-            >
-              <Plus size={18} /> Add
-            </button>
-          </div>
-
-          <DragDropContext onDragEnd={onDragEnd}>
-            <StrictModeDroppable droppableId="gallery-images">
-              {(provided) => (
-                <div 
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="space-y-3"
-                >
-                  {formData.images?.map((url, index) => (
-                    <Draggable key={url + index} draggableId={url + index} index={index}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`flex items-center gap-4 p-3 bg-white border rounded-lg shadow-sm group transition-colors ${
-                            snapshot.isDragging ? 'border-black ring-2 ring-black/10 shadow-lg z-50' : 'hover:border-gray-300'
-                          }`}
-                          style={{
-                             ...provided.draggableProps.style,
-                             opacity: snapshot.isDragging ? 0.9 : 1
-                          }}
-                        >
-                          <div 
-                            {...provided.dragHandleProps} 
-                            className="text-gray-300 hover:text-gray-600 cursor-grab active:cursor-grabbing p-3 -ml-3 flex items-center justify-center"
-                          >
-                            <GripVertical size={24} />
-                          </div>
-                          
-                          <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0 border">
-                            {url.includes('vimeo') ? (
-                              <div className="w-full h-full flex items-center justify-center bg-black text-white">
-                                <span className="font-bold text-xs">VIMEO</span>
-                              </div>
-                            ) : (
-                              <img src={url} alt="" className="w-full h-full object-cover" />
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-500 truncate mb-1" title={url}>{url}</p>
-                            {url.includes('supabase.co') ? (
-                               <span className="inline-flex items-center gap-1 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                                 <Check size={10} /> Backed Up
-                               </span>
-                            ) : url.includes('vimeo') ? (
-                               <span className="inline-flex items-center gap-1 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                                 Video Embed
-                               </span>
-                            ) : (
-                               <span className="inline-flex items-center gap-1 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">
-                                 External Link
-                               </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {!url.includes('supabase.co') && (
-                              <button
-                                type="button"
-                                onClick={() => handleBackupSingleGalleryImage(url, index)}
-                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Backup to Supabase"
-                              >
-                                <Upload size={18} />
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveImage(index)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                              title="Remove image"
-                            >
-                              <X size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </StrictModeDroppable>
-          </DragDropContext>
-          
-          <div className="flex gap-2 mt-6 pt-6 border-t border-dashed border-gray-200">
-            <input 
-              type="text" 
-              value={newImageUrl2}
-              onChange={(e) => setNewImageUrl2(e.target.value)}
-              placeholder="Paste another image URL here..."
-              className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage(newImageUrl2))}
-            />
-            <button 
-              type="button"
-              onClick={() => handleAddImage(newImageUrl2)}
-              disabled={!newImageUrl2}
-              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
-            >
-              <Plus size={18} /> Add
-            </button>
-          </div>
-
-          {(!formData.images || formData.images.length === 0) && (
-            <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg text-gray-400">
-              No images in gallery yet. Paste a URL above to start.
-            </div>
-          )}
+          <GalleryEditor
+             ref={galleryEditorRef}
+             initialImages={formData.images || []}
+             projectId={formData.id}
+          />
         </div>
 
-        <div className="flex justify-end gap-4 pt-6 sticky bottom-0 bg-white/80 backdrop-blur p-4 border-t border-gray-100 -mx-8 -mb-8 mt-8">
+        <div className="flex justify-end gap-4 pt-6 sticky bottom-0 bg-white/80 backdrop-blur p-4 border-t border-gray-100 -mx-8 -mb-8 mt-8 z-50">
           <button
             type="button"
             onClick={() => navigate('/admin')}
