@@ -191,6 +191,65 @@ export default function ProjectEditor() {
     }
   };
 
+  const handleBackupAllImages = async () => {
+    if (!formData.images || formData.images.length === 0) return;
+
+    const projectId = formData.id || crypto.randomUUID();
+    // Filter out images that are already on Supabase or are Vimeo links
+    const imagesToBackup = formData.images
+      .map((url, index) => ({ url, index }))
+      .filter(item => !item.url.includes('supabase.co') && !item.url.includes('vimeo'));
+
+    if (imagesToBackup.length === 0) {
+      toast.success('All images are already backed up!');
+      return;
+    }
+
+    if (!window.confirm(`Found ${imagesToBackup.length} external images. Backup them all now? This might take a while.`)) return;
+
+    setBackingUp(true);
+    const toastId = toast.loading(`Starting backup for ${imagesToBackup.length} images...`);
+    let successCount = 0;
+    // Create a copy of the current images array
+    const newImages = [...formData.images];
+
+    try {
+      // Process sequentially to avoid overwhelming the server/network
+      for (let i = 0; i < imagesToBackup.length; i++) {
+        const item = imagesToBackup[i];
+        toast.loading(`Backing up ${i + 1}/${imagesToBackup.length}...`, { id: toastId });
+        
+        try {
+          const newUrl = await backupImageToSupabase(item.url, projectId);
+          newImages[item.index] = newUrl;
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to backup image at index ${item.index}`, err);
+        }
+      }
+
+      // Update state with new URLs
+      setFormData(prev => ({ ...prev, images: newImages }));
+
+      // Auto-save to DB
+      if (!isNew && id) {
+        await supabase.from('projects').update({ images: newImages }).eq('id', id);
+      }
+
+      if (successCount === imagesToBackup.length) {
+        toast.success(`Successfully backed up all ${successCount} images!`, { id: toastId });
+      } else {
+        toast.error(`Finished with errors. Backed up ${successCount}/${imagesToBackup.length} images.`, { id: toastId });
+      }
+
+    } catch (error) {
+      console.error('Backup all process failed', error);
+      toast.error('Backup process failed unexpectedly', { id: toastId });
+    } finally {
+      setBackingUp(false);
+    }
+  };
+
   const onDragEnd = async (result: any) => {
     if (!result.destination) return;
     
@@ -548,7 +607,19 @@ export default function ProjectEditor() {
         </div>
 
         <div className="pt-6 border-t border-gray-100">
-          <h3 className="font-bold text-gray-900 mb-4">Gallery Images</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-gray-900">Gallery Images</h3>
+            <button
+              type="button"
+              onClick={handleBackupAllImages}
+              disabled={backingUp}
+              className="flex items-center gap-2 text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded transition-colors disabled:opacity-50"
+              title="Backup all external images to Supabase"
+            >
+              <Upload size={14} />
+              {backingUp ? 'Backing up...' : 'Backup All'}
+            </button>
+          </div>
           
           <div className="flex gap-2 mb-6">
             <input 
