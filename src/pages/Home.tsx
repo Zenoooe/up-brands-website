@@ -198,10 +198,16 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
         <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
           <a 
             href={projectUrl}
-            className="group flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-[#D4AF37] hover:text-white transition-all duration-300 rounded-md border border-gray-100 hover:border-[#D4AF37]"
+            className="group relative flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white text-black font-black uppercase tracking-widest text-sm overflow-hidden rounded-md border border-gray-100 transition-colors duration-300 hover:border-[#D4AF37]"
           >
-            <span>{t('home.modal.title')}</span>
-            <span>↗</span>
+            {/* Gold Sweep Layer */}
+            <span className="absolute inset-0 bg-[#D4AF37] transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out" />
+            
+            {/* Content Layer */}
+            <span className="relative z-10 group-hover:text-white transition-colors duration-300 flex items-center gap-2">
+              <span>{t('home.modal.title')}</span>
+              <span>↗</span>
+            </span>
           </a>
           <button 
             onClick={onClose}
