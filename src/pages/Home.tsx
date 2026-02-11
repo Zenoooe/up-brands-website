@@ -148,6 +148,16 @@ const MarqueeBar = () => {
 
 const PlatformModal = ({ project, position, onClose }: { project: Project | null; position: { x: number, y: number } | null; onClose: () => void }) => {
   const { t } = useTranslation();
+  const [forceActive, setForceActive] = useState(false);
+
+  useEffect(() => {
+    // Auto-trigger animation on mobile
+    if (window.innerWidth < 768) {
+      const timer = setTimeout(() => setForceActive(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   if (!project || !position) return null;
 
   const projectUrl = `/project/${project.slug || project.id}`;
@@ -198,13 +208,13 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
         <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
           <a 
             href={projectUrl}
-            className="group relative flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white text-black font-black uppercase tracking-widest text-sm overflow-hidden rounded-md border border-gray-100 transition-colors duration-300 hover:border-[#D4AF37]"
+            className={`group relative flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-white text-black font-black uppercase tracking-widest text-sm overflow-hidden rounded-md border border-gray-100 transition-colors duration-300 hover:border-[#c0ac97] ${forceActive ? 'border-[#c0ac97]' : ''}`}
           >
             {/* Gold Sweep Layer */}
-            <span className="absolute inset-0 bg-[#D4AF37] transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out" />
+            <span className={`absolute inset-0 bg-[#c0ac97] transform origin-left transition-transform duration-500 ease-out ${forceActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`} />
             
             {/* Content Layer */}
-            <span className="relative z-10 group-hover:text-white transition-colors duration-300 flex items-center gap-2">
+            <span className={`relative z-10 transition-colors duration-300 flex items-center justify-between w-full ${forceActive ? 'text-white' : 'group-hover:text-white'}`}>
               <span>{t('home.modal.title')}</span>
               <span>↗</span>
             </span>
@@ -217,7 +227,7 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
           </button>
         </div>
 
-        <div className="flex justify-around items-center gap-4 mb-5">
+        <div className="flex justify-start items-center gap-8 mb-5 px-4">
           <a
             href={project.link}
             target="_blank"
