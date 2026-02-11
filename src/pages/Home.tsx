@@ -198,9 +198,10 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
         <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
           <a 
             href={projectUrl}
-            className="text-sm font-black uppercase tracking-widest text-gray-900 hover:opacity-70 transition-opacity flex items-center gap-1"
+            className="text-sm font-black uppercase tracking-widest text-gray-900 flex items-center gap-1 group relative pb-1 cursor-pointer"
           >
-            {t('home.modal.title')} ↗
+            <span>{t('home.modal.title')} ↗</span>
+            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#D4AF37] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
           </a>
           <button 
             onClick={onClose}
