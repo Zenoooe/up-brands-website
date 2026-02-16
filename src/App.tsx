@@ -10,6 +10,7 @@ const About = lazy(() => import('./pages/About'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin Imports (Also Lazy)
 import { AuthProvider } from './contexts/AuthContext';
@@ -75,8 +76,8 @@ function App() {
               <Route path="posts/:id" element={<PostEditor />} />
             </Route>
 
-            {/* Catch all for 404 - redirect EVERYTHING to home */}
-            <Route path="*" element={<Home />} />
+            {/* Catch all for 404 */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </Router>

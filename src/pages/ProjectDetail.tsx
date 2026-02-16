@@ -311,7 +311,8 @@ export default function ProjectDetail() {
   }
 
   const isHybridLayout = true; 
-  const currentUrl = window.location.href;
+  // Ensure we use the full canonical URL including the domain
+  const currentUrl = `${window.location.origin}/project/${project.slug || project.id}`;
   const imageUrl = project.backup_image_url || project.imageUrl;
 
   // Multi-language Description Logic
