@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HOST = 'www.up-brands.com';
 const PROTOCOL = 'https';
 // Use existing key from public directory
-const KEY = 'a3cd48afa2594bc6b12faaa904168506';
+const KEY = '8a942aefb20f42c8b4bae673d0fc3df3';
 
 // Sitemap location (assuming npm run build or npm run sitemap:local has run)
 const sitemapPath = path.join(__dirname, '../public/sitemap.xml');

@@ -9,7 +9,7 @@ export default async function handler(
   const url = request.query.url || request.body?.url;
   
   // Use existing key from public directory
-  const key = process.env.INDEXNOW_KEY || 'a3cd48afa2594bc6b12faaa904168506';
+  const key = process.env.INDEXNOW_KEY || '8a942aefb20f42c8b4bae673d0fc3df3';
   const host = 'www.up-brands.com';
 
   if (!url) {
