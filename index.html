@@ -209,7 +209,22 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="background-color: #f5f5f5; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; text-align: center; padding: 20px;">
+        <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 1rem; text-transform: uppercase;">Up-Brands</h1>
+        <p style="font-size: 1.2rem; max-w: 600px; line-height: 1.6; color: #333;">
+          Leading Brand Strategy, Creative Visual Design, and Digital Marketing Agency in Greater Bay Area.
+          <br>
+          粤港澳大湾区领先的品牌策略与创意营销专家。
+        </p>
+        <div style="margin-top: 2rem;">
+          <div style="width: 40px; height: 40px; border: 4px solid #000; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        </div>
+        <style>
+          @keyframes spin { to { transform: rotate(360deg); } }
+        </style>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
