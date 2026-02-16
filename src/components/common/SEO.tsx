@@ -54,7 +54,7 @@ export function SEO({
     sameAs: [
       'https://www.behance.net/up-brands',
       'https://www.linkedin.com/company/up_brands/',
-      'https://www.instagram.com/up.brands_/',
+      'https://www.instagram.com/upstream.asia/',
       'https://mp.weixin.qq.com/s/bSMmQyzfit5OIACx9uZ8kw',
       'https://www.xiaohongshu.com/user/profile/663a1f290000000007005cc2'
     ],
