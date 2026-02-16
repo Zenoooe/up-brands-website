@@ -153,8 +153,8 @@ export default function ProjectEditor() {
         const projectSlug = payload.slug || payload.id;
         const projectUrl = `https://www.up-brands.com/project/${projectSlug}`;
         
-        // Bing
-        await fetch(`/api/bing-push?url=${encodeURIComponent(projectUrl)}`, { method: 'GET' }).catch(() => {});
+        // Bing / IndexNow
+        await fetch(`/api/indexnow?url=${encodeURIComponent(projectUrl)}`, { method: 'GET' }).catch(() => {});
         
         // Baidu
         await fetch(`/api/baidu-push?url=${encodeURIComponent(projectUrl)}&site=https://www.up-brands.com&token=YOUR_BAIDU_TOKEN`, { method: 'POST' }).catch(() => {});

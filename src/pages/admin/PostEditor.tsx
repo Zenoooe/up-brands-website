@@ -87,15 +87,18 @@ export default function PostEditor() {
       // Notify Bing IndexNow
       try {
         const postUrl = `https://www.up-brands.com/blog/${payload.slug}`;
-        const key = 'B206303A7C114A33B370DE795A9821BE';
-        const indexNowUrl = `https://www.bing.com/indexnow?url=${encodeURIComponent(postUrl)}&key=${key}`;
+        
+        // Use our new backend API
+        fetch(`/api/indexnow?url=${encodeURIComponent(postUrl)}`)
+          .then(res => res.json())
+          .then(data => console.log('IndexNow result:', data))
+          .catch(err => console.warn('IndexNow failed', err));
         
         // Notify Baidu (via proxy to avoid CORS)
         const baiduToken = 'a8dKMsRIVkl7JfbF';
         const baiduProxyUrl = `/api/baidu-push?site=https://www.up-brands.com&token=${baiduToken}&url=${encodeURIComponent(postUrl)}`;
 
         // Fire and forget
-        fetch(indexNowUrl, { mode: 'no-cors' }).catch(err => console.warn('IndexNow failed', err));
         fetch(baiduProxyUrl).catch(err => console.warn('Baidu push failed', err));
         
         toast.success('Post saved & Search Engines notified!');
