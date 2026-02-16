@@ -417,8 +417,14 @@ export default function Home() {
         keywords={['Brand Strategy', 'Creative Design', 'Visual Identity', 'Digital Marketing', 'Greater Bay Area', 'Up-Brands', '品牌咨询', '品牌策略', '创意视觉', '珠海品牌设计', '大湾区设计']}
       />
 
+      {/* Hidden H1 for SEO (Semantic Structure) */}
+      <h1 className="sr-only">
+        Up-Brands - Leading Brand Strategy, Creative Visual Design, and Digital Marketing Agency in Greater Bay Area.
+        Providing VI design, packaging design, and social media marketing services.
+      </h1>
+
       {/* Interactive Hero Section */}
-      <section 
+      <section  
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onTouchMove={handleTouchMove}

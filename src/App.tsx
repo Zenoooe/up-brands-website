@@ -1,21 +1,30 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import About from './pages/About';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import { useEffect } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import Lenis from 'lenis';
 import { Toaster } from 'react-hot-toast';
 import ScrollToTop from './components/common/ScrollToTop';
 
-// Admin Imports
+// Lazy Load Pages
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+
+// Admin Imports (Also Lazy)
 import { AuthProvider } from './contexts/AuthContext';
-import AdminLogin from './pages/admin/Login';
-import AdminLayout from './components/layout/AdminLayout';
-import Dashboard from './pages/admin/Dashboard';
-import ProjectEditor from './pages/admin/ProjectEditor';
-import PostEditor from './pages/admin/PostEditor';
-import ProjectDetail from './pages/ProjectDetail';
+const AdminLogin = lazy(() => import('./pages/admin/Login'));
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
+const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
+const ProjectEditor = lazy(() => import('./pages/admin/ProjectEditor'));
+const PostEditor = lazy(() => import('./pages/admin/PostEditor'));
+
+// Loading Fallback
+const PageLoader = () => (
+  <div className="w-full h-screen flex items-center justify-center bg-white">
+    <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 function App() {
   useEffect(() => {
@@ -48,26 +57,28 @@ function App() {
       <Toaster position="top-center" />
       <Router>
         <ScrollToTop />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/project/:id" element={<ProjectDetail />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/project/:id" element={<ProjectDetail />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="projects/:id" element={<ProjectEditor />} />
-            <Route path="posts/:id" element={<PostEditor />} />
-          </Route>
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="projects/:id" element={<ProjectEditor />} />
+              <Route path="posts/:id" element={<PostEditor />} />
+            </Route>
 
-          {/* Catch all for 404 - redirect EVERYTHING to home */}
-          <Route path="*" element={<Home />} />
-        </Routes>
+            {/* Catch all for 404 - redirect EVERYTHING to home */}
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </Suspense>
       </Router>
     </AuthProvider>
   );
