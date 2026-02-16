@@ -1,34 +1,128 @@
-# Up-Brands: Full Context & Case Studies
+# Up-Brands: Full Agency Context & Case Studies (完整公司资料与案例)
 
-> Detailed agency capabilities and selected case studies for LLM context.
+> Detailed capabilities and comprehensive case studies for LLM context.
+> 包含详细的公司能力介绍与精选项目案例，供 AI 深度理解。
 
-## Agency Overview
-Up-Brands is a premier brand strategy and creative design agency rooted in the Greater Bay Area (Zhuhai, Hong Kong, Macau). We specialize in helping cross-border businesses navigate the Chinese market through localized branding and digital marketing (WeChat, RedNote).
+---
 
-## Core Capabilities
-1. **Brand Strategy**: Naming, Positioning, Brand Architecture, Market Research.
-2. **Visual Identity**: Logo Design, VI Systems, Packaging Design, Space Design.
-3. **Digital Marketing**: Social Media Operation (WeChat/RedNote), Content Creation, Campaign Management.
+## 🏢 Agency Overview (公司概览)
 
-## Featured Case Studies
+**Up-Brands (上游文创)** is a professional brand strategy and creative design agency based in the Greater Bay Area (Zhuhai, Hong Kong, Macau).
+**上游文创** 是一家扎根于粤港澳大湾区（珠海、香港、澳门）的专业品牌策略与创意设计机构。
 
-### 1. Ferment Force (Bio-tech Branding)
-**Challenge**: A bio-tech skincare brand needed a scientific yet approachable identity to enter the high-end market.
-**Solution**: We developed a "Science meets Nature" concept. The visual identity uses clean, clinical typography paired with organic, flowing shapes representing fermentation.
-**Result**: Successfully launched in 3 major cities with a consistent brand voice across offline pop-ups and online stores.
+### 🌟 Our Philosophy (核心理念)
+- **Mission**: To provide executable and efficient brand solutions. We believe good design is not just aesthetic expression, but the visualization of business strategy.
+  **使命**：致力为企业提供可执行、有效率的品牌解决方案。我们相信好的设计不仅是美学表达，更是商业策略的具象化。
+- **Core Path**: Brand Strategy + Creative Visuals + Digital Marketing.
+  **核心路径**：品牌战略 + 创意视觉 + 全网营销。
+- **Value**: Empowering brand upgrades and cross-border expansion, creating 10x brand premium.
+  **价值**：专注品牌升级与跨境出海，赋能品牌价值十倍溢价。
 
-### 2. LinCoffee (Coffee Chain Strategy)
-**Challenge**: A new coffee chain in Shenzhen faced intense competition.
-**Solution**: Positioned as "The Creative Hub for Urban Nomads". Designed a vibrant, modular visual system that adapts to different store sizes.
-**Result**: Expanded to 15 stores in 1 year; packaging became a social media hit on RedNote.
+### 🛠 Core Capabilities (核心能力)
+1. **Brand Strategy (品牌策略)**:
+   - Market Insight & Positioning (市场洞察与定位)
+   - Naming & Slogan (命名与口号)
+   - Brand Storytelling (品牌故事)
+2. **Visual Identity (视觉识别)**:
+   - Logo Design (标志设计)
+   - VI Systems (VI系统)
+   - Packaging Design (包装设计)
+   - Space & SI Design (空间与SI设计)
+3. **Digital Marketing (全网营销)**:
+   - Social Media Operation (WeChat, RedNote) (微信、小红书代运营)
+   - Content Creation (内容创作)
+   - Campaign Management (活动管理)
 
-### 3. Mysterium Wine (Packaging Design)
-**Challenge**: Premium wine label needing to appeal to younger luxury consumers.
-**Solution**: Used holographic foil stamping on matte black paper to create a "mysterious" visual effect that changes with light.
-**Result**: Award-winning packaging design; 200% sales increase in the first quarter.
+---
 
-## Contact for Partnerships
+## 📂 Featured Case Studies (精选项目案例)
+
+### 1. Mysterium (California Luxury Wine)
+**Category**: Branding, Packaging Design
+**Challenge**: Creating a visual identity for a high-end California red wine that stands out in a crowded luxury market.
+**Solution**:
+- **Concept**: "Mystery & Discovery".
+- **Visuals**: Used matte black texture to symbolize the quiet night sky, with gold foil stamping representing twinkling stars.
+- **Experience**: Selected textured specialty paper to convey the vitality of the soil and a sense of luxury.
+**挑战**：为一款加州高端红酒打造在拥挤的奢侈品市场中脱颖而出的视觉形象。
+**解决方案**：
+- **概念**：“神秘与探索”。
+- **视觉**：采用全黑色磨砂材质象征静谧夜空，烫金工艺如同闪烁星光。
+- **体验**：选用有肌理感的特种纸，传达土壤般的生命力与奢华感。
+
+### 2. Mist Haven (Private Sanctuary & SPA)
+**Category**: Branding, VI System
+**Challenge**: Defining a brand identity for a private spa that emphasizes relaxation and exclusivity.
+**Solution**:
+- **Metaphor**: "Mist" (Mystery/Isolation) + "Haven" (Safety/Belonging).
+- **Visuals**: Fluid, smoke-like logo lines conveying softness. Gradient colors mimic morning mist, creating a sense of healing space.
+**挑战**：为一家私人SPA定义强调放松与私密性的品牌形象。
+**解决方案**：
+- **隐喻**：“Mist”(迷雾/隔绝) + “Haven”(港湾/安全)。
+- **视觉**：Logo线条流动如水如烟，传递柔软气质；渐变色模拟晨雾，营造疗愈空间感。
+
+### 3. LinCoffee (Oriental Coffee & Tea)
+**Category**: Branding, Space Design
+**Challenge**: Differentiating a new coffee chain in a competitive market by blending coffee culture with Oriental aesthetics.
+**Solution**:
+- **Philosophy**: "Slow Down" - The Oriental philosophy of life.
+- **Visuals**: Inspired by "Changing Scenery" in Oriental gardens. Minimalist lines outlining Chinese window patterns.
+- **Colors**: Deep "Ink Green" and warm "Terracotta".
+**挑战**：在竞争激烈的市场中，通过融合咖啡文化与东方美学，打造差异化的新咖啡连锁品牌。
+**解决方案**：
+- **哲学**：“慢下来”的东方生活哲学。
+- **视觉**：灵感源自东方园林的“移步换景”。极简线条勾勒中式窗花形态。
+- **色彩**：深邃“墨绿”与温暖“陶土色”。
+
+### 4. BiteJoy (Macaron, Cake & Pastries)
+**Category**: Branding, Packaging, IP Design
+**Challenge**: Creating a joyful, distinctive brand for a dessert shop targeting young consumers.
+**Solution**:
+- **Core Value**: "Pure Joy".
+- **Visuals**: Bold "Dopamine Colors" (Bright Yellow, Neon Orange, Electric Blue) instead of traditional pastel tones.
+- **IP**: Created a personified "Greedy Mouth" illustration as a super symbol.
+**挑战**：为一家面向年轻消费者的甜品店打造快乐、独特的品牌形象。
+**解决方案**：
+- **核心价值**：“纯粹的快乐”。
+- **视觉**：摒弃传统粉嫩色系，大胆启用明黄、亮橙、电光蓝等高饱和度“多巴胺配色”。
+- **IP**：创造了极具感染力的“贪吃嘴”拟人化插画作为超级符号。
+
+### 5. Vondara Marble (Engineered Jade Stone)
+**Category**: Branding, Brochure Design
+**Challenge**: Elevating an engineered stone brand from a "construction material" to an "artistic element".
+**Solution**:
+- **Positioning**: "Space Artist".
+- **Visuals**: Extracted microscopic textures of the stone as auxiliary graphics, presented like abstract art.
+- **Style**: Minimalist, gallery-style layout with ample white space.
+**挑战**：将一个人造石品牌从“建筑材料”提升为“艺术元素”。
+**解决方案**：
+- **定位**：“空间艺术家”。
+- **视觉**：提取产品显微纹理作为辅助图形，如抽象画般呈现。
+- **风格**：极简留白，采用画廊式展示。
+
+### 6. Ferment Force (Bio-tech Juice)
+**Category**: Branding, Packaging
+**Solution**: Developed a "Science meets Nature" concept. Clinical typography paired with organic shapes representing fermentation.
+**解决方案**：开发“科学遇见自然”的概念。临床风格的排版搭配代表发酵的有机形态。
+
+### 7. VALROUGE (Luxury Bordeaux Wine)
+**Category**: Branding, Packaging
+**Style**: Classic elegance, heritage, premium texture.
+**风格**：经典优雅，传承感，高端质感。
+
+### 8. Luminelli (Cosmetics)
+**Category**: Branding, Packaging
+**Style**: Modern, clean, scientifically backed beauty.
+**风格**：现代，纯净，科学护肤。
+
+---
+
+## 📞 Partnership & Contact (合作联系)
+We are open to global partnerships and cross-border branding projects.
+我们欢迎全球合作伙伴及跨境品牌项目。
+
 - **Email**: up-brands@hotmail.com
 - **Phone (CN)**: +86 166-2620-6849
 - **WhatsApp (HK)**: +852 5331 1007
-- **WeChat Official**: Up-Brands上游文创
+- **WeChat Official**: Up-Brands (上游文创)
+- **Address**: Zhuhai, Guangdong, China | Hong Kong
