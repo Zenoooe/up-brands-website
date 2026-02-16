@@ -46,6 +46,20 @@ export const ContactModal = ({ onClose }: { onClose: () => void }) => {
             </span>
           </a>
 
+          {/* Phone (CN) */}
+          <a
+            href="tel:+8616626206849"
+            className="flex flex-col items-center gap-3 group relative"
+          >
+            <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-lg">
+              <span className="text-xl font-bold">CN</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-widest text-gray-500 group-hover:opacity-0 transition-opacity">Phone</span>
+            <span className="absolute -bottom-6 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold bg-black text-white px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none">
+              +86 166-2620-6849
+            </span>
+          </a>
+
           {/* WhatsApp */}
           <a
             href="https://wa.me/85253311007"
