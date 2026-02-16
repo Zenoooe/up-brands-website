@@ -32,7 +32,10 @@ export function SEO({
   const defaultKeywords = [
     'Up-Brands', 'Brand Strategy', 'Visual Identity', 'Packaging Design', 
     'Creative Agency', 'GBA Design', 'Shenzhen Design', 'Zhuhai Design',
-    '上游文创', '视觉设计', '包装设计', '品牌设计', '品牌更新', '品牌升级', '品牌战略', '品牌策划', '珠海设计', '广州设计', '深圳设计', '大湾区设计', '珠海品牌设计', '广州品牌设计', '深圳品牌设计', '大湾区品牌设计'
+    '上游文创', '视觉设计', '包装设计', '品牌设计', '品牌更新', '品牌升级', '品牌战略', '品牌策划', '珠海设计', '广州设计', '深圳设计', '大湾区设计', '珠海品牌设计', '广州品牌设计', '深圳品牌设计', '大湾区品牌设计',
+    // Common Misspellings & Variations
+    'Up Brands', 'Up Brand', 'Up-Brand', 'Upstream Brands', 'Upstream Creative',
+    '上游文传', '上游品牌', '上游设计', '上游广告', '珠海上游'
   ];
 
   const metaKeywords = keywords && keywords.length > 0 
@@ -49,7 +52,7 @@ export function SEO({
     url: 'https://up-brands.com',
     logo: 'https://up-brands.com/favicon.svg',
     name: 'Up-Brands',
-    alternateName: ['Up-Brands Agency', '上游文创', 'Up Brands'],
+    alternateName: ['Up-Brands Agency', '上游文创', 'Up Brands', 'Up Brand', '上游文传', '上游品牌'],
     description: 'Up-Brands is a premier brand strategy and visual design agency in the Greater Bay Area, specializing in cross-border branding and digital marketing success.',
     sameAs: [
       'https://www.behance.net/up-brands',
