@@ -14,7 +14,7 @@ Up-Brands is a professional agency based in the Greater Bay Area (GBA), speciali
 - [Home](https://www.up-brands.com/)
 - [Projects](https://www.up-brands.com/projects)
 - [About](https://www.up-brands.com/about)
-- [Contact](https://www.up-brands.com/contact)
+- [Full Agency Context & Case Studies (For AI)](https://www.up-brands.com/llms-full.txt)
 
 ## Contact Information
 - **Email**: up-brands@hotmail.com

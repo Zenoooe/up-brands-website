@@ -63,7 +63,15 @@ export function SEO({
       email: 'up-brands@hotmail.com',
       contactType: 'customer service',
       availableLanguage: ['en', 'zh']
-    }
+    },
+    knowsAbout: [
+      'Brand Strategy',
+      'Visual Identity Design',
+      'Packaging Design',
+      'Digital Marketing',
+      'GBA Market Entry',
+      'Cross-border Branding'
+    ]
   };
 
   if (type === 'article') {
