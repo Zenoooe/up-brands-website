@@ -458,9 +458,9 @@ export default function Home() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="relative z-0 max-w-[90vw] md:max-w-[80vw] pointer-events-none"
         >
-          <h1 className="text-5xl md:text-7xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.9] text-black mb-8 mix-blend-darken">
+          <h2 className="text-5xl md:text-7xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.9] text-black mb-8 mix-blend-darken">
             {t('home.tagline')}
-          </h1>
+          </h2>
           <div className="w-full h-px bg-black/20 mt-8 md:mt-16" />
         </motion.div>
 

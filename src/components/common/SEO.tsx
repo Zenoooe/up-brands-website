@@ -50,7 +50,7 @@ export function SEO({
     logo: 'https://up-brands.com/favicon.svg',
     name: 'Up-Brands',
     alternateName: ['Up-Brands Agency', '上游文创', 'Up Brands'],
-    description: 'Specializing in brand strategy and visual identity for cross-border success.',
+    description: 'Up-Brands is a premier brand strategy and visual design agency in the Greater Bay Area, specializing in cross-border branding and digital marketing success.',
     sameAs: [
       'https://www.behance.net/up-brands',
       'https://www.linkedin.com/company/up_brands/',

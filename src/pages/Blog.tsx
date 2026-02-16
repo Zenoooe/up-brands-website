@@ -23,8 +23,8 @@ export default function Blog() {
     : "Creative Vision & Brand Strategy - Up-Brands | Brand Enhancement Experts";
 
   const seoDesc = i18n.language.startsWith('zh')
-    ? "上游文创Up-Brands提供专业的品牌策略和创意视觉服务，帮助大湾区企业通过精准的市场定位和创意设计实现品牌升级和业务增长。"
-    : "Up-Brands provides professional brand strategy and creative vision services, helping GBA enterprises achieve brand upgrades and business growth through precise positioning and design.";
+    ? "上游文创Up-Brands提供专业的品牌策略和创意视觉服务，帮助大湾区企业通过精准的市场定位和创意设计实现品牌升级和业务增长。探索我们的行业洞察、品牌设计趋势和最新项目动态。"
+    : "Up-Brands provides professional brand strategy and creative vision services, helping GBA enterprises achieve brand upgrades and business growth through precise positioning and design. Explore our industry insights, brand design trends, and latest project updates.";
 
   // Helper to handle text conversion
   const getLocalizedText = (text: string) => {

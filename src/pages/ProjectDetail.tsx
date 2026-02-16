@@ -333,11 +333,6 @@ export default function ProjectDetail() {
   const descriptionEn = project.description_en;
   const descriptionZh = project.description;
   
-  // Logic:
-  // 1. If English mode -> Show English (fallback to Chinese)
-  // 2. If Traditional mode -> Convert Chinese to Traditional
-  // 3. If Simplified mode -> Show Chinese (or Convert Traditional to Simplified if source was Trad)
-  
   let description = descriptionZh || "Turning paper into possibility with an inspiring packaging collection.";
 
   if (i18n.language.startsWith('en') && descriptionEn) {
@@ -345,14 +340,17 @@ export default function ProjectDetail() {
   } else if (i18n.language.includes('TW') || i18n.language.includes('Hant') || i18n.language === 'zh-HK') {
     // Auto-convert to Traditional Chinese
     description = cn2tw(descriptionZh || "");
-  } else {
-    // Default / Simplified
-    // Optional: if your source is actually Traditional, you could use tw2cn here
-    // description = tw2cn(descriptionZh || "");
   }
 
   // Sanitize HTML
   const cleanDescription = DOMPurify.sanitize(description);
+  
+  // Append agency boilerplate for better SEO description length
+  const seoDescription = cleanDescription.replace(/<[^>]+>/g, '').substring(0, 160) + 
+    (i18n.language.startsWith('en') 
+      ? " - Up-Brands: Greater Bay Area Brand Strategy & Design Agency." 
+      : " - 上游文创：粤港澳大湾区领先的品牌策略与创意设计机构。");
+  
   // Estimate text length for collapse logic (strip tags)
   const textLength = cleanDescription.replace(/<[^>]+>/g, '').length;
   const isLongDescription = textLength > 150; 
@@ -366,7 +364,7 @@ export default function ProjectDetail() {
     <Layout>
       <SEO
         title={project.title}
-        description={cleanDescription.replace(/<[^>]+>/g, '').substring(0, 160)} // Truncate for SEO
+        description={seoDescription}
         image={imageUrl}
         type="website" // Change to website but let SEO component detect project URL
         url={currentUrl}
