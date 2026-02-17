@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect, Suspense, lazy } from 'react';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import Lenis from 'lenis';
 import { Toaster } from 'react-hot-toast';
 import ScrollToTop from './components/common/ScrollToTop';
@@ -54,34 +55,36 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <Toaster position="top-center" />
-      <Router>
-        <ScrollToTop />
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/project/:id" element={<ProjectDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
+    <LazyMotion features={domAnimation}>
+      <AuthProvider>
+        <Toaster position="top-center" />
+        <Router>
+          <ScrollToTop />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/project/:id" element={<ProjectDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="projects/:id" element={<ProjectEditor />} />
-              <Route path="posts/:id" element={<PostEditor />} />
-            </Route>
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="projects/:id" element={<ProjectEditor />} />
+                <Route path="posts/:id" element={<PostEditor />} />
+              </Route>
 
-            {/* Catch all for 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </Router>
-    </AuthProvider>
+              {/* Catch all for 404 */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </Router>
+      </AuthProvider>
+    </LazyMotion>
   );
 }
 

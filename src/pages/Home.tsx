@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/layout/Layout';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useBehanceProjects } from '../hooks/useBehanceProjects';
 import { Project } from '../types';
 import { useState, useRef, useEffect } from 'react';
@@ -11,6 +11,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { SiXiaohongshu } from 'react-icons/si';
 import { ContactModal } from '../components/ui/ContactModal';
 import { SEO } from '../components/common/SEO';
+import { ResponsiveImage } from '../components/ui/ResponsiveImage';
 import wechatQr from '../assets/wechat-qr.jpg';
 import { toast } from 'react-hot-toast';
 
@@ -62,17 +63,8 @@ const ProjectCard = ({ project, index, onClick, priority = false }: { project: P
   // Use backup URL if available, otherwise fallback to original imageUrl
   let displayUrl = project.backup_image_url || project.imageUrl;
   
-  // Optimize Supabase images
-  if (displayUrl.includes('supabase.co')) {
-     const separator = displayUrl.includes('?') ? '&' : '?';
-     displayUrl = `${displayUrl}${separator}width=600&quality=80&format=webp`;
-  }
-
-  // And use smart loader for further fallback (wp proxy) if needed
-  const smart = useSmartImageSrc(displayUrl);
-  
   return (
-    <motion.div
+    <m.div
       onClick={(e) => onClick(project, e)}
       className="block w-full mb-12 md:mb-32 group cursor-pointer"
       initial={{ opacity: 0, y: 100 }}
@@ -82,19 +74,20 @@ const ProjectCard = ({ project, index, onClick, priority = false }: { project: P
     >
       <div className="relative overflow-hidden bg-gray-100 aspect-[4/3] md:aspect-[3/4] lg:aspect-[4/5]">
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 z-10" />
-        <motion.img
-          src={smart.src}
-          alt={project.title}
-          className="w-full h-full object-cover"
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-          onLoad={smart.onLoad}
-          onError={smart.onError}
-          referrerPolicy="no-referrer"
-          loading={priority ? "eager" : "lazy"}
-          // @ts-ignore
-          fetchpriority={priority ? "high" : "auto"}
-        />
+        <div className="w-full h-full overflow-hidden">
+          <m.div
+            className="w-full h-full"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <ResponsiveImage
+              src={displayUrl}
+              alt={project.title}
+              className="w-full h-full object-cover"
+              priority={priority}
+            />
+          </m.div>
+        </div>
       </div>
       
       <div className="mt-4 md:mt-6 flex flex-col items-start">
@@ -116,7 +109,7 @@ const ProjectCard = ({ project, index, onClick, priority = false }: { project: P
           View on Behance
         </a>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -190,7 +183,7 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
         className="fixed inset-0 z-[100] bg-transparent" 
         onClick={onClose}
       />
-      <motion.div
+      <m.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -285,7 +278,7 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
             </button>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </>
   );
 };
@@ -435,7 +428,7 @@ export default function Home() {
         <div className="absolute inset-0 pointer-events-none z-10">
           <AnimatePresence>
             {spawnedImages.map((img) => (
-              <motion.div
+              <m.div
                 key={img.id}
                 initial={{ opacity: 0, scale: 0.5, x: img.x - 150, y: img.y - 100 }}
                 animate={{ opacity: 1, scale: img.scale, x: img.x - 150, y: img.y - 100 }}
@@ -447,13 +440,13 @@ export default function Home() {
                 }}
               >
                 <SpawnedPreviewImage src={img.src} />
-              </motion.div>
+              </m.div>
             ))}
           </AnimatePresence>
         </div>
 
         {/* Original Tagline (Foreground) */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -463,7 +456,7 @@ export default function Home() {
             {t('home.tagline')}
           </h2>
           <div className="w-full h-px bg-black/20 mt-8 md:mt-16" />
-        </motion.div>
+        </m.div>
 
         {/* Marquee Bar at the bottom of Hero Section */}
         <MarqueeBar />
@@ -476,7 +469,7 @@ export default function Home() {
         
         <div className="px-4 md:px-8 max-w-[90vw]">
           <div className="flex flex-col gap-12 md:gap-24 relative z-10">
-            <motion.h2 
+            <m.h2 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -484,9 +477,9 @@ export default function Home() {
               className="text-4xl md:text-6xl font-bold tracking-tight"
             >
               {t('home.about_title')}
-            </motion.h2>
+            </m.h2>
 
-            <motion.div 
+            <m.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -500,11 +493,11 @@ export default function Home() {
                   {t('home.about_desc_2')}
                 </span>
               </p>
-            </motion.div>
+            </m.div>
           </div>
           
           {/* Decorative Circle */}
-          <motion.div 
+          <m.div 
             initial={{ scale: 0, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1.5, ease: "easeOut" }}
@@ -553,7 +546,7 @@ export default function Home() {
 
       {/* Contact Section */}
       <section className="w-full py-32 md:py-48 px-4 md:px-8 bg-black text-white text-center">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -568,20 +561,21 @@ export default function Home() {
           >
             {t('home.contact_btn')}
           </button>
-        </motion.div>
+        </m.div>
       </section>
 
       {/* Platform Selection Modal */}
       <AnimatePresence>
         {selectedProject && modalPosition && (
           <PlatformModal 
+            key="platform-modal"
             project={selectedProject} 
-            position={modalPosition}
+            position={modalPosition} 
             onClose={closeModal} 
           />
         )}
         {showContactModal && (
-          <ContactModal onClose={() => setShowContactModal(false)} />
+          <ContactModal key="contact-modal" onClose={() => setShowContactModal(false)} />
         )}
       </AnimatePresence>
     </Layout>
