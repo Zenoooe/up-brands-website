@@ -8,8 +8,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Configuration - MUST SET THESE IN VERCEL ENVIRONMENT VARIABLES
   const GITHUB_PAT = process.env.GITHUB_PAT;
-  const REPO_OWNER = 'Up-Brands'; // Assuming Organization/User name
-  const REPO_NAME = 'newweb';     // Assuming Repo name
+  const REPO_OWNER = 'Zenoooe'; // Updated based on git remote
+  const REPO_NAME = 'up-brands-website'; // Updated based on git remote
   const WORKFLOW_FILE = 'sitemap-automation.yml';
 
   if (!GITHUB_PAT) {

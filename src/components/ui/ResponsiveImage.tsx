@@ -15,8 +15,20 @@ function toWpImageProxyUrl(url: string) {
 
 function getSupabaseUrl(url: string, width: number) {
   if (!url.includes('supabase.co')) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}width=${width}&quality=80&format=webp`;
+  
+  // Replace with custom CDN if configured (e.g. Cloudflare)
+  const cdnUrl = import.meta.env.VITE_SUPABASE_CDN_URL;
+  let optimizedUrl = url;
+  
+  if (cdnUrl) {
+    // Replace the supabase project domain with CDN domain
+    // Example: https://xyz.supabase.co -> https://cdn.up-brands.com
+    const urlObj = new URL(url);
+    optimizedUrl = `${cdnUrl}${urlObj.pathname}`;
+  }
+
+  const separator = optimizedUrl.includes('?') ? '&' : '?';
+  return `${optimizedUrl}${separator}width=${width}&quality=80&format=webp`;
 }
 
 export const ResponsiveImage = ({ src: originalSrc, alt, className, priority = false, ...props }: ResponsiveImageProps) => {

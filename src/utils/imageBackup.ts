@@ -60,6 +60,7 @@ export async function backupImageToSupabase(imageUrl: string, projectId: string)
       .from('project-images')
       .upload(fileName, blob, {
         contentType,
+        cacheControl: '31536000', // 1 year cache
         upsert: true
       });
 
