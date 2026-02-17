@@ -15,9 +15,11 @@ export function getSupabaseUrl(url: string, width: number) {
   if (cdnUrl) {
     try {
       const urlObj = new URL(url);
-      // Replace the supabase project domain with CDN domain
-      // Example: https://xyz.supabase.co -> https://cdn.up-brands.com
-      optimizedUrl = `${cdnUrl}${urlObj.pathname}`;
+      // Remove '/storage/v1/object/public' prefix for cleaner CDN URLs
+      // Example: https://xyz.supabase.co/storage/v1/object/public/bucket/img.jpg 
+      //       -> https://cdn.up-brands.com/bucket/img.jpg
+      const cleanPath = urlObj.pathname.replace('/storage/v1/object/public', '');
+      optimizedUrl = `${cdnUrl}${cleanPath}`;
     } catch (e) {
       console.warn('CDN URL replacement failed', e);
     }
