@@ -16,6 +16,8 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/noto-sans-sc": "^5.2.9",
     "@supabase/supabase-js": "^2.93.3",
     "@types/dompurify": "^3.0.5",
     "@types/react-beautiful-dnd": "^13.1.8",
@@ -56,10 +58,12 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "postcss": "^8.5.3",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
     "vite": "^6.3.5",
+    "vite-plugin-image-optimizer": "^2.0.3",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }
