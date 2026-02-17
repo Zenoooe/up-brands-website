@@ -1,0 +1,48 @@
+name: Sitemap Automation
+
+on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+  repository_dispatch: # Allows trigger via Webhook (API)
+    types: [sitemap_update]
+
+jobs:
+  generate-and-submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Local Sitemap
+        run: npm run sitemap:local
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Sync Fallback Data
+        run: npm run sync:fallback
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Submit to IndexNow
+        run: npm run sitemap:submit
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Commit and Push Changes (if any)
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add src/data/fallbackProjects.ts public/sitemap.xml
+          git commit -m "chore: auto-update sitemap and fallback data" || echo "No changes to commit"
+          git push

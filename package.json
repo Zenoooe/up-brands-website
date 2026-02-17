@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "check": "tsc -b --noEmit",
     "sitemap:local": "node scripts/generate-sitemap-local.js",
-    "sitemap:submit": "node scripts/submit-sitemap-indexnow.js"
+    "sitemap:submit": "node scripts/submit-sitemap-indexnow.js",
+    "sync:fallback": "node scripts/sync-fallback-data.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

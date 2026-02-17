@@ -199,6 +199,7 @@ export default function Dashboard() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [triggering, setTriggering] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -563,6 +564,8 @@ export default function Dashboard() {
       if (count > 0) {
         toast.success(`Synced! Processed ${count} items`, { id: toastId });
         fetchData();
+        // Trigger automated workflow after significant sync
+        handleTriggerSitemap();
       } else {
         toast.success('All items up to date', { id: toastId });
       }
@@ -575,6 +578,21 @@ export default function Dashboard() {
     }
   };
 
+  const handleTriggerSitemap = async () => {
+    setTriggering(true);
+    const toastId = toast.loading('Updating sitemap & fallback data...');
+    try {
+      const res = await fetch('/api/trigger-workflow', { method: 'POST' });
+      if (!res.ok) throw new Error('Request failed');
+      toast.success('Update started! Changes will appear in ~2 mins.', { id: toastId });
+    } catch (error) {
+      console.error('Trigger error:', error);
+      toast.error('Failed to trigger update', { id: toastId });
+    } finally {
+      setTriggering(false);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -584,6 +602,15 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold uppercase tracking-tight">Projects</h2>
           <div className="flex items-center gap-4">
+             <button 
+                type="button"
+                onClick={handleTriggerSitemap}
+                disabled={triggering}
+                className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
+             >
+                <RefreshCw size={16} className={triggering ? "animate-spin" : ""} />
+                {triggering ? 'Updating...' : 'Update Sitemap'}
+             </button>
              <button 
                 type="button"
                 onClick={handleSyncBehance}

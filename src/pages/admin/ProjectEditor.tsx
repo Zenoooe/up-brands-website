@@ -148,14 +148,19 @@ export default function ProjectEditor() {
       sessionStorage.removeItem('behance_projects_cache');
       sessionStorage.removeItem('behance_projects_timestamp');
       
-      // Ping search engines
+      // Ping search engines & Trigger Automation
       try {
         const projectSlug = payload.slug || payload.id;
         const projectUrl = `https://www.up-brands.com/project/${projectSlug}`;
         
-        // Bing / IndexNow
-        await fetch(`/api/indexnow?url=${encodeURIComponent(projectUrl)}`, { method: 'GET' }).catch(() => {});
+        // 1. Existing IndexNow (Keep if you want immediate ping)
+        fetch(`/api/indexnow?url=${encodeURIComponent(projectUrl)}`, { method: 'GET' }).catch(() => {});
         
+        // 2. Trigger GitHub Action (Sitemap Generation & Submission & Fallback Sync)
+        fetch('/api/trigger-workflow', { method: 'POST' })
+          .then(res => res.ok ? console.log('Workflow triggered') : console.error('Workflow trigger failed'))
+          .catch(err => console.error('Workflow trigger error', err));
+
         // Baidu
         await fetch(`/api/baidu-push?url=${encodeURIComponent(projectUrl)}&site=https://www.up-brands.com&token=YOUR_BAIDU_TOKEN`, { method: 'POST' }).catch(() => {});
       } catch (e) {
