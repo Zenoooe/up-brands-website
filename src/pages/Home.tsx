@@ -13,10 +13,12 @@ import { SEO } from '../components/common/SEO';
 import { ResponsiveImage } from '../components/ui/ResponsiveImage';
 import { HeroInteraction } from '../components/home/HeroInteraction';
 import { toast } from 'react-hot-toast';
+import { getSupabaseUrl } from '../utils/image';
 
 const ProjectCard = ({ project, index, onClick, priority = false }: { project: Project; index: number; onClick: (project: Project, e: React.MouseEvent) => void; priority?: boolean }) => {
   // Use backup URL if available, otherwise fallback to original imageUrl
   let displayUrl = project.backup_image_url || project.imageUrl;
+  displayUrl = getSupabaseUrl(displayUrl, 600);
   
   return (
     <m.div

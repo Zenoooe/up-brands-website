@@ -10,6 +10,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import * as OpenCC from 'opencc-js';
 import DOMPurify from 'dompurify';
+import { getSupabaseUrl } from '../utils/image';
 
 import { Volume2, VolumeX } from 'lucide-react';
 import Player from '@vimeo/player';
@@ -105,13 +106,6 @@ function VimeoBlock({ videoId }: { videoId: string }) {
 
 export default function ProjectDetail() {
   const { t, i18n } = useTranslation();
-
-  // Helper to optimize image URLs (Supabase)
-  const getOptimizedUrl = (url: string, width = 1200) => {
-    if (!url || !url.includes('supabase.co')) return url;
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}width=${width}&quality=85&format=webp`;
-  };
 
   const { id } = useParams();
   
@@ -324,10 +318,7 @@ export default function ProjectDetail() {
   
   // Optimize Hero Image
   let imageUrl = project.backup_image_url || project.imageUrl;
-  if (imageUrl.includes('supabase.co')) {
-     const separator = imageUrl.includes('?') ? '&' : '?';
-     imageUrl = `${imageUrl}${separator}width=1600&quality=90&format=webp`;
-  }
+  imageUrl = getSupabaseUrl(imageUrl, 1600);
 
   // Multi-language Description Logic
   const descriptionEn = project.description_en;
@@ -474,7 +465,7 @@ export default function ProjectDetail() {
                       <VimeoBlock videoId={vimeoId} />
                     ) : (
                       <img 
-                        src={getOptimizedUrl(img, 1600)} 
+                        src={getSupabaseUrl(img, 1600)} 
                         alt={`${project.title} detail ${index + 1}`}
                         className={`w-full object-cover block ${
                            project.gallery_layout === 'full' && (index + 1) % 3 !== 0 ? 'h-full' : 'h-auto'

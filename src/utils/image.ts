@@ -1,0 +1,27 @@
+
+export function toWpImageProxyUrl(url: string) {
+  const cleaned = url.replace(/^https?:\/\//, '');
+  return `https://i0.wp.com/${cleaned}`;
+}
+
+export function getSupabaseUrl(url: string, width: number) {
+  if (!url || !url.includes('supabase.co')) return url;
+  
+  // Replace with custom CDN if configured (e.g. Cloudflare)
+  const cdnUrl = import.meta.env.VITE_SUPABASE_CDN_URL;
+  let optimizedUrl = url;
+  
+  if (cdnUrl) {
+    try {
+      const urlObj = new URL(url);
+      // Replace the supabase project domain with CDN domain
+      // Example: https://xyz.supabase.co -> https://cdn.up-brands.com
+      optimizedUrl = `${cdnUrl}${urlObj.pathname}`;
+    } catch (e) {
+      console.warn('CDN URL replacement failed', e);
+    }
+  }
+
+  const separator = optimizedUrl.includes('?') ? '&' : '?';
+  return `${optimizedUrl}${separator}width=${width}&quality=85&format=webp`;
+}
