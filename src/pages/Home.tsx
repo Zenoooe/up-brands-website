@@ -95,7 +95,7 @@ const MarqueeBar = () => {
 };
 
 const PlatformModal = ({ project, position, onClose }: { project: Project | null; position: { x: number, y: number } | null; onClose: () => void }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [forceActive, setForceActive] = useState(false);
 
   useEffect(() => {
@@ -200,7 +200,9 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
             <div className="w-12 h-12 bg-[#07C160] text-white rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
               <FaWeixin />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black">WeChat</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black">
+              {i18n.language.startsWith('zh') ? '微信公众号' : 'WeChat'}
+            </span>
           </a>
 
           <a
@@ -213,7 +215,9 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
             <div className="w-12 h-12 bg-[#FF2442] text-white rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
               <SiXiaohongshu />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black">RedNote</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black">
+              {i18n.language.startsWith('zh') ? '小红书' : 'RedNote'}
+            </span>
           </a>
         </div>
 
