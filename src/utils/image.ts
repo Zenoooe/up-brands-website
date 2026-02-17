@@ -8,7 +8,8 @@ export function getSupabaseUrl(url: string, width: number) {
   if (!url || !url.includes('supabase.co')) return url;
   
   // Replace with custom CDN if configured (e.g. Cloudflare)
-  const cdnUrl = import.meta.env.VITE_SUPABASE_CDN_URL;
+  // Fallback to hardcoded CDN if env var is missing in production build
+  const cdnUrl = import.meta.env.VITE_SUPABASE_CDN_URL || 'https://cdn.up-brands.com';
   let optimizedUrl = url;
   
   if (cdnUrl) {
