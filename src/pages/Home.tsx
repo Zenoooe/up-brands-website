@@ -227,7 +227,8 @@ const PlatformModal = ({ project, position, onClose }: { project: Project | null
           </button>
         </div>
 
-        <div className="flex justify-start items-center gap-8 mb-5 px-4">
+        <div className="flex justify-start items-center gap-8 mb-5 px-4 pt-4 relative">
+          <p className="absolute -top-1 left-4 text-[9px] font-bold uppercase tracking-widest text-gray-400 opacity-60">Also view on</p>
           <a
             href={project.link}
             target="_blank"
