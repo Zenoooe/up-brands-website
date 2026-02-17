@@ -7,12 +7,11 @@ export function toWpImageProxyUrl(url: string) {
 export function getSupabaseUrl(url: string, width: number) {
   if (!url || !url.includes('supabase.co')) return url;
   
-  // Reverted Cloudflare CDN integration - Direct Supabase Connection
-  // Emergency fix: comment out CDN logic to restore image loading
-  // const cdnUrl = import.meta.env.VITE_SUPABASE_CDN_URL || 'https://cdn.up-brands.com';
+  // Replace with custom CDN if configured (e.g. Cloudflare)
+  // Fallback to hardcoded CDN if env var is missing in production build
+  const cdnUrl = import.meta.env.VITE_SUPABASE_CDN_URL || 'https://cdn.up-brands.com';
   let optimizedUrl = url;
   
-  /*
   if (cdnUrl) {
     try {
       const urlObj = new URL(url);
@@ -23,7 +22,6 @@ export function getSupabaseUrl(url: string, width: number) {
       console.warn('CDN URL replacement failed', e);
     }
   }
-  */
 
   const separator = optimizedUrl.includes('?') ? '&' : '?';
   return `${optimizedUrl}${separator}width=${width}&quality=85&format=webp`;
