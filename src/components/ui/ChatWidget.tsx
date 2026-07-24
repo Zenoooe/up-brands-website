@@ -62,9 +62,15 @@ export const ChatWidget = () => {
 
   const saveLead = async (contact: string, msg: string) => {
     try {
+      // Clamp lengths to avoid persisting unbounded, unvalidated input.
+      const contactInfo = contact.trim().slice(0, 500);
+      const message = msg.slice(0, 5000);
+
+      if (!contactInfo) return;
+
       const { error } = await supabase
         .from('leads')
-        .insert([{ contact_info: contact, message: msg }]);
+        .insert([{ contact_info: contactInfo, message }]);
       
       if (error) throw error;
 

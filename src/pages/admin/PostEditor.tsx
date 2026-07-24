@@ -94,12 +94,11 @@ export default function PostEditor() {
           .then(data => console.log('IndexNow result:', data))
           .catch(err => console.warn('IndexNow failed', err));
         
-        // Notify Baidu (via proxy to avoid CORS)
-        const baiduToken = 'a8dKMsRIVkl7JfbF';
-        const baiduProxyUrl = `/api/baidu-push?site=https://www.up-brands.com&token=${baiduToken}&url=${encodeURIComponent(postUrl)}`;
+        // Notify Baidu (token is applied server-side from env, never in the client)
+        const baiduProxyUrl = `/api/baidu-push?url=${encodeURIComponent(postUrl)}`;
 
         // Fire and forget
-        fetch(baiduProxyUrl).catch(err => console.warn('Baidu push failed', err));
+        fetch(baiduProxyUrl, { method: 'POST' }).catch(err => console.warn('Baidu push failed', err));
         
         toast.success('Post saved & Search Engines notified!');
       } catch (err) {
