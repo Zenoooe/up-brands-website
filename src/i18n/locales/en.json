@@ -69,7 +69,9 @@
   "blog": {
     "title": "Insights & News",
     "read_more": "Read More",
-    "back": "Back to Blog"
+    "back": "Back to Blog",
+    "load_error": "We couldn't load the articles. Please try again.",
+    "retry": "Retry"
   },
   "footer": {
     "rights": "Up-Brands. All Rights Reserved.",
@@ -105,7 +107,8 @@
     "contact_methods": "Scan QR code to add WeChat or click to chat on WhatsApp",
     "responses": {
       "contact_received": "Thanks! We have received your contact info and will get back to you shortly.",
-      "ask_contact": "Could you please leave your email or phone number so we can contact you?"
+      "ask_contact": "Could you please leave your email or phone number so we can contact you?",
+      "save_failed": "Sorry, we couldn't save your details right now. Please reach us on WhatsApp or WeChat, or email up-brands@hotmail.com."
     }
   }
 }

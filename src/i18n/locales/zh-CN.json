@@ -69,7 +69,9 @@
   "blog": {
     "title": "洞察与动态",
     "read_more": "阅读更多",
-    "back": "返回博客"
+    "back": "返回博客",
+    "load_error": "文章加载失败，请重试。",
+    "retry": "重试"
   },
   "footer": {
     "rights": "上游文创 版权所有。",
@@ -105,7 +107,8 @@
     "contact_methods": "扫码添加微信或点击联系 WhatsApp",
     "responses": {
       "contact_received": "谢谢！我们已收到您的联系方式，会尽快与您取得联系。",
-      "ask_contact": "请留下您的邮箱或电话号码，以便我们可以联系到您。"
+      "ask_contact": "请留下您的邮箱或电话号码，以便我们可以联系到您。",
+      "save_failed": "抱歉，目前无法保存您的信息。请通过 WhatsApp 或微信联系我们，或发送邮件至 up-brands@hotmail.com。"
     }
   }
 }

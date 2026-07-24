@@ -60,16 +60,18 @@ export const ChatWidget = () => {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  const saveLead = async (contact: string, msg: string) => {
+  const saveLead = async (contact: string, msg: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('leads')
         .insert([{ contact_info: contact, message: msg }]);
-      
+
       if (error) throw error;
 
+      return true;
     } catch (err) {
       console.error('Error saving lead:', err);
+      return false;
     }
   };
 
@@ -117,8 +119,10 @@ export const ChatWidget = () => {
       let botResponseText = '';
       
       if (isContactInfo) {
-        await saveLead(text, messages.map(m => m.text).join('\n'));
-        botResponseText = t('chat.responses.contact_received');
+        const saved = await saveLead(text, messages.map(m => m.text).join('\n'));
+        botResponseText = saved
+          ? t('chat.responses.contact_received')
+          : t('chat.responses.save_failed');
       } else {
         botResponseText = t('chat.responses.ask_contact');
       }

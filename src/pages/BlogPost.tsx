@@ -13,7 +13,7 @@ const convertToSimplified = OpenCC.Converter({ from: 'hk', to: 'cn' });
 export default function BlogPost() {
   const { t, i18n } = useTranslation();
   const { slug } = useParams();
-  const { post, loading } = usePost(slug);
+  const { post, loading, error } = usePost(slug);
   const isZh = i18n.language.startsWith('zh');
   const isSimplified = i18n.language === 'zh-CN' || i18n.language === 'zh';
 
@@ -22,6 +22,22 @@ export default function BlogPost() {
       <Layout>
         <div className="w-full h-screen flex items-center justify-center">
           <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="w-full h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
+          <p className="text-lg font-medium text-gray-700">{t('blog.load_error')}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-black text-white rounded font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
+          >
+            {t('blog.retry')}
+          </button>
         </div>
       </Layout>
     );

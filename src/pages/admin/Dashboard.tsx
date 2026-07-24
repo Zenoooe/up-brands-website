@@ -220,6 +220,9 @@ export default function Dashboard() {
         supabase.from('subscribers').select('*').order('created_at', { ascending: false })
       ]);
 
+      const responseError = projectsRes.error || postsRes.error || subscribersRes.error;
+      if (responseError) throw responseError;
+
       if (projectsRes.data) setProjects(projectsRes.data);
       if (postsRes.data) setPosts(postsRes.data);
       if (subscribersRes.data) setSubscribers(subscribersRes.data);
@@ -248,7 +251,10 @@ export default function Dashboard() {
 
         Promise.all(updates.map(u => 
           supabase.from('projects').update({ sort_order: u.sort_order }).eq('id', u.id)
-        )).catch(err => {
+        )).then(results => {
+          const failed = results.find(r => r.error);
+          if (failed?.error) throw failed.error;
+        }).catch(err => {
           console.error('Error updating sort order:', err);
           toast.error('Failed to save sort order');
         });
@@ -275,7 +281,10 @@ export default function Dashboard() {
 
         Promise.all(updates.map(u => 
           supabase.from('posts').update({ sort_order: u.sort_order }).eq('id', u.id)
-        )).catch(err => {
+        )).then(results => {
+          const failed = results.find(r => r.error);
+          if (failed?.error) throw failed.error;
+        }).catch(err => {
           console.error('Error updating sort order:', err);
           toast.error('Failed to save sort order');
         });
@@ -340,10 +349,12 @@ export default function Dashboard() {
   const deleteProject = async (id: string) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
     try {
-      await supabase.from('projects').delete().eq('id', id);
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) throw error;
       toast.success('Project deleted');
       fetchData();
     } catch (e) {
+      console.error('Failed to delete project', e);
       toast.error('Failed to delete project');
     }
   };
@@ -351,10 +362,12 @@ export default function Dashboard() {
   const deletePost = async (id: string) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
     try {
-      await supabase.from('posts').delete().eq('id', id);
+      const { error } = await supabase.from('posts').delete().eq('id', id);
+      if (error) throw error;
       toast.success('Post deleted');
       fetchData();
     } catch (e) {
+      console.error('Failed to delete post', e);
       toast.error('Failed to delete post');
     }
   };
@@ -362,10 +375,12 @@ export default function Dashboard() {
   const deleteSubscriber = async (id: string) => {
     if (!confirm('Are you sure you want to remove this subscriber?')) return;
     try {
-      await supabase.from('subscribers').delete().eq('id', id);
+      const { error } = await supabase.from('subscribers').delete().eq('id', id);
+      if (error) throw error;
       toast.success('Subscriber removed');
       fetchData();
     } catch (e) {
+      console.error('Failed to remove subscriber', e);
       toast.error('Failed to remove subscriber');
     }
   };
@@ -462,7 +477,7 @@ export default function Dashboard() {
                 console.warn(`Failed to backup image for project ${id}`, err);
               }
 
-              await supabase.from('projects').insert({
+              const { error: insertError } = await supabase.from('projects').insert({
                 id,
                 title,
                 category,
@@ -471,7 +486,11 @@ export default function Dashboard() {
                 link,
                 sort_order: maxSortOrder + count + 1
               });
-              count++;
+              if (insertError) {
+                console.error(`Failed to insert project ${id}`, insertError);
+              } else {
+                count++;
+              }
             }
           } else {
             // Existing project: 
@@ -482,15 +501,17 @@ export default function Dashboard() {
             if (existingProject && !existingProject.backup_image_url) {
                // Also check if the original imageUrl has changed, we might want to update it
                if (existingProject.imageUrl !== imageUrl) {
-                 await supabase.from('projects').update({ imageUrl }).eq('id', id);
+                 const { error: urlError } = await supabase.from('projects').update({ imageUrl }).eq('id', id);
+                 if (urlError) console.warn(`Failed to update imageUrl for project ${id}`, urlError);
                }
 
                try {
                 const newBackupUrl = await backupImageToSupabase(imageUrl, id);
                 if (newBackupUrl) {
-                  await supabase.from('projects')
+                  const { error: backupError } = await supabase.from('projects')
                     .update({ backup_image_url: newBackupUrl }) // Only update backup field
                     .eq('id', id);
+                  if (backupError) throw backupError;
                   count++; 
                 }
               } catch (err) {
@@ -519,9 +540,10 @@ export default function Dashboard() {
               if (!project.backup_image_url) {
                 const newBackupUrl = await backupImageToSupabase(project.imageUrl, project.id);
                 if (newBackupUrl) {
-                  await supabase.from('projects')
+                  const { error: backupError } = await supabase.from('projects')
                     .update({ backup_image_url: newBackupUrl })
                     .eq('id', project.id);
+                  if (backupError) throw backupError;
                   count++;
                 }
               }
@@ -549,9 +571,10 @@ export default function Dashboard() {
                const newBackupUrl = await backupImageToSupabase(post.imageUrl, imageId);
                
                if (newBackupUrl) {
-                 await supabase.from('posts')
+                 const { error: backupError } = await supabase.from('posts')
                    .update({ backup_image_url: newBackupUrl })
                    .eq('id', post.id);
+                 if (backupError) throw backupError;
                  count++;
                }
              } catch (err) {
