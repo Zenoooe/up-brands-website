@@ -5,6 +5,7 @@ import { BlogPost } from '../types';
 export function usePosts() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     async function fetchPosts() {
@@ -16,13 +17,13 @@ export function usePosts() {
           .order('sort_order', { ascending: true })
           .order('date', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching posts:', error);
-        } else if (data) {
-          setPosts(data as BlogPost[]);
-        }
+        if (error) throw error;
+
+        setPosts((data ?? []) as BlogPost[]);
+        setError(null);
       } catch (e) {
-        console.error('Exception fetching posts:', e);
+        console.error('Error fetching posts:', e);
+        setError(e instanceof Error ? e : new Error('Failed to load posts'));
       } finally {
         setLoading(false);
       }
@@ -31,12 +32,13 @@ export function usePosts() {
     fetchPosts();
   }, []);
 
-  return { posts, loading };
+  return { posts, loading, error };
 }
 
 export function usePost(slug: string | undefined) {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!slug) {
@@ -50,15 +52,15 @@ export function usePost(slug: string | undefined) {
           .from('posts')
           .select('*')
           .eq('slug', slug)
-          .single();
+          .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching post:', error);
-        } else if (data) {
-          setPost(data as BlogPost);
-        }
+        if (error) throw error;
+
+        setPost((data ?? null) as BlogPost | null);
+        setError(null);
       } catch (e) {
-        console.error('Exception fetching post:', e);
+        console.error('Error fetching post:', e);
+        setError(e instanceof Error ? e : new Error('Failed to load post'));
       } finally {
         setLoading(false);
       }
@@ -67,5 +69,5 @@ export function usePost(slug: string | undefined) {
     fetchPost();
   }, [slug]);
 
-  return { post, loading };
+  return { post, loading, error };
 }

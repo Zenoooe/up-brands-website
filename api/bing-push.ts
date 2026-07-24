@@ -20,6 +20,7 @@ export default async function handler(
 
     return response.status(200).json({ success: true, message: 'Bing pinged successfully' });
   } catch (error) {
+    console.error('Bing ping error:', error);
     return response.status(500).json({ error: 'Failed to ping Bing' });
   }
 }

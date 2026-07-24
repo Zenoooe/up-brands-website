@@ -116,11 +116,13 @@ export default function ProjectEditor() {
       setFormData(prev => ({ ...prev, backup_image_url: newUrl }));
       
       if (!isNew && id) {
-        await supabase.from('projects').update({ backup_image_url: newUrl }).eq('id', id);
+        const { error: updateError } = await supabase.from('projects').update({ backup_image_url: newUrl }).eq('id', id);
+        if (updateError) throw updateError;
       }
       
       toast.success('Cover image backed up!', { id: toastId });
     } catch (error) {
+      console.error('Failed to backup image', error);
       toast.error('Failed to backup image', { id: toastId });
     } finally {
       setBackingUp(false);
@@ -136,14 +138,15 @@ export default function ProjectEditor() {
       const currentImages = galleryEditorRef.current?.getImages() || formData.images || [];
       const payload = { ...formData, images: currentImages };
 
-      if (isNew) {
-        if (!payload.id) {
-           payload.id = crypto.randomUUID();
-        }
-        await supabase.from('projects').insert(payload);
-      } else {
-        await supabase.from('projects').update(payload).eq('id', id);
+      if (isNew && !payload.id) {
+        payload.id = crypto.randomUUID();
       }
+
+      const { error: saveError } = isNew
+        ? await supabase.from('projects').insert(payload)
+        : await supabase.from('projects').update(payload).eq('id', id);
+
+      if (saveError) throw saveError;
       
       sessionStorage.removeItem('behance_projects_cache');
       sessionStorage.removeItem('behance_projects_timestamp');

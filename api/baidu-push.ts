@@ -23,6 +23,7 @@ export default async function handler(
     const data = await baiduResponse.json();
     return response.status(200).json(data);
   } catch (error) {
+    console.error('Baidu push error:', error);
     return response.status(500).json({ error: 'Failed to push to Baidu' });
   }
 }

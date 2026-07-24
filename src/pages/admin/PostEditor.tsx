@@ -38,7 +38,12 @@ export default function PostEditor() {
   }, [id]);
 
   const loadPost = async (postId: string) => {
-    const { data } = await supabase.from('posts').select('*').eq('id', postId).single();
+    const { data, error } = await supabase.from('posts').select('*').eq('id', postId).single();
+    if (error) {
+      console.error('Failed to load post', error);
+      toast.error('Failed to load post data');
+      return;
+    }
     if (data) {
       setFormData(data);
       setTagsString(data.tags?.join(', ') || '');
@@ -62,6 +67,7 @@ export default function PostEditor() {
       setFormData(prev => ({ ...prev, backup_image_url: newUrl }));
       toast.success('Image backed up successfully!', { id: toastId });
     } catch (error) {
+      console.error('Failed to backup image', error);
       toast.error('Failed to backup image', { id: toastId });
     } finally {
       setBackingUp(false);
@@ -78,11 +84,11 @@ export default function PostEditor() {
         tags: tagsString.split(',').map(t => t.trim()).filter(Boolean)
       };
 
-      if (isNew) {
-        await supabase.from('posts').insert(payload);
-      } else {
-        await supabase.from('posts').update(payload).eq('id', id);
-      }
+      const { error: saveError } = isNew
+        ? await supabase.from('posts').insert(payload)
+        : await supabase.from('posts').update(payload).eq('id', id);
+
+      if (saveError) throw saveError;
 
       // Notify Bing IndexNow
       try {
@@ -103,13 +109,15 @@ export default function PostEditor() {
         
         toast.success('Post saved & Search Engines notified!');
       } catch (err) {
-        // Ignore SEO errors
+        // SEO notifications are best-effort; the post itself was saved.
+        console.warn('Search engine notification failed', err);
+        toast.success('Post saved');
       }
 
       navigate('/admin');
     } catch (error) {
       console.error('Error saving post:', error);
-      alert('Failed to save post');
+      toast.error('Failed to save post');
     } finally {
       setLoading(false);
     }

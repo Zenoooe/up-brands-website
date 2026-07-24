@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Layout } from '../../components/layout/Layout';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function AdminLayout() {
   const { user, signOut } = useAuth();
@@ -9,6 +10,14 @@ export default function AdminLayout() {
   if (!user) {
     return <Navigate to="/admin/login" replace />;
   }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch {
+      toast.error('Failed to sign out. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -22,7 +31,7 @@ export default function AdminLayout() {
             <Link to="/admin" className="text-sm font-medium hover:text-gray-600">Dashboard</Link>
             <Link to="/" className="text-sm font-medium hover:text-gray-600" target="_blank">View Site</Link>
             <button 
-              onClick={() => signOut()} 
+              onClick={handleSignOut} 
               className="text-sm font-medium text-red-500 hover:text-red-700"
             >
               Sign Out
