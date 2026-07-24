@@ -4,6 +4,7 @@ import { LazyMotion, domAnimation } from 'framer-motion';
 import Lenis from 'lenis';
 import { Toaster } from 'react-hot-toast';
 import ScrollToTop from './components/common/ScrollToTop';
+import { LoadingScreen } from './components/ui/Spinner';
 
 // Lazy Load Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -22,11 +23,7 @@ const ProjectEditor = lazy(() => import('./pages/admin/ProjectEditor'));
 const PostEditor = lazy(() => import('./pages/admin/PostEditor'));
 
 // Loading Fallback
-const PageLoader = () => (
-  <div className="w-full h-screen flex items-center justify-center bg-white">
-    <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin" />
-  </div>
-);
+const PageLoader = () => <LoadingScreen className="h-screen bg-white" />;
 
 function App() {
   useEffect(() => {

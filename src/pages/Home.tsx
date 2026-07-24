@@ -12,6 +12,7 @@ import { ContactModal } from '../components/ui/ContactModal';
 import { SEO } from '../components/common/SEO';
 import { ResponsiveImage } from '../components/ui/ResponsiveImage';
 import { HeroInteraction } from '../components/home/HeroInteraction';
+import { LoadingScreen } from '../components/ui/Spinner';
 import { toast } from 'react-hot-toast';
 import { getSupabaseUrl } from '../utils/image';
 
@@ -387,9 +388,7 @@ export default function Home() {
       {/* Projects Grid - Masonry Style */}
       <section className="w-full px-4 md:px-8 py-32 bg-white">
         {loading ? (
-          <div className="w-full h-96 flex items-center justify-center">
-            <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin" />
-          </div>
+          <LoadingScreen className="h-96" />
         ) : (
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 lg:gap-24">
             {/* Left Column */}

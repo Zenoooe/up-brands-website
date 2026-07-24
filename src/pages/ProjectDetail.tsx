@@ -8,9 +8,10 @@ import { FaBehance, FaPinterest, FaTwitter, FaLink } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import * as OpenCC from 'opencc-js';
 import DOMPurify from 'dompurify';
 import { getSupabaseUrl } from '../utils/image';
+import { toTraditional } from '../utils/i18n';
+import { LoadingScreen } from '../components/ui/Spinner';
 
 import { Volume2, VolumeX } from 'lucide-react';
 import Player from '@vimeo/player';
@@ -108,10 +109,6 @@ export default function ProjectDetail() {
   const { t, i18n } = useTranslation();
 
   const { id } = useParams();
-  
-  // Initialize converters
-  const cn2tw = useMemo(() => OpenCC.Converter({ from: 'cn', to: 'tw' }), []);
-  const tw2cn = useMemo(() => OpenCC.Converter({ from: 'tw', to: 'cn' }), []);
   const { projects, loading: listLoading } = useBehanceProjects();
   
   // All Hooks MUST be at the top level
@@ -300,9 +297,7 @@ export default function ProjectDetail() {
   if (loading && !project) {
     return (
       <Layout>
-        <div className="w-full h-screen flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoadingScreen size="md" className="h-screen" />
       </Layout>
     );
   }
@@ -330,7 +325,7 @@ export default function ProjectDetail() {
     description = descriptionEn;
   } else if (i18n.language.includes('TW') || i18n.language.includes('Hant') || i18n.language === 'zh-HK') {
     // Auto-convert to Traditional Chinese
-    description = cn2tw(descriptionZh || "");
+    description = toTraditional(descriptionZh || "");
   }
 
   // Sanitize HTML

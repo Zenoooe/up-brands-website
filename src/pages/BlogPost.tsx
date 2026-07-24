@@ -5,24 +5,19 @@ import { usePost } from '../hooks/usePosts';
 import { SEO } from '../components/common/SEO';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import * as OpenCC from 'opencc-js';
-
-// Create converter instance
-const convertToSimplified = OpenCC.Converter({ from: 'hk', to: 'cn' });
+import { LoadingScreen } from '../components/ui/Spinner';
+import { useLocalizedText } from '../hooks/useLocalizedText';
 
 export default function BlogPost() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { slug } = useParams();
   const { post, loading } = usePost(slug);
-  const isZh = i18n.language.startsWith('zh');
-  const isSimplified = i18n.language === 'zh-CN' || i18n.language === 'zh';
+  const { isZh, localize } = useLocalizedText();
 
   if (loading) {
     return (
       <Layout>
-        <div className="w-full h-screen flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoadingScreen size="md" className="h-screen" />
       </Layout>
     );
   }
@@ -31,20 +26,13 @@ export default function BlogPost() {
     return <Navigate to="/blog" replace />;
   }
 
-  // Helper to handle text conversion
-  const getLocalizedText = (text: string) => {
-    if (!isZh) return text;
-    // If it's simplified mode, convert the traditional text to simplified
-    return isSimplified ? convertToSimplified(text) : text;
-  };
-
   const rawTitle = isZh ? post.title_zh : post.title_en;
   const rawExcerpt = isZh ? post.excerpt_zh : post.excerpt_en;
   const rawContent = isZh ? post.content_zh : post.content_en;
 
-  const title = getLocalizedText(rawTitle);
-  const excerpt = getLocalizedText(rawExcerpt);
-  const content = getLocalizedText(rawContent);
+  const title = localize(rawTitle);
+  const excerpt = localize(rawExcerpt);
+  const content = localize(rawContent);
 
   return (
     <Layout>
