@@ -4,18 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { usePosts } from '../hooks/usePosts';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import * as OpenCC from 'opencc-js';
-import { useEffect, useState } from 'react';
 import { SEO } from '../components/common/SEO';
-
-// Create converter instance
-const convertToSimplified = OpenCC.Converter({ from: 'hk', to: 'cn' });
+import { LoadingScreen } from '../components/ui/Spinner';
+import { useLocalizedText } from '../hooks/useLocalizedText';
 
 export default function Blog() {
   const { t, i18n } = useTranslation();
   const { posts, loading } = usePosts();
-  const isZh = i18n.language.startsWith('zh');
-  const isSimplified = i18n.language === 'zh-CN' || i18n.language === 'zh';
+  const { isZh, localize } = useLocalizedText();
   
   // Custom SEO for Blog
   const seoTitle = i18n.language.startsWith('zh')
@@ -25,13 +21,6 @@ export default function Blog() {
   const seoDesc = i18n.language.startsWith('zh')
     ? "上游文创Up-Brands提供专业的品牌策略和创意视觉服务，帮助大湾区企业通过精准的市场定位和创意设计实现品牌升级和业务增长。探索我们的行业洞察、品牌设计趋势和最新项目动态。"
     : "Up-Brands provides professional brand strategy and creative vision services, helping GBA enterprises achieve brand upgrades and business growth through precise positioning and design. Explore our industry insights, brand design trends, and latest project updates.";
-
-  // Helper to handle text conversion
-  const getLocalizedText = (text: string) => {
-    if (!isZh) return text;
-    // If it's simplified mode, convert the traditional text to simplified
-    return isSimplified ? convertToSimplified(text) : text;
-  };
 
   if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
 
@@ -54,9 +43,7 @@ export default function Blog() {
           </h1>
 
           {loading ? (
-            <div className="w-full h-64 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
-            </div>
+            <LoadingScreen size="md" className="h-64" />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {posts.map((post, index) => {
@@ -65,8 +52,8 @@ export default function Blog() {
                 const rawExcerpt = isZh ? post.excerpt_zh : post.excerpt_en;
                 
                 // Convert if needed
-                const title = isZh ? getLocalizedText(rawTitle) : rawTitle;
-                const excerpt = isZh ? getLocalizedText(rawExcerpt) : rawExcerpt;
+                const title = localize(rawTitle);
+                const excerpt = localize(rawExcerpt);
                 
                 return (
                   <motion.div
