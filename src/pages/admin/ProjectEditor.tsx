@@ -157,12 +157,18 @@ export default function ProjectEditor() {
         fetch(`/api/indexnow?url=${encodeURIComponent(projectUrl)}`, { method: 'GET' }).catch(() => {});
         
         // 2. Trigger GitHub Action (Sitemap Generation & Submission & Fallback Sync)
-        fetch('/api/trigger-workflow', { method: 'POST' })
-          .then(res => res.ok ? console.log('Workflow triggered') : console.error('Workflow trigger failed'))
-          .catch(err => console.error('Workflow trigger error', err));
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          fetch('/api/trigger-workflow', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          })
+            .then(res => res.ok ? console.log('Workflow triggered') : console.error('Workflow trigger failed'))
+            .catch(err => console.error('Workflow trigger error', err));
+        }
 
-        // Baidu
-        await fetch(`/api/baidu-push?url=${encodeURIComponent(projectUrl)}&site=https://www.up-brands.com&token=YOUR_BAIDU_TOKEN`, { method: 'POST' }).catch(() => {});
+        // Baidu (token is applied server-side from env, never in the client)
+        await fetch(`/api/baidu-push?url=${encodeURIComponent(projectUrl)}`, { method: 'POST' }).catch(() => {});
       } catch (e) {
         console.warn('Failed to ping search engines', e);
       }

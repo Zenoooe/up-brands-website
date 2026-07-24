@@ -13,29 +13,20 @@ dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 const SITE_URL = 'https://www.up-brands.com';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Debug: Log availability (do not log actual keys)
   // We prefer standard SUPABASE_URL without VITE_ prefix for backend
-  // Note: Vercel environment variables are process.env properties
-  const availableKeys = Object.keys(process.env);
-  console.log('API Sitemap: Checking Env Vars. Available keys count:', availableKeys.length);
-  
   const hasUrl = !!(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
   const hasKey = !!(process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY);
 
   if (!hasUrl || !hasKey) {
-    console.error('Sitemap Configuration Error: Missing Env Vars');
-    console.error('Available Env Keys:', availableKeys);
-    
-    return res.status(500).json({ 
-      error: 'Configuration Error', 
-      message: 'Environment variables are missing on the server.',
-      suggestion: 'Please add SUPABASE_URL and SUPABASE_ANON_KEY to Vercel Environment Variables.',
-      debug: { 
-        cwd: process.cwd(),
-        missingUrl: !hasUrl, 
-        missingKey: !hasKey,
-        availableKeysSample: availableKeys // Show all keys for now to debug
-      } 
+    // Never expose environment details (even key names) to clients.
+    console.error('Sitemap Configuration Error: Missing Supabase env vars', {
+      missingUrl: !hasUrl,
+      missingKey: !hasKey,
+    });
+
+    return res.status(500).json({
+      error: 'Configuration Error',
+      message: 'The sitemap service is temporarily unavailable.',
     });
   }
   
