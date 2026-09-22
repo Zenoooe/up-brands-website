@@ -75,6 +75,9 @@ export function Footer() {
             <a href="https://www.behance.net/up-brands" target="_blank" rel="noopener noreferrer" className="text-2xl font-normal hover:opacity-70 transition-opacity">
               Behance
             </a>
+            <a href="https://dribbble.com/up-brands" target="_blank" rel="noopener noreferrer" className="text-2xl font-normal hover:opacity-70 transition-opacity">
+              Dribbble
+            </a>
             <a href="https://mp.weixin.qq.com/s/bSMmQyzfit5OIACx9uZ8kw" target="_blank" rel="noopener noreferrer" className="text-2xl font-normal hover:opacity-70 transition-opacity">
               {t('footer.wechat')}
             </a>

@@ -16,9 +16,12 @@ export function usePosts() {
           .order('sort_order', { ascending: true })
           .order('date', { ascending: false });
 
+        console.log('fetchPosts result:', { data, error });
+
         if (error) {
           console.error('Error fetching posts:', error);
         } else if (data) {
+          console.log('Fetched posts:', data);
           setPosts(data as BlogPost[]);
         }
       } catch (e) {

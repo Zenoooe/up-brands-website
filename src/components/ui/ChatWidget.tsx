@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, ChevronDown, Send, UserPlus, MessageSquare } from 'lucide-react';
+import { MessageCircle, X, ChevronDown, Send, UserPlus, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from 'react-i18next';
@@ -60,16 +60,32 @@ export const ChatWidget = () => {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  const saveLead = async (contact: string, msg: string) => {
-    try {
-      const { error } = await supabase
-        .from('leads')
-        .insert([{ contact_info: contact, message: msg }]);
-      
-      if (error) throw error;
+  const saveContactToNewsletter = async (contact: string) => {
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmail = emailRegex.test(contact);
+    const isPhone = /\d{8,}/.test(contact.replace(/[\s\-\(\)]/g, ''));
 
+    if (!isEmail && !isPhone) return false;
+
+    try {
+      // Use the 'subscribers' table (matches Newsletter Subscribers)
+      const { error } = await supabase
+        .from('subscribers')
+        .insert([{ email: isEmail ? contact : null }]);
+
+      if (error) {
+        // Ignore duplicate key errors (unique constraint on email)
+        if (error.code === '23505') {
+          console.log('Contact already exists in subscribers');
+          return true;
+        }
+        throw error;
+      }
+      return true;
     } catch (err) {
-      console.error('Error saving lead:', err);
+      console.error('Error saving to newsletter subscribers:', err);
+      return false;
     }
   };
 
@@ -117,8 +133,10 @@ export const ChatWidget = () => {
       let botResponseText = '';
       
       if (isContactInfo) {
-        await saveLead(text, messages.map(m => m.text).join('\n'));
-        botResponseText = t('chat.responses.contact_received');
+        const saved = await saveContactToNewsletter(text);
+        botResponseText = saved 
+          ? t('chat.responses.contact_received') 
+          : t('chat.responses.ask_contact');
       } else {
         botResponseText = t('chat.responses.ask_contact');
       }
@@ -198,14 +216,12 @@ export const ChatWidget = () => {
                            <p className="text-xs text-center text-gray-500 mt-1 select-all">WeChat ID: DANISEBD</p>
                          </div>
                          
-                         <a 
-                           href="https://wa.me/85253311007" 
-                           target="_blank" 
-                           rel="noreferrer"
-                           className="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#128C7E] transition-colors"
+                         <a
+                           href="mailto:Up-brands@hotmail.com"
+                           className="flex items-center justify-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
                          >
-                           <MessageSquare size={16} />
-                           Chat on WhatsApp
+                           <Mail size={16} />
+                           Email Us
                          </a>
                        </div>
                     )}

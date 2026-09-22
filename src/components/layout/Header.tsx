@@ -59,7 +59,7 @@ export function Header() {
   ];
 
   const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
+    if (path === '/') return location.pathname === '/' || location.pathname.startsWith('/work');
     return location.pathname.startsWith(path);
   };
 
@@ -84,31 +84,33 @@ export function Header() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-12">
+          <nav className="hidden md:flex items-center space-x-12 relative z-50">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors",
+                  "text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors text-black",
                   isActive(item.href) ? "opacity-100" : "opacity-60"
                 )}
               >
                 {item.label}
               </Link>
             ))}
+            
             <button
               onClick={() => setShowContactModal(true)}
               className={cn(
-                "text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors",
+                "text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors text-black",
                 "opacity-60 hover:opacity-100"
               )}
             >
               {t('nav.contact')}
             </button>
+
             <button
               onClick={toggleLanguage}
-              className="text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors ml-4 border border-black px-3 py-1 rounded-full w-12 text-center"
+              className="text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors ml-4 border border-black px-3 py-1 rounded-full w-12 text-center text-black"
             >
               {getLangLabel()}
             </button>

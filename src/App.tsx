@@ -3,10 +3,14 @@ import { useEffect, Suspense, lazy } from 'react';
 import { LazyMotion, domAnimation } from 'framer-motion';
 import Lenis from 'lenis';
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { HelmetProvider } from 'react-helmet-async';
 import ScrollToTop from './components/common/ScrollToTop';
 
 // Lazy Load Pages
 const Home = lazy(() => import('./pages/Home'));
+const Work = lazy(() => import('./pages/Work'));
 const About = lazy(() => import('./pages/About'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
@@ -56,34 +60,39 @@ function App() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <AuthProvider>
-        <Toaster position="top-center" />
-        <Router>
-          <ScrollToTop />
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/project/:id" element={<ProjectDetail />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
+      <HelmetProvider>
+        <AuthProvider>
+          <Toaster position="top-center" />
+          <Analytics />
+          <SpeedInsights />
+          <Router>
+            <ScrollToTop />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/work" element={<Work />} />
+                <Route path="/project/:id" element={<ProjectDetail />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
 
-              {/* Admin Routes */}
-              <Route path="/admin/login" element={<AdminLogin />} />
-              
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="projects/:id" element={<ProjectEditor />} />
-                <Route path="posts/:id" element={<PostEditor />} />
-              </Route>
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="projects/:id" element={<ProjectEditor />} />
+                  <Route path="posts/:id" element={<PostEditor />} />
+                </Route>
 
-              {/* Catch all for 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </Router>
-      </AuthProvider>
+                {/* Catch all for 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </Router>
+        </AuthProvider>
+      </HelmetProvider>
     </LazyMotion>
   );
 }

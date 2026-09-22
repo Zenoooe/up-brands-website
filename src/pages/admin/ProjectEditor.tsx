@@ -3,12 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Project } from '../../types';
 import { Helmet } from 'react-helmet-async';
-import { Upload, X } from 'lucide-react';
-import { backupImageToSupabase } from '../../utils/imageBackup';
+import { Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { GalleryEditor, GalleryEditorHandle } from './components/GalleryEditor';
+import { toTraditionalChinese } from '../../utils/opencc-traditional';
+import { splitProjectTitle } from '../../../shared/project-metadata';
+import { parseProjectTags, stringifyProjectTags } from '../../utils/tags';
 
 const modules = {
   toolbar: [
@@ -27,19 +29,26 @@ export default function ProjectEditor() {
   const galleryEditorRef = useRef<GalleryEditorHandle>(null);
   
   const [loading, setLoading] = useState(false);
-  const [backingUp, setBackingUp] = useState(false);
   const [formData, setFormData] = useState<Partial<Project>>({
     id: '',
     slug: '',
     title: '',
+    subtitle: '',
     category: '',
     imageUrl: '',
     backup_image_url: '',
     link: '',
     wechatLink: '',
     redNoteLink: '',
+    dribbbleLink: '',
+    zcoolLink: '',
+    gutianluLink: '',
+    instagramLink: '',
+    worldBrandSocietyLink: '',
+    packagingOfTheWorldLink: '',
     images: [],
     description: '',
+    description_tw: '',
     description_en: '',
     credits: {},
     gallery_layout: 'full',
@@ -51,12 +60,75 @@ export default function ProjectEditor() {
   const [newCreditRole, setNewCreditRole] = useState('');
   const [newCreditName, setNewCreditName] = useState('');
 
+  const [services, setServices] = useState<string[]>([]);
+  const [industries, setIndustries] = useState<string[]>([]);
+  const [newService, setNewService] = useState('');
+  const [newIndustry, setNewIndustry] = useState('');
+
+  const [availableServices, setAvailableServices] = useState<string[]>([
+    "Business Design", "Strategic Positioning", "Branding", 
+    "Digital Marketing", "UI / UX", "Packaging", "Research & Insights"
+  ]);
+  const [availableIndustries, setAvailableIndustries] = useState<string[]>([
+    "FMCG", "Beauty", "Tech", "Lifestyle"
+  ]);
+
   // 1. Load data ONLY ONCE
   useEffect(() => {
     if (!isNew && id) {
       loadProject(id);
     }
+    fetchAllTags();
   }, []); // Remove [id] dependency to prevent reload loop
+
+  const fetchAllTags = async () => {
+    try {
+      const sSet = new Set(availableServices);
+      const iSet = new Set(availableIndustries);
+
+      // 1. Fetch predefined tags from settings
+      const [settingsServices, settingsIndustries] = await Promise.all([
+        supabase.from('settings').select('value').eq('key', 'services_hierarchy').maybeSingle(),
+        supabase.from('settings').select('value').eq('key', 'industries_list').maybeSingle()
+      ]);
+
+      if (settingsServices.data && settingsServices.data.value) {
+        settingsServices.data.value.forEach((cat: any) => {
+          if (cat.items && Array.isArray(cat.items)) {
+            cat.items.forEach((item: any) => {
+              if (item.en) sSet.add(item.en);
+            });
+          }
+        });
+      }
+
+      if (settingsIndustries.data && settingsIndustries.data.value) {
+        settingsIndustries.data.value.forEach((ind: any) => {
+          if (ind.en) iSet.add(ind.en);
+        });
+      }
+
+      // 2. Fetch existing tags from projects as a fallback/supplement
+      const { data, error } = await supabase.from('projects').select('category');
+      if (error) throw error;
+      if (data) {
+        data.forEach(p => {
+          try {
+            const parsed = parseProjectTags(p.category);
+            parsed.services.forEach(s => sSet.add(s));
+            parsed.industries.forEach(i => iSet.add(i));
+          } catch (err) {
+            // Ignore parse errors for individual projects
+          }
+        });
+      }
+      
+      setAvailableServices(Array.from(sSet).sort());
+      setAvailableIndustries(Array.from(iSet).sort());
+    } catch (e) {
+      console.error("Failed to fetch all tags", e);
+    }
+  };
 
 
   const loadProject = async (projectId: string) => {
@@ -64,12 +136,18 @@ export default function ProjectEditor() {
       const { data, error } = await supabase.from('projects').select('*').eq('id', projectId).single();
       if (error) throw error;
       if (data) {
+        const parsedTags = parseProjectTags(data.category);
+        setServices(parsedTags.services);
+        setIndustries(parsedTags.industries);
+
         setFormData({
           ...data,
           slug: data.slug || '',
+          subtitle: data.subtitle || '',
           backup_image_url: data.backup_image_url || '',
           images: data.images || [],
           description: data.description || '',
+          description_tw: data.description_tw || '',
           description_en: data.description_en || '',
           credits: data.credits || {},
           gallery_layout: data.gallery_layout || 'full',
@@ -101,48 +179,53 @@ export default function ProjectEditor() {
     });
   };
 
-  const handleBackupImage = async () => {
-    if (!formData.imageUrl) {
-      toast.error('Please enter an Image URL first');
-      return;
-    }
 
-    const projectId = formData.id || crypto.randomUUID();
-    setBackingUp(true);
-    const toastId = toast.loading('Backing up cover image...');
-
-    try {
-      const newUrl = await backupImageToSupabase(formData.imageUrl, projectId);
-      setFormData(prev => ({ ...prev, backup_image_url: newUrl }));
-      
-      if (!isNew && id) {
-        await supabase.from('projects').update({ backup_image_url: newUrl }).eq('id', id);
-      }
-      
-      toast.success('Cover image backed up!', { id: toastId });
-    } catch (error) {
-      toast.error('Failed to backup image', { id: toastId });
-    } finally {
-      setBackingUp(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Get latest images from GalleryEditor
-      const currentImages = galleryEditorRef.current?.getImages() || formData.images || [];
-      const payload = { ...formData, images: currentImages };
+      // Prefer the editor's live state if it is mounted.
+      const isEditorMounted = galleryEditorRef.current !== null;
+      const currentImages = isEditorMounted
+        ? galleryEditorRef.current!.getImages()
+        : (Array.isArray(formData.images) ? formData.images : []);
+
+      const descriptionTw = formData.description
+        ? await toTraditionalChinese(formData.description)
+        : '';
+      const splitTitle = splitProjectTitle(formData.title || '');
+      const payload = {
+        ...formData,
+        title: splitTitle.title || formData.title,
+        subtitle: formData.subtitle || splitTitle.subtitle || '',
+        category: stringifyProjectTags({ services, industries }),
+        images: currentImages,
+        description_tw: descriptionTw,
+      };
+
+      if (!payload.title?.trim()) {
+        throw new Error('Title is required');
+      }
+
+      if (!payload.imageUrl?.trim()) {
+        throw new Error('Cover image URL is required');
+      }
+
+      if (!payload.link?.trim()) {
+        throw new Error('Behance link is required');
+      }
 
       if (isNew) {
         if (!payload.id) {
            payload.id = crypto.randomUUID();
         }
-        await supabase.from('projects').insert(payload);
+        const { error } = await supabase.from('projects').insert(payload);
+        if (error) throw error;
       } else {
-        await supabase.from('projects').update(payload).eq('id', id);
+        const { error } = await supabase.from('projects').update(payload).eq('id', id);
+        if (error) throw error;
       }
       
       sessionStorage.removeItem('behance_projects_cache');
@@ -171,7 +254,7 @@ export default function ProjectEditor() {
       navigate('/admin');
     } catch (error) {
       console.error('Error saving project:', error);
-      toast.error('Failed to save project');
+      toast.error(error instanceof Error ? error.message : 'Failed to save project');
     } finally {
       setLoading(false);
     }
@@ -272,6 +355,16 @@ export default function ProjectEditor() {
           />
         </div>
 
+        <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+          <p className="text-sm font-medium text-gray-900">Traditional Chinese Description</p>
+          <p className="mt-1 text-xs text-gray-600">
+            Auto-generated from the default Chinese description when you save this project.
+          </p>
+          <div className="mt-3 rounded border bg-white p-3 text-sm text-gray-700">
+            {formData.description_tw ? 'Saved and available for zh-TW visitors.' : 'Will be generated on save.'}
+          </div>
+        </div>
+
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
            <h3 className="font-bold text-gray-900 mb-4">Project Credits</h3>
            <div className="flex gap-2 mb-4">
@@ -364,17 +457,150 @@ export default function ProjectEditor() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle / Small Label</label>
           <input
             type="text"
-            value={formData.category}
+            value={formData.subtitle || ''}
             onChange={e => {
               const val = e.target.value;
-              setFormData(prev => ({...prev, category: val}));
+              setFormData(prev => ({...prev, subtitle: val}));
             }}
             className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-            required
+            placeholder="Luxury Organic Jam & Dopamine Botanical VI"
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Behance sync will auto-fill this from title formatting like `Main Title | Subtitle`.
+          </p>
+        </div>
+
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <h3 className="font-bold text-gray-900 mb-4">Project Tags (Filters)</h3>
+          
+          {/* Services */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Services (e.g., Brand Strategy, Brand Identity)</label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {services.map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                  {tag}
+                  <button type="button" onClick={() => setServices(services.filter(t => t !== tag))} className="hover:text-gray-300">
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+              {services.length === 0 && <span className="text-sm text-gray-400 italic">No services added</span>}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select 
+                value=""
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val && !services.includes(val)) {
+                    setServices([...services, val]);
+                  }
+                }}
+                className="sm:w-1/3 px-3 py-2 border rounded text-sm outline-none focus:ring-2 focus:ring-black bg-white"
+              >
+                <option value="">-- Select existing --</option>
+                {availableServices.filter(s => !services.includes(s)).map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              <div className="flex flex-1 gap-2">
+                <input
+                  type="text"
+                  value={newService}
+                  onChange={e => setNewService(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newService.trim() && !services.includes(newService.trim())) {
+                        setServices([...services, newService.trim()]);
+                        setNewService('');
+                      }
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 border rounded text-sm outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Or type a new service and press Enter..."
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newService.trim() && !services.includes(newService.trim())) {
+                      setServices([...services, newService.trim()]);
+                      setNewService('');
+                    }
+                  }}
+                  className="bg-gray-200 text-black px-4 py-2 rounded text-sm font-bold hover:bg-gray-300 whitespace-nowrap"
+                >
+                  Add New
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Industries */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Industries (e.g., Arts & Culture, Tech)</label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {industries.map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1 bg-white border border-black text-black px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                  {tag}
+                  <button type="button" onClick={() => setIndustries(industries.filter(t => t !== tag))} className="hover:text-gray-500">
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+              {industries.length === 0 && <span className="text-sm text-gray-400 italic">No industries added</span>}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select 
+                value=""
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val && !industries.includes(val)) {
+                    setIndustries([...industries, val]);
+                  }
+                }}
+                className="sm:w-1/3 px-3 py-2 border rounded text-sm outline-none focus:ring-2 focus:ring-black bg-white"
+              >
+                <option value="">-- Select existing --</option>
+                {availableIndustries.filter(i => !industries.includes(i)).map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              <div className="flex flex-1 gap-2">
+                <input
+                  type="text"
+                  value={newIndustry}
+                  onChange={e => setNewIndustry(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newIndustry.trim() && !industries.includes(newIndustry.trim())) {
+                        setIndustries([...industries, newIndustry.trim()]);
+                        setNewIndustry('');
+                      }
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 border rounded text-sm outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Or type a new industry and press Enter..."
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newIndustry.trim() && !industries.includes(newIndustry.trim())) {
+                      setIndustries([...industries, newIndustry.trim()]);
+                      setNewIndustry('');
+                    }
+                  }}
+                  className="bg-gray-200 text-black px-4 py-2 rounded text-sm font-bold hover:bg-gray-300 whitespace-nowrap"
+                >
+                  Add New
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
@@ -382,7 +608,7 @@ export default function ProjectEditor() {
           <div className="flex gap-4 items-start">
              <div className="flex-1 space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Original URL</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Image URL (Behance / External)</label>
                   <div className="flex gap-2">
                     <input
                       type="url"
@@ -393,29 +619,52 @@ export default function ProjectEditor() {
                       }}
                       className="flex-1 px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none"
                       required
+                      placeholder="https://mir-s3-cdn-cf.behance.net/..."
                     />
                     <button
                       type="button"
-                      onClick={handleBackupImage}
-                      disabled={backingUp || !formData.imageUrl}
-                      className="flex items-center gap-2 bg-black text-white px-3 py-2 rounded text-sm hover:bg-gray-800 disabled:opacity-50"
+                      onClick={() => {
+                          if (!formData.imageUrl) return;
+                          // Just trigger a re-render or toast, no backup logic needed
+                          toast.success('Image URL set');
+                      }}
+                      className="flex items-center gap-2 bg-black text-white px-3 py-2 rounded text-sm hover:bg-gray-800"
                     >
-                      <Upload size={14} />
-                      Backup
+                      <Plus size={14} />
+                      Set
                     </button>
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Use a high-res Behance URL (e.g. 2800_webp). It will be automatically CDN-optimized.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Supabase URL (Auto-filled)</label>
-                  <input
-                    type="url"
-                    value={formData.backup_image_url || ''}
-                    readOnly
-                    className="w-full px-3 py-2 border rounded text-sm bg-gray-100 text-gray-500"
-                  />
-                </div>
+                
+                {/* Supabase URL field removed/hidden since we are deprecating it */}
+                {formData.backup_image_url && (
+                    <div className="bg-yellow-50 p-2 rounded border border-yellow-100">
+                      <label className="block text-xs font-medium text-yellow-800 mb-1">Legacy Supabase Backup (Deprecated)</label>
+                      <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={formData.backup_image_url}
+                            readOnly
+                            className="flex-1 px-2 py-1 text-xs bg-white border rounded text-gray-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({...prev, backup_image_url: null}))}
+                            className="text-xs text-red-600 hover:text-red-800"
+                          >
+                            Remove
+                          </button>
+                      </div>
+                      <p className="text-xs text-yellow-600 mt-1">
+                        Click remove to stop using Supabase storage for this cover.
+                      </p>
+                    </div>
+                )}
              </div>
-             <div className="w-32 h-32 bg-white border rounded overflow-hidden flex-shrink-0">
+             <div className="w-32 h-32 bg-white border rounded overflow-hidden flex-shrink-0 relative group">
                {formData.imageUrl ? (
                  <img src={formData.imageUrl} alt="Cover" className="w-full h-full object-cover" />
                ) : (
@@ -465,6 +714,30 @@ export default function ProjectEditor() {
                   className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none"
                 />
              </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Dribbble Link</label>
+                <input type="url" value={formData.dribbbleLink || ''} onChange={e => setFormData(prev => ({...prev, dribbbleLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Zcool (站酷) Link</label>
+                <input type="url" value={formData.zcoolLink || ''} onChange={e => setFormData(prev => ({...prev, zcoolLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Gutianlu 9 (古田路9号) Link</label>
+                <input type="url" value={formData.gutianluLink || ''} onChange={e => setFormData(prev => ({...prev, gutianluLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Instagram Link</label>
+                <input type="url" value={formData.instagramLink || ''} onChange={e => setFormData(prev => ({...prev, instagramLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">World Brand Design Society Link</label>
+                <input type="url" value={formData.worldBrandSocietyLink || ''} onChange={e => setFormData(prev => ({...prev, worldBrandSocietyLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Packaging of the World Link</label>
+                <input type="url" value={formData.packagingOfTheWorldLink || ''} onChange={e => setFormData(prev => ({...prev, packagingOfTheWorldLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
           </div>
         </div>
 
@@ -473,6 +746,7 @@ export default function ProjectEditor() {
              ref={galleryEditorRef}
              initialImages={formData.images || []}
              projectId={formData.id}
+             projectLink={formData.link}
           />
         </div>
 

@@ -2,21 +2,22 @@ import { Layout } from '../components/layout/Layout';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { usePosts } from '../hooks/usePosts';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import * as OpenCC from 'opencc-js';
 import { useEffect, useState } from 'react';
 import { SEO } from '../components/common/SEO';
-
-// Create converter instance
-const convertToSimplified = OpenCC.Converter({ from: 'hk', to: 'cn' });
+import { getBlogImageAlt, getCanonicalUrl } from '../utils/seo';
+import { getSupabaseUrl, getValidImageUrl } from '../utils/image';
+import { toSimplifiedChinese } from '../utils/opencc-simplified';
 
 export default function Blog() {
   const { t, i18n } = useTranslation();
   const { posts, loading } = usePosts();
   const isZh = i18n.language.startsWith('zh');
   const isSimplified = i18n.language === 'zh-CN' || i18n.language === 'zh';
+  const [convertedPosts, setConvertedPosts] = useState<Record<string, { title: string; excerpt: string }>>({});
   
+  console.log("Blog.tsx rendering:", { loading, postsLength: posts.length, isZh, isSimplified });
+
   // Custom SEO for Blog
   const seoTitle = i18n.language.startsWith('zh')
     ? "创意视觉与品牌策略 - 上游文创Up-Brands | 品牌提升专家"
@@ -26,12 +27,38 @@ export default function Blog() {
     ? "上游文创Up-Brands提供专业的品牌策略和创意视觉服务，帮助大湾区企业通过精准的市场定位和创意设计实现品牌升级和业务增长。探索我们的行业洞察、品牌设计趋势和最新项目动态。"
     : "Up-Brands provides professional brand strategy and creative vision services, helping GBA enterprises achieve brand upgrades and business growth through precise positioning and design. Explore our industry insights, brand design trends, and latest project updates.";
 
-  // Helper to handle text conversion
-  const getLocalizedText = (text: string) => {
-    if (!isZh) return text;
-    // If it's simplified mode, convert the traditional text to simplified
-    return isSimplified ? convertToSimplified(text) : text;
-  };
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!isZh || !isSimplified || posts.length === 0) {
+      setConvertedPosts({});
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const convertPosts = async () => {
+      const entries = await Promise.all(
+        posts.map(async (post) => [
+          post.id,
+          {
+            title: await toSimplifiedChinese(post.title_zh),
+            excerpt: await toSimplifiedChinese(post.excerpt_zh),
+          },
+        ] as const),
+      );
+
+      if (isMounted) {
+        setConvertedPosts(Object.fromEntries(entries));
+      }
+    };
+
+    void convertPosts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isSimplified, isZh, posts]);
 
   if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
 
@@ -40,6 +67,7 @@ export default function Blog() {
       <SEO 
         title={seoTitle}
         description={seoDesc}
+        url={getCanonicalUrl('/blog')}
       />
 
       <section className="w-full pt-32 pb-16 px-4 md:px-8 bg-white min-h-screen">
@@ -64,9 +92,11 @@ export default function Blog() {
                 const rawTitle = isZh ? post.title_zh : post.title_en;
                 const rawExcerpt = isZh ? post.excerpt_zh : post.excerpt_en;
                 
-                // Convert if needed
-                const title = isZh ? getLocalizedText(rawTitle) : rawTitle;
-                const excerpt = isZh ? getLocalizedText(rawExcerpt) : rawExcerpt;
+                const convertedPost = convertedPosts[post.id];
+                const title = isZh && isSimplified ? convertedPost?.title || rawTitle : rawTitle;
+                const excerpt = isZh && isSimplified ? convertedPost?.excerpt || rawExcerpt : rawExcerpt;
+                
+                const finalImageToUse = getValidImageUrl(post.backup_image_url, post.imageUrl);
                 
                 return (
                   <motion.div
@@ -80,9 +110,13 @@ export default function Blog() {
                     <Link to={`/blog/${post.slug}`} className="block h-full">
                       <div className="overflow-hidden aspect-[16/9] mb-6 bg-gray-100">
                         <img 
-                          src={post.backup_image_url || post.imageUrl} 
-                          alt={title} 
+                          src={getSupabaseUrl(finalImageToUse, 800)} 
+                          alt={getBlogImageAlt(title, post.tags)}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          loading={index === 0 ? 'eager' : 'lazy'}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
+                          decoding="async"
+                          sizes="(max-width: 768px) 100vw, 50vw"
                         />
                       </div>
                       

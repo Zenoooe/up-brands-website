@@ -1,7 +1,7 @@
 {
   "seo": {
     "home": {
-      "title": "Up-Brands | Greater Bay Area Brand Strategy & Creative Marketing Expert",
+      "title": "Up-Brands | Brand Strategy & Creative Marketing Expert",
       "description": "Rooted in Zhuhai, Up-Brands serves the Greater Bay Area and global clients with bilingual brand strategy, creative design, and digital marketing services."
     }
   },
@@ -102,10 +102,90 @@
       "other": "Other"
     },
     "create_together": "Let's Create Together",
-    "contact_methods": "Scan QR code to add WeChat or click to chat on WhatsApp",
+    "contact_methods": "Scan QR code to add WeChat or click to send an email",
     "responses": {
       "contact_received": "Thanks! We have received your contact info and will get back to you shortly.",
       "ask_contact": "Could you please leave your email or phone number so we can contact you?"
+    }
+  },
+  "services_section": {
+    "title": "SERVICES",
+    "description": "Whether it’s a corporate brand, a consumer product or a branded environment, our expertise covers the full brand value chain: Brand Strategy to reveal its uniqueness, Brand Expression to embody its identity, Brand Experience to shape how the brand is lived and felt across touchpoints, and Brand Content to sustain its narrative over time. An integrated and creative approach that blends strategic vision, design excellence and tailored experience — to build brands that are lasting, impactful, and truly engaging.",
+    "categories": [
+      {
+        "title": "Brand Strategy",
+        "items": [
+          "Research & Insights",
+          "La Collab, task force dedicated to GenZ insights and trends",
+          "Innovation",
+          "Business Design",
+          "Strategic Positioning",
+          "Brand Purpose & Brand Platform",
+          "Brand Architecture",
+          "Messaging",
+          "Brand Management"
+        ]
+      },
+      {
+        "title": "Brand Expression",
+        "items": [
+          "Visual identity",
+          "Brand Territory",
+          "Naming",
+          "Verbal Identity",
+          "Packaging",
+          "UI / UX"
+        ]
+      },
+      {
+        "title": "Brand Experience",
+        "items": [
+          "Customer Journey",
+          "Architecture (Retail, Hospitality, Workspace Design)",
+          "Signage & Environmental Design",
+          "Merchandising",
+          "Activation & Launch",
+          "Digital Ecosystem"
+        ]
+      },
+      {
+        "title": "Brand Content",
+        "items": [
+          "Corporate Communication, B2B / B2C",
+          "Institutional Publishing, Annual & CSR Reporting",
+          "Employer Branding & Communication",
+          "Social Media & Content",
+          "Activation",
+          "Video Production"
+        ]
+      }
+    ]
+  },
+  "filter_bar": {
+    "we_design": "We design",
+    "for": "for",
+    "everything": "Everything",
+    "everyone": "Everyone",
+    "go_to_work": "Go to Work",
+    "part1": "We design",
+    "part2": "for",
+    "part3": ""
+  },
+  "tags": {
+    "services": {
+      "Business Design": "Business Design",
+      "Strategic Positioning": "Strategic Positioning",
+      "Branding": "Branding",
+      "Digital Marketing": "Digital Marketing",
+      "UI / UX": "UI / UX",
+      "Packaging": "Packaging",
+      "Research & Insights": "Research & Insights"
+    },
+    "industries": {
+      "FMCG": "FMCG",
+      "Beauty": "Beauty",
+      "Tech": "Tech",
+      "Lifestyle": "Lifestyle"
     }
   }
 }

@@ -2,9 +2,15 @@ import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } fro
 import { DragDropContext } from 'react-beautiful-dnd';
 import { StrictModeDroppable } from '../../../components/common/StrictModeDroppable';
 import { GalleryImageItem } from './GalleryImageItem';
-import { Upload, Plus } from 'lucide-react';
+import { Plus, Code, Link2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { backupImageToSupabase } from '../../../utils/imageBackup';
+import { supabase } from '../../../lib/supabase';
+import {
+  extractProjectImagesFromHtml,
+  isProjectPageUrl,
+  mergeUniqueImageUrls,
+} from '../../../../shared/project-images';
 
 export interface GalleryEditorHandle {
   getImages: () => string[];
@@ -18,33 +24,24 @@ interface GalleryItem {
 interface GalleryEditorProps {
   initialImages: string[];
   projectId?: string;
+  projectLink?: string;
 }
 
 export const GalleryEditor = forwardRef<GalleryEditorHandle, GalleryEditorProps>(
-  ({ initialImages, projectId }, ref) => {
+  ({ initialImages, projectId, projectLink }, ref) => {
     const [items, setItems] = useState<GalleryItem[]>([]);
     const [newImageUrl, setNewImageUrl] = useState('');
     const [newImageUrl2, setNewImageUrl2] = useState('');
-    const [backingUp, setBackingUp] = useState(false);
+    const [extractingFromLink, setExtractingFromLink] = useState(false);
+    
+    // New state for HTML extraction
+    const [showHtmlInput, setShowHtmlInput] = useState(false);
+    const [htmlInput, setHtmlInput] = useState('');
 
     // Initialize items with stable IDs when initialImages changes
     useEffect(() => {
       if (initialImages && initialImages.length > 0) {
-        // Only initialize if we have no items, OR if we want to force sync?
-        // Better: Initialize once. The parent usually passes [] then [data].
-        // We can check if we already have items to avoid overwriting ongoing edits if parent re-renders?
-        // But parent ProjectEditor only loads once.
-        // Let's assume initialImages is stable-ish or we only map if items is empty.
-        // Actually, for "Edit" mode, we need to populate.
-        // Let's use a simple mapping.
-        
         setItems(prev => {
-            // If we already have items and they match the URLs, keep them (to keep IDs stable)
-            // But checking match is hard.
-            // Simplest: Just map on mount.
-            // But useEffect runs on prop change.
-            // We'll trust the parent to only pass valid initialImages once or we accept re-init.
-            // To be safe, let's only do this if items is empty.
             if (prev.length === 0) {
                  return initialImages.map(url => ({
                     id: crypto.randomUUID(),
@@ -59,34 +56,147 @@ export const GalleryEditor = forwardRef<GalleryEditorHandle, GalleryEditorProps>
     // Expose getImages to parent
     useImperativeHandle(ref, () => ({
       getImages: () => items.map(item => item.url)
-    }));
+    }), [items]);
 
-    const handleAddImage = (urlToAdd: string) => {
-      if (!urlToAdd) return;
-      setItems(prev => [...prev, { id: crypto.randomUUID(), url: urlToAdd }]);
-      setNewImageUrl('');
-      setNewImageUrl2('');
-      toast.success('Image added');
-    };
+    const appendImages = useCallback((incomingUrls: string[]) => {
+      if (!incomingUrls.length) return 0;
 
-    const handleRemoveImage = useCallback((index: number) => {
-      setItems(prev => prev.filter((_, i) => i !== index));
+      let addedCount = 0;
+      setItems((prev) => {
+        const existingUrls = prev.map((item) => item.url);
+        const mergedUrls = mergeUniqueImageUrls(existingUrls, incomingUrls);
+        addedCount = mergedUrls.length - existingUrls.length;
+        return mergedUrls.map((url, index) => prev[index] || { id: crypto.randomUUID(), url });
+      });
+
+      return addedCount;
     }, []);
 
+    const extractImagesFromProjectLink = useCallback(async (urlToExtract?: string) => {
+      const targetUrl = (urlToExtract || projectLink || '').trim();
+      const endpoint = import.meta.env.DEV
+        ? `/dev-api/extract-project-images?url=${encodeURIComponent(targetUrl)}`
+        : `/api/extract-project-images?url=${encodeURIComponent(targetUrl)}`;
+
+      if (!targetUrl) {
+        toast.error('Add a Behance or ZCOOL project link first.');
+        return;
+      }
+
+      if (!isProjectPageUrl(targetUrl)) {
+        toast.error('This link is not a supported Behance or ZCOOL project page.');
+        return;
+      }
+
+      const toastId = toast.loading('Extracting images from project page...');
+      setExtractingFromLink(true);
+
+      try {
+        const response = await fetch(endpoint);
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.details || payload?.error || 'Failed to extract project images');
+        }
+
+        const nextImages = Array.isArray(payload?.images) ? payload.images : [];
+        const addedCount = appendImages(nextImages);
+
+        if (addedCount > 0) {
+          toast.success(`Added ${addedCount} images from the project page.`, { id: toastId });
+        } else if (nextImages.length > 0) {
+          toast.success('Project images are already in the gallery.', { id: toastId });
+        } else {
+          toast.error('No project images were found on that page.', { id: toastId });
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error(error instanceof Error ? error.message : 'Failed to extract project images', { id: toastId });
+      } finally {
+        setExtractingFromLink(false);
+      }
+    }, [appendImages, projectLink]);
+
+    const handleAddImage = async (urlToAdd: string, resetTarget: 'primary' | 'secondary' = 'primary') => {
+      if (!urlToAdd) return;
+
+      if (isProjectPageUrl(urlToAdd)) {
+        await extractImagesFromProjectLink(urlToAdd);
+      } else {
+        appendImages([urlToAdd]);
+        toast.success('Image added');
+      }
+
+      if (resetTarget === 'primary') {
+        setNewImageUrl('');
+      } else {
+        setNewImageUrl2('');
+      }
+    };
+
+    const handleParseHtml = () => {
+      if (!htmlInput) return;
+
+      try {
+        const finalImages = extractProjectImagesFromHtml(htmlInput);
+
+        if (finalImages.length === 0) {
+          toast.error('No Behance or ZCOOL project images found in the pasted content.');
+          return;
+        }
+
+        const addedCount = appendImages(finalImages);
+        setHtmlInput('');
+        setShowHtmlInput(false);
+
+        if (addedCount > 0) {
+          toast.success(`Success! Added ${addedCount} high-res images.`);
+        } else {
+          toast.success('Those images are already in the gallery.');
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error('Failed to parse HTML');
+      }
+    };
+
+    const handleRemoveImage = useCallback(async (index: number) => {
+      const itemToRemove = items[index];
+      
+      // Delete from UI immediately
+      setItems(prev => prev.filter((_, i) => i !== index));
+      
+      // If it's a Supabase file, delete it from storage
+      if (itemToRemove && itemToRemove.url.includes('supabase.co')) {
+          try {
+              const parts = itemToRemove.url.split('/');
+              const fileName = parts[parts.length - 1];
+              if (fileName) {
+                  const { error } = await supabase.storage.from('project-images').remove([fileName]);
+                  if (error) {
+                      console.warn('Failed to delete file from storage', error);
+                  } else {
+                      toast.success('File deleted from storage');
+                  }
+              }
+          } catch (e) {
+              console.error('Error deleting file:', e);
+          }
+      }
+    }, [items]);
+
     const handleBackupSingle = useCallback(async (url: string, index: number) => {
+      // Deprecated functionality
       const targetProjectId = projectId || crypto.randomUUID();
       const toastId = toast.loading('Backing up image...');
 
       try {
         const newUrl = await backupImageToSupabase(url, targetProjectId);
-        
         setItems(prev => {
             const newItems = [...prev];
-            // Update URL but KEEP ID STABLE
             newItems[index] = { ...newItems[index], url: newUrl };
             return newItems;
         });
-
         toast.success('Image backed up!', { id: toastId });
       } catch (error) {
         console.error(error);
@@ -94,68 +204,11 @@ export const GalleryEditor = forwardRef<GalleryEditorHandle, GalleryEditorProps>
       }
     }, [projectId]);
 
-    const handleBackupAll = async () => {
-      if (items.length === 0) return;
-      
-      const targetProjectId = projectId || crypto.randomUUID();
-      const imagesToBackup = items
-        .map((item, index) => ({ item, index }))
-        .filter(({ item }) => !item.url.includes('supabase.co') && !item.url.includes('vimeo'));
-
-      if (imagesToBackup.length === 0) {
-        toast.success('All images are already backed up!');
-        return;
-      }
-
-      if (!window.confirm(`Found ${imagesToBackup.length} external images. Backup them all now?`)) return;
-
-      setBackingUp(true);
-      const toastId = toast.loading(`Starting backup...`);
-      let successCount = 0;
-
-      // We process sequentially to be nice to the server, but update UI immediately
-      for (let i = 0; i < imagesToBackup.length; i++) {
-        const { item, index } = imagesToBackup[i];
-        toast.loading(`Backing up ${i + 1}/${imagesToBackup.length}...`, { id: toastId });
-
-        try {
-          const newUrl = await backupImageToSupabase(item.url, targetProjectId);
-          successCount++;
-
-          // Immediate UI update with STABLE ID
-          setItems(prev => {
-             const newItems = [...prev];
-             // Find the item by ID to be safe, or use index if we trust it hasn't moved
-             // Since we are blocking UI interactions mostly, index should be safe-ish,
-             // BUT user *could* reorder while backup runs if we don't disable DND.
-             // Best to find by ID.
-             const actualIndex = newItems.findIndex(x => x.id === item.id);
-             if (actualIndex !== -1) {
-                 newItems[actualIndex] = { ...newItems[actualIndex], url: newUrl };
-             }
-             return newItems;
-          });
-
-        } catch (err) {
-          console.error(`Failed to backup image ${item.url}`, err);
-        }
-      }
-
-      setBackingUp(false);
-      if (successCount === imagesToBackup.length) {
-        toast.success(`All ${successCount} images backed up!`, { id: toastId });
-      } else {
-        toast.error(`Completed with errors (${successCount}/${imagesToBackup.length})`, { id: toastId });
-      }
-    };
-
     const onDragEnd = (result: any) => {
       if (!result.destination) return;
-      
       const newItems = Array.from(items);
       const [reorderedItem] = newItems.splice(result.source.index, 1);
       newItems.splice(result.destination.index, 0, reorderedItem);
-      
       setItems(newItems);
     };
 
@@ -163,33 +216,72 @@ export const GalleryEditor = forwardRef<GalleryEditorHandle, GalleryEditorProps>
       <div className="space-y-4">
         <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-gray-900">Gallery Images</h3>
-            <button
-              type="button"
-              onClick={handleBackupAll}
-              disabled={backingUp}
-              className="flex items-center gap-2 text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded transition-colors disabled:opacity-50"
-            >
-              <Upload size={14} />
-              {backingUp ? 'Backing up...' : 'Backup All'}
-            </button>
+            <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => extractImagesFromProjectLink()}
+                  disabled={!projectLink || extractingFromLink}
+                  className="flex items-center gap-2 text-xs font-medium bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1.5 rounded transition-colors disabled:opacity-50"
+                >
+                  <Link2 size={14} />
+                  {extractingFromLink ? 'Extracting...' : 'Extract Current Link'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowHtmlInput(!showHtmlInput)}
+                  className="flex items-center gap-2 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded transition-colors"
+                >
+                  <Code size={14} />
+                  {showHtmlInput ? 'Hide HTML Extractor' : 'Extract from HTML'}
+                </button>
+            </div>
         </div>
+        <p className="text-xs text-gray-500 -mt-2">
+          Direct link extraction works best for supported public pages. If Behance blocks the request, use the HTML extractor below as fallback.
+        </p>
+
+        {/* HTML Extractor Section */}
+        {showHtmlInput && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6">
+                <label className="block text-sm font-medium text-blue-900 mb-2">
+                    Paste Behance or Zcool Page Source Code
+                </label>
+                <p className="text-xs text-blue-700 mb-3">
+                    Right-click on the Behance or Zcool project page, select "View Page Source" (or Inspect), copy the entire HTML (or just the `project-modules` section), and paste it here. We will automatically find and sort the high-res images.
+                </p>
+                <textarea
+                    value={htmlInput}
+                    onChange={(e) => setHtmlInput(e.target.value)}
+                    className="w-full h-32 p-3 text-xs font-mono border rounded focus:ring-2 focus:ring-blue-500 outline-none mb-3"
+                    placeholder="<div id='project-modules'>...</div>"
+                />
+                <button
+                    type="button"
+                    onClick={handleParseHtml}
+                    disabled={!htmlInput}
+                    className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                >
+                    Extract Images
+                </button>
+            </div>
+        )}
 
         <div className="flex gap-2 mb-6">
             <input 
               type="text" 
               value={newImageUrl}
               onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="Paste image URL or Vimeo link here..."
+              placeholder="Paste image URL, Behance link, or Zcool HTML here..."
               className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage(newImageUrl))}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), void handleAddImage(newImageUrl))}
             />
             <button 
               type="button"
-              onClick={() => handleAddImage(newImageUrl)}
+              onClick={() => void handleAddImage(newImageUrl)}
               disabled={!newImageUrl}
               className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
             >
-              <Plus size={18} /> Add
+              <Plus size={18} /> {isProjectPageUrl(newImageUrl) ? 'Extract' : 'Add'}
             </button>
         </div>
 
@@ -224,15 +316,15 @@ export const GalleryEditor = forwardRef<GalleryEditorHandle, GalleryEditorProps>
               onChange={(e) => setNewImageUrl2(e.target.value)}
               placeholder="Paste another image URL here..."
               className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage(newImageUrl2))}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), void handleAddImage(newImageUrl2, 'secondary'))}
             />
             <button 
               type="button"
-              onClick={() => handleAddImage(newImageUrl2)}
+              onClick={() => void handleAddImage(newImageUrl2, 'secondary')}
               disabled={!newImageUrl2}
               className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
             >
-              <Plus size={18} /> Add
+              <Plus size={18} /> {isProjectPageUrl(newImageUrl2) ? 'Extract' : 'Add'}
             </button>
         </div>
 

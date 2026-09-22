@@ -61,10 +61,26 @@ async function generateLocalSitemap() {
 
     if (postsError) console.error('Error fetching posts:', postsError);
 
+    // Helper to escape XML special characters
+    const escapeXml = (unsafe) => {
+        return unsafe.replace(/[<>&'"]/g, function (c) {
+            switch (c) {
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '&': return '&amp;';
+                case '\'': return '&apos;';
+                case '"': return '&quot;';
+            }
+        });
+    };
+
     if (projects) {
       console.log(`Found ${projects.length} visible projects.`);
       projects.forEach(project => {
-        const slug = project.slug || project.id;
+        let slug = project.slug || project.id;
+        // Escape the slug to prevent XML errors (e.g. bolt&bloom -> bolt&amp;bloom)
+        slug = escapeXml(slug);
+        
         const lastMod = project.updated_at || project.created_at || new Date().toISOString();
         
         xml += `
@@ -80,11 +96,12 @@ async function generateLocalSitemap() {
     if (posts) {
       console.log(`Found ${posts.length} visible posts.`);
       posts.forEach(post => {
+        const slug = escapeXml(post.slug);
         const lastMod = post.updated_at || post.date || post.created_at || new Date().toISOString();
         
         xml += `
   <url>
-    <loc>${SITE_URL}/blog/${post.slug}</loc>
+    <loc>${SITE_URL}/blog/${slug}</loc>
     <lastmod>${new Date(lastMod).toISOString().split('T')[0]}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

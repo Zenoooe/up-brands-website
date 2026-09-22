@@ -7,6 +7,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing username' });
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
   try {
     // Add a random query param to bust Behance's server-side cache
     const rssUrl = `https://www.behance.net/feeds/user?username=${username}&t=${Date.now()}`;
@@ -18,7 +21,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Pretend to be a bot or standard browser to ensure we get a response
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Cache-Control': 'no-cache, no-store'
-      }
+      },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -39,7 +43,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).send(xmlText);
 
   } catch (error: any) {
+    const message = error?.name === 'AbortError'
+      ? 'Behance RSS request timed out after 12s'
+      : error.message;
     console.error('Behance RSS Error:', error);
-    res.status(500).json({ error: 'Failed to fetch Behance feed', details: error.message });
+    res.status(500).json({ error: 'Failed to fetch Behance feed', details: message });
+  } finally {
+    // Keep serverless invocation short if Behance stops responding.
+    clearTimeout(timeoutId);
   }
 }

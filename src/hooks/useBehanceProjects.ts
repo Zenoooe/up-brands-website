@@ -6,37 +6,33 @@ import { fallbackProjects } from '../data/fallbackProjects';
 // 5 seconds timeout for Supabase requests to prevent hanging
 const FETCH_TIMEOUT = 5000;
 
+// Mock tags for initial fallback data
+const fallbackProjectsWithTags = fallbackProjects.map((p, i) => {
+  const services = ['Business Design', 'Strategic Positioning', 'Branding', 'Digital Marketing', 'UI / UX', 'Packaging'];
+  const industries = ['FMCG', 'Beauty', 'Tech', 'Lifestyle'];
+  return {
+    ...p,
+    category: JSON.stringify({
+      services: [services[i % services.length]],
+      industries: [industries[i % industries.length]]
+    })
+  };
+});
+
 export function useBehanceProjects() {
-  // Initialize with fallback data for instant load (Optimistic UI)
-  const [projects, setProjects] = useState<Project[]>(fallbackProjects);
-  // Loading is false initially because we have data to show immediately
-  const [loading, setLoading] = useState(false);
+  // We no longer initialize with fallbackProjectsWithTags to prevent the flash of old behance images.
+  // Instead, we start with an empty array or loading state.
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchProjects() {
       const now = Date.now();
 
       // 1. Check Cache
-      const cached = sessionStorage.getItem('behance_projects_cache');
-      const cacheTime = sessionStorage.getItem('behance_projects_timestamp');
-      
-      if (cached && cacheTime && (now - parseInt(cacheTime) < 60000)) {
-        try {
-          const cachedProjects = JSON.parse(cached);
-          if (cachedProjects.length > 0) {
-            setProjects(cachedProjects);
-            return;
-          }
-        } catch (e) {
-          console.warn('Cache parse error, fetching fresh data...');
-        }
-      }
 
       // If no valid cache, try fetching fresh data in background
-      // We set loading to true only if you want a spinner, but for "instant feel" we keep it false
-      // or manage a separate 'isRefetching' state if needed.
-      // Here we keep loading false to avoid UI flickering since we have fallback data.
-
+      
       try {
         // 2. Create Timeout Promise
         const timeoutPromise = new Promise<never>((_, reject) => {
@@ -56,7 +52,37 @@ export function useBehanceProjects() {
         if (error) throw error;
 
         if (data && data.length > 0) {
-          const projectsData = data as Project[];
+          let projectsData = data as Project[];
+          
+          // MOCK: Auto-assign some tags for testing purposes to projects without tags
+          projectsData = projectsData.map((p, i) => {
+            let hasTags = false;
+            try {
+              const parsed = JSON.parse(p.category);
+              if (parsed.services?.length || parsed.industries?.length) {
+                hasTags = true;
+              }
+            } catch (e) {}
+
+            if (!hasTags) {
+              const services = ['Business Design', 'Strategic Positioning', 'Branding', 'Digital Marketing', 'UI / UX', 'Packaging'];
+              const industries = ['FMCG', 'Beauty', 'Tech', 'Lifestyle'];
+              
+              // deterministically assign based on index
+              const assignedService = services[i % services.length];
+              const assignedIndustry = industries[i % industries.length];
+              
+              return {
+                ...p,
+                category: JSON.stringify({
+                  services: [assignedService],
+                  industries: [assignedIndustry]
+                })
+              };
+            }
+            return p;
+          });
+
           setProjects(projectsData);
           // Update Cache
           sessionStorage.setItem('behance_projects_cache', JSON.stringify(projectsData));
@@ -64,9 +90,9 @@ export function useBehanceProjects() {
         }
       } catch (e) {
         // 5. Silent Failure / Fallback
-        // If timeout or error occurs, we just log it.
-        // The UI stays intact because 'projects' was initialized with fallbackProjects.
-        console.warn('Supabase connection issue, using fallback data:', e);
+        console.warn('Supabase connection issue:', e);
+      } finally {
+        setLoading(false);
       }
     }
 

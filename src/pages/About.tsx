@@ -6,6 +6,7 @@ import { FaBehance, FaWeixin, FaWhatsapp } from 'react-icons/fa';
 import { ContactModal } from '../components/ui/ContactModal';
 import { useState } from 'react';
 import { SEO } from '../components/common/SEO';
+import { getCanonicalUrl } from '../utils/seo';
 
 export default function About() {
   const { t, i18n } = useTranslation();
@@ -20,11 +21,47 @@ export default function About() {
     ? "基本介绍：上游致力为企业提供一套可执行的、有效率的全套品牌核心解决方案，以品牌战略+创意视觉+全网营销为核心路径，实现品牌更新和重塑之路。"
     : "Up-Brands is dedicated to providing efficient brand core solutions, focusing on Brand Strategy + Creative Vision + Digital Marketing to achieve brand renewal and reshaping.";
 
+  const aboutUrl = getCanonicalUrl('/about');
+  const aboutSchemas = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'AboutPage',
+      name: seoTitle,
+      description: seoDesc,
+      url: aboutUrl,
+      inLanguage: i18n.language.startsWith('zh') ? 'zh-CN' : 'en',
+      mainEntity: {
+        '@type': 'Organization',
+        name: 'Up-Brands™上游文创',
+        url: getCanonicalUrl('/'),
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ProfessionalService',
+      name: 'Up-Brands™上游文创',
+      url: getCanonicalUrl('/'),
+      image: 'https://www.up-brands.com/og-image.svg',
+      description: seoDesc,
+      areaServed: ['Greater Bay Area', 'Hong Kong', 'Macau', 'Shenzhen', 'Zhuhai', 'Guangzhou'],
+      knowsAbout: ['Brand Strategy', 'Visual Identity Design', 'Packaging Design', 'Digital Marketing'],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        email: 'up-brands@hotmail.com',
+        telephone: '+86-166-2620-6849',
+        contactType: 'customer service',
+        availableLanguage: ['en', 'zh'],
+      },
+    },
+  ];
+
   return (
     <Layout>
       <SEO 
         title={seoTitle}
         description={seoDesc}
+        url={aboutUrl}
+        schemas={aboutSchemas}
       />
       <div className="container mx-auto px-4 md:px-8 py-20">
         <motion.div
