@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import { Project } from '../../types';
 import { getSupabaseUrl, getValidImageUrl } from '../../utils/image';
 
@@ -50,6 +50,13 @@ export const HeroInteraction = ({ projects, enableClickSpawn = true, enableMachi
   const lastSpawnPos = useRef({ x: 0, y: 0 });
   const imageIdCounter = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Guided "Click" cursor ring (follows the mouse when no large image is on screen)
+  const [showCursorRing, setShowCursorRing] = useState(false);
+  const ringX = useMotionValue(-9999);
+  const ringY = useMotionValue(-9999);
+  const smoothRingX = useSpring(ringX, { stiffness: 500, damping: 40, mass: 0.4 });
+  const smoothRingY = useSpring(ringY, { stiffness: 500, damping: 40, mass: 0.4 });
   
   // Audio Context for generating sound
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -375,11 +382,23 @@ export const HeroInteraction = ({ projects, enableClickSpawn = true, enableMachi
     }
   };
 
+  const handlePointerLeave = () => {
+    handlePointerUp();
+    setShowCursorRing(false);
+  };
+
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!containerRef.current || projects.length === 0) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    // Follow the mouse with the guided "Click" ring (mouse only, never touch/pen)
+    if (e.pointerType === 'mouse') {
+      ringX.set(x);
+      ringY.set(y);
+      setShowCursorRing(true);
+    }
 
     // Update press position if holding down
     if (isPressingRef.current) {
@@ -391,15 +410,19 @@ export const HeroInteraction = ({ projects, enableClickSpawn = true, enableMachi
   };
 
   const hasLargeImage = spawnedImages.some(img => img.isLarge);
+  // Hide the guided ring while a large image is on screen so it never covers it
+  const showRing = showCursorRing && !hasLargeImage;
 
   return (
     <div
       ref={containerRef}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp} // Stop if leaving container
+      onPointerLeave={handlePointerLeave} // Stop if leaving container
       onPointerMove={handlePointerMove}
-      className="absolute inset-0 z-10 cursor-crosshair overflow-hidden select-none"
+      className={`absolute inset-0 z-10 overflow-hidden select-none ${
+        showRing ? 'cursor-none' : 'cursor-crosshair'
+      }`}
     >
       <AnimatePresence>
         {spawnedImages.map((img) => (
@@ -463,6 +486,50 @@ export const HeroInteraction = ({ projects, enableClickSpawn = true, enableMachi
             <SpawnedPreviewImage src={img.src} />
           </m.div>
         ))}
+      </AnimatePresence>
+
+      {/* Guided "Click" cursor ring — only visible while no large image is on screen */}
+      <AnimatePresence>
+        {showRing && (
+          <m.div
+            className="absolute z-30 pointer-events-none"
+            style={{ left: smoothRingX, top: smoothRingY, translateX: '-50%', translateY: '-50%' }}
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            <div className="relative flex items-center justify-center w-[84px] h-[84px] [filter:drop-shadow(0_0_4px_rgba(255,255,255,0.85))]">
+              {/* Pulsing halo */}
+              <m.span
+                className="absolute inset-0 rounded-full border-2 border-[#1f2021]/30"
+                animate={{ scale: [1, 1.35], opacity: [0.5, 0] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+              />
+              {/* Rotating dashed line circle */}
+              <svg
+                className="absolute inset-0 w-full h-full animate-[spin_9s_linear_infinite]"
+                viewBox="0 0 100 100"
+                fill="none"
+              >
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="48"
+                  stroke="#1f2021"
+                  strokeOpacity="0.75"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 8"
+                />
+              </svg>
+              {/* Solid inner ring */}
+              <span className="absolute inset-[12px] rounded-full border border-[#1f2021]/80" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1f2021]">
+                Click
+              </span>
+            </div>
+          </m.div>
+        )}
       </AnimatePresence>
     </div>
   );

@@ -253,6 +253,11 @@ async function fetchPosts() {
   return data || [];
 }
 
+async function readLocale(localeFile) {
+  const raw = await readFile(path.join(projectRoot, 'src', 'i18n', 'locales', localeFile), 'utf8');
+  return JSON.parse(raw);
+}
+
 function homeSchemas(projects, posts) {
   return [
     {
@@ -358,6 +363,151 @@ async function run() {
 
   await writeRoute('/about', aboutHtml);
 
+  const enLocale = await readLocale('en.json');
+  const faqCategories = Array.isArray(enLocale?.faq?.categories) ? enLocale.faq.categories : [];
+  const faqItems = faqCategories.flatMap((category) =>
+    Array.isArray(category.items) ? category.items : [],
+  );
+
+  const faqBody = faqCategories
+    .map(
+      (category) =>
+        `<h2 style="margin:32px 0 8px;font-size:1.4rem;">${escapeHtml(category.title || '')}</h2>` +
+        (Array.isArray(category.items) ? category.items : [])
+          .map(
+            (item) =>
+              `<h3 style="margin:16px 0 6px;font-size:1.1rem;">${escapeHtml(item.question || '')}</h3><p style="margin:0;color:#444;">${escapeHtml(item.answer || '')}</p>`,
+          )
+          .join(''),
+    )
+    .join('');
+
+  const faqHtml = renderBaseHtml(template, {
+    title: 'Frequently Asked Questions | Up-Brands',
+    description:
+      'Answers to common questions about working with Up-Brands: services, process, timelines, pricing, and how to start a brand project.',
+    canonical: routeUrl('/faq'),
+    image: DEFAULT_OG,
+    schemas: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        name: 'Frequently Asked Questions - Up-Brands',
+        url: routeUrl('/faq'),
+        inLanguage: 'en',
+        mainEntity: faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      },
+    ],
+    body: pageChrome({
+      eyebrow: 'Support',
+      title: 'Frequently Asked Questions',
+      description:
+        'Everything you need to know about working with Up-Brands — our services, process, pricing, and how to get started.',
+      content: faqBody,
+      links: [
+        { href: '/company', label: 'Learn about the company', description: 'Who we are and how we work.' },
+        { href: '/projects', label: 'Browse our projects', description: 'See recent branding, packaging, and visual identity work.' },
+      ],
+    }),
+  });
+
+  await writeRoute('/faq', faqHtml);
+
+  const companyHtml = renderBaseHtml(template, {
+    title: 'The Company | Up-Brands',
+    description:
+      'Up-Brands™上游文创 is a bilingual brand strategy and creative design company rooted in Zhuhai, serving the Greater Bay Area and global clients with brand strategy, visual identity, and digital marketing.',
+    canonical: routeUrl('/company'),
+    image: DEFAULT_OG,
+    schemas: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Up-Brands™上游文创',
+        alternateName: 'Up-Brands',
+        url: routeUrl('/'),
+        logo: `${SITE_URL}/favicon.svg`,
+        image: DEFAULT_OG,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: 'Room 1101, Dongda Commercial Center, Jingshan Road, Jida, Xiangzhou District',
+          addressLocality: 'Zhuhai',
+          addressRegion: 'Guangdong',
+          postalCode: '519000',
+          addressCountry: 'CN',
+        },
+        areaServed: ['Greater Bay Area', 'Hong Kong', 'Macau', 'Shenzhen', 'Zhuhai', 'Guangzhou'],
+        knowsAbout: ['Brand Strategy', 'Visual Identity Design', 'Packaging Design', 'Digital Marketing'],
+        sameAs: ['https://www.behance.net/up-brands'],
+        contactPoint: {
+          '@type': 'ContactPoint',
+          email: 'up-brands@hotmail.com',
+          telephone: '+86-166-2620-6849',
+          contactType: 'customer service',
+          availableLanguage: ['en', 'zh'],
+        },
+      },
+    ],
+    body: pageChrome({
+      eyebrow: 'Studio',
+      title: 'The Company',
+      description:
+        'Up-Brands™上游文创 is a bilingual brand strategy and creative design company rooted in Zhuhai, serving the Greater Bay Area and global clients.',
+      content: paragraphize([
+        'We help founders, hospitality groups, lifestyle brands, food businesses, and premium product teams build sharper positioning, stronger visual systems, and launch-ready creative assets.',
+        'Based in Zhuhai, adjacent to Hong Kong and Macau, we support businesses across Guangzhou, Shenzhen, Zhuhai, Zhongshan, Foshan, Hong Kong, and Macau — and collaborate with international clients remotely.',
+      ]),
+      links: [
+        { href: '/projects', label: 'Browse selected projects', description: 'See recent branding, packaging, and visual identity work.' },
+        { href: '/faq', label: 'Read our FAQ', description: 'Answers on services, process, pricing, and how to start.' },
+        { href: '/blog', label: 'Read brand insights', description: 'Explore articles on strategy, design systems, and market positioning.' },
+      ],
+    }),
+  });
+
+  await writeRoute('/company', companyHtml);
+
+  const storeHtml = renderBaseHtml(template, {
+    title: 'Store | Up-Brands',
+    description:
+      'The Up-Brands online store is coming soon, featuring brand merchandise, templates, and design resources. Subscribe or contact us to be notified at launch.',
+    canonical: routeUrl('/store'),
+    image: DEFAULT_OG,
+    schemas: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'Store - Up-Brands',
+        description:
+          'The Up-Brands online store is coming soon, featuring brand merchandise, templates, and design resources.',
+        url: routeUrl('/store'),
+        inLanguage: 'en',
+      },
+    ],
+    body: pageChrome({
+      eyebrow: 'Shop',
+      title: 'Up-Brands Store',
+      description: 'A curated selection of brand merchandise, templates, and design resources from Up-Brands.',
+      content: paragraphize([
+        'Online store coming soon. We are preparing an online store featuring branded merchandise, brand templates, and design resources.',
+        'Subscribe to our newsletter or get in touch to be notified when it launches.',
+      ]),
+      links: [
+        { href: '/projects', label: 'Browse our work', description: 'See recent branding, packaging, and visual identity work.' },
+        { href: '/company', label: 'About the company', description: 'Who we are and how we work.' },
+      ],
+    }),
+  });
+
+  await writeRoute('/store', storeHtml);
+
   const blogIndexHtml = renderBaseHtml(template, {
     title: 'Brand Insights | Up-Brands Blog',
     description:
@@ -381,6 +531,59 @@ async function run() {
   });
 
   await writeRoute('/blog', blogIndexHtml);
+
+  const projectLinks = projects.map((project) => ({
+    href: `/project/${project.slug || project.id}`,
+    label: project.title,
+    description: excerpt(
+      project.description_en || project.description || getDisplaySubtitle(project) || getDisplayCategory(project),
+      140,
+    ),
+  }));
+
+  const projectListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Up-Brands Projects',
+    itemListElement: projects.map((project, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: routeUrl(`/project/${project.slug || project.id}`),
+      name: project.title,
+    })),
+  };
+
+  const listingImage = projects[0]?.backup_image_url || projects[0]?.imageUrl || DEFAULT_OG;
+
+  const buildListingHtml = ({ canonicalPath, title, heading, eyebrow }) =>
+    renderBaseHtml(template, {
+      title,
+      description:
+        'Browse the Up-Brands project archive: brand strategy, visual identity, packaging, and digital campaigns delivered for clients across the Greater Bay Area and beyond.',
+      canonical: routeUrl(canonicalPath),
+      image: listingImage,
+      schemas: [projectListSchema],
+      body: pageChrome({
+        eyebrow,
+        title: heading,
+        description:
+          'A curated archive of brand strategy, visual identity, packaging, and digital work created by Up-Brands. Each project links to its own case study.',
+        content: paragraphize([
+          'Select any project below to read its full case study, see the visual system, and understand the strategy behind the work.',
+        ]),
+        links: projectLinks,
+      }),
+    });
+
+  await writeRoute(
+    '/projects',
+    buildListingHtml({ canonicalPath: '/projects', title: 'Projects | Up-Brands', heading: 'Projects', eyebrow: 'Selected Work' }),
+  );
+
+  await writeRoute(
+    '/work',
+    buildListingHtml({ canonicalPath: '/work', title: 'Our Work | Up-Brands', heading: 'Our Work', eyebrow: 'Portfolio' }),
+  );
 
   for (const post of posts) {
     const postUrl = routeUrl(`/blog/${post.slug}`);

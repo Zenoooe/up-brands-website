@@ -84,15 +84,22 @@
     "address_line3": "Zhuhai, Guangdong",
     "address_line4": "China",
     "wechat": "WeChat",
-    "xiaohongshu": "Xiaohongshu"
+    "xiaohongshu": "Xiaohongshu",
+    "explore": "Explore",
+    "projects": "Projects",
+    "company": "Company",
+    "faq": "FAQ",
+    "store": "Store"
   },
   "chat": {
     "header": "Studio Support",
-    "bot_name": "Studio Support Bot",
-    "status": "Automated",
-    "welcome": "Hello! Welcome to Up-Brands. How can we help you today?",
-    "prompt": "Please select a topic or leave your contact info.",
-    "input_placeholder": "Type a message...",
+    "bot_name": "Studio Support",
+    "status": "The team can also help",
+    "notice": "Questions about a project, a quote, or a collaboration? Whatever it is, just reach out — we're here to help.",
+    "welcome": "Hey there! 👋 Welcome to Up-Brands. How can we help you today?",
+    "prompt": "Pick a topic below, or leave your email and a short message.",
+    "input_placeholder": "Message...",
+    "email_placeholder": "email@example.com",
     "powered_by": "Powered by Up-Brands",
     "actions": {
       "strategy": "Brand Strategy",
@@ -102,10 +109,11 @@
       "other": "Other"
     },
     "create_together": "Let's Create Together",
-    "contact_methods": "Scan QR code to add WeChat or click to send an email",
+    "contact_methods": "Scan the QR code to add us on WeChat, or email us directly.",
     "responses": {
-      "contact_received": "Thanks! We have received your contact info and will get back to you shortly.",
-      "ask_contact": "Could you please leave your email or phone number so we can contact you?"
+      "contact_received": "Thanks! We've received your message and will get back to you shortly.",
+      "ask_contact": "Could you please leave your email or phone number so we can get back to you?",
+      "invalid_email": "Please enter a valid email address so we can reply to you."
     }
   },
   "services_section": {
@@ -187,5 +195,127 @@
       "Tech": "Tech",
       "Lifestyle": "Lifestyle"
     }
+  },
+  "faq": {
+    "eyebrow": "Support",
+    "title": "Frequently Asked Questions",
+    "intro": "Everything you need to know about working with Up-Brands — our services, process, pricing, and how to get started.",
+    "cta_title": "Still have questions?",
+    "cta_desc": "Tell us about your brand and we will get back to you with a free initial diagnosis and tailored suggestions.",
+    "cta_btn": "Contact Us",
+    "categories": [
+      {
+        "title": "Services",
+        "items": [
+          {
+            "question": "What services does Up-Brands provide?",
+            "answer": "We provide three core services — brand strategy, creative visual design, and digital marketing — delivered bilingually in English and Chinese. This covers research and insights, strategic positioning, naming, visual identity, packaging, UI/UX, and campaign-ready content."
+          },
+          {
+            "question": "Do you handle both branding and marketing?",
+            "answer": "Yes. We connect strategy, visual identity, packaging, and digital marketing so that your brand stays coherent from the first touchpoint to final conversion."
+          },
+          {
+            "question": "Can you take on a single deliverable, such as a logo or packaging?",
+            "answer": "Yes. While we recommend a complete brand system, we also accept focused projects such as packaging design, a logo refresh, or a single campaign."
+          }
+        ]
+      },
+      {
+        "title": "Process & Timeline",
+        "items": [
+          {
+            "question": "What does a typical project process look like?",
+            "answer": "Requirement discussion, brand diagnosis, strategy proposal, creative execution, delivery and optimization, then ongoing support. Every stage is transparent and open to adjustment."
+          },
+          {
+            "question": "How long does a brand project take?",
+            "answer": "Timelines depend on scope. A focused deliverable can be completed in a few weeks, while a full brand system usually spans six to twelve weeks from diagnosis to final delivery."
+          },
+          {
+            "question": "How do you work with clients remotely?",
+            "answer": "We are based in Zhuhai and collaborate with clients across the Greater Bay Area and internationally through online meetings, shared documents, and bilingual deliverables."
+          }
+        ]
+      },
+      {
+        "title": "Pricing & Engagement",
+        "items": [
+          {
+            "question": "How is pricing calculated?",
+            "answer": "Pricing is tailored to project scope and complexity, typically ranging from tens of thousands to several hundred thousand RMB. We provide a transparent quote based on your specific needs."
+          },
+          {
+            "question": "Do you offer a free initial consultation?",
+            "answer": "Yes. We offer a free preliminary brand diagnosis and a customized proposal before any commitment."
+          },
+          {
+            "question": "What are your payment terms?",
+            "answer": "Projects are typically staged, starting with a deposit and followed by milestone-based payments, with the final balance due on delivery."
+          }
+        ]
+      },
+      {
+        "title": "Working Together",
+        "items": [
+          {
+            "question": "Where are you based, and which regions do you serve?",
+            "answer": "We are rooted in Zhuhai and serve the Greater Bay Area — Guangzhou, Shenzhen, Zhuhai, Zhongshan, Foshan, Hong Kong, and Macau — as well as international clients remotely."
+          },
+          {
+            "question": "How do I start a project with Up-Brands?",
+            "answer": "Reach out by email, phone, WhatsApp, or WeChat. We will schedule a discovery conversation and provide a free initial diagnosis."
+          },
+          {
+            "question": "Do you provide support after delivery?",
+            "answer": "Yes. We offer post-delivery support and can continue with brand management, content, and marketing as your business grows."
+          }
+        ]
+      }
+    ]
+  },
+  "company": {
+    "eyebrow": "Studio",
+    "title": "The Company",
+    "intro": "Up-Brands™上游文创 is a bilingual brand strategy and creative design company rooted in Zhuhai, serving the Greater Bay Area and global clients.",
+    "who_title": "Who We Are",
+    "who_desc": "We help founders, hospitality groups, lifestyle brands, food businesses, and premium product teams build sharper positioning, stronger visual systems, and launch-ready creative assets. Our team combines strategic thinking with design craft to turn business goals into brands people remember.",
+    "what_title": "What We Do",
+    "services": [
+      {
+        "title": "Brand Strategy",
+        "desc": "Research and insights, strategic positioning, brand architecture, messaging, and brand management that reveal what makes your business unique."
+      },
+      {
+        "title": "Creative Visual Design",
+        "desc": "Visual identity, naming, packaging, UI/UX, and brand expression that give your business a coherent and premium look across every touchpoint."
+      },
+      {
+        "title": "Digital Marketing",
+        "desc": "Campaigns, social content, and digital ecosystems that turn brand equity into measurable growth in Chinese and international markets."
+      }
+    ],
+    "where_title": "Where We Work",
+    "where_desc": "Based in Zhuhai, adjacent to Hong Kong and Macau, we support businesses across Guangzhou, Shenzhen, Zhuhai, Zhongshan, Foshan, Hong Kong, and Macau — and collaborate with international clients remotely.",
+    "how_title": "How We Work",
+    "values": [
+      "Strategy first — every visual decision is grounded in a clear brand strategy.",
+      "Bilingual by default — English and Chinese deliverables ready for real commercial use.",
+      "End-to-end — from diagnosis and positioning to design, launch, and ongoing support."
+    ],
+    "cta_title": "Let's build your brand together",
+    "cta_desc": "Tell us where your brand is today and where you want it to go. We will respond with a free initial diagnosis.",
+    "cta_btn": "Start a Project"
+  },
+  "store": {
+    "eyebrow": "Shop",
+    "title": "Up-Brands Store",
+    "intro": "A curated selection of brand merchandise, templates, and design resources from Up-Brands.",
+    "coming_soon": "Online store coming soon",
+    "desc": "We are preparing an online store featuring branded merchandise, brand templates, and design resources. Subscribe to our newsletter or get in touch to be notified when it launches.",
+    "cta_title": "Interested in our products?",
+    "cta_desc": "Contact us for brand merchandise, licensed templates, or custom design resources.",
+    "cta_btn": "Contact Us",
+    "back": "Browse our work"
   }
 }

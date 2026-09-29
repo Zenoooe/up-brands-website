@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useBehanceProjects } from '../hooks/useBehanceProjects';
 import { Project } from '../types';
 import { useMemo } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useLocation } from 'react-router-dom';
 import { SEO } from '../components/common/SEO';
 import { getSupabaseUrl, getValidImageUrl } from '../utils/image';
 import { getCanonicalUrl, getProjectImageAlt } from '../utils/seo';
@@ -58,9 +58,14 @@ export default function Work() {
   const { t } = useTranslation();
   const { projects, loading } = useBehanceProjects();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   
   const service = searchParams.get('service');
   const industry = searchParams.get('industry');
+
+  // Same listing is served at /work and the SEO alias /projects.
+  const basePath = location.pathname.startsWith('/projects') ? '/projects' : '/work';
+  const defaultHeading = basePath === '/projects' ? 'Projects' : 'Our Work';
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
@@ -72,10 +77,10 @@ export default function Work() {
   }, [projects, service, industry]);
 
   const seoTitle = service || industry 
-    ? `${service || ''} ${industry ? `for ${industry}` : ''} | Up-Brands Work`
-    : 'Our Work | Up-Brands';
+    ? `${service || ''} ${industry ? `for ${industry}` : ''} | Up-Brands ${defaultHeading}`
+    : `${defaultHeading} | Up-Brands`;
 
-  const heading = service || 'Our Work';
+  const heading = service || defaultHeading;
   const subheading = industry ? `for ${industry}` : '';
 
   return (
@@ -83,7 +88,7 @@ export default function Work() {
       <SEO 
         title={seoTitle}
         description={`Explore our creative projects in ${service || 'branding'} ${industry ? `for the ${industry} industry` : ''}.`}
-        url={getCanonicalUrl('/work')}
+        url={getCanonicalUrl(basePath)}
       />
 
       <section className="w-full pt-48 pb-16 px-4 md:px-8 bg-[#F3EFEA] min-h-[50vh] flex flex-col justify-center">

@@ -15,6 +15,9 @@ const About = lazy(() => import('./pages/About'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const Company = lazy(() => import('./pages/Company'));
+const Store = lazy(() => import('./pages/Store'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin Imports (Also Lazy)
@@ -72,8 +75,12 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/work" element={<Work />} />
+                <Route path="/projects" element={<Work />} />
                 <Route path="/project/:id" element={<ProjectDetail />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/company" element={<Company />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/store" element={<Store />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
 

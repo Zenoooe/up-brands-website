@@ -42,14 +42,16 @@ export const ProjectSidebar = ({ project, isOpen, onClose }: ProjectSidebarProps
         />
       )}
       
-      {/* Sidebar Panel - Wrapper provides the positioning, inner div provides the sticky behavior and background */}
+      {/* Sidebar Panel */}
+      {/* Mobile: fixed full-screen drawer. Desktop: absolute inside the content wrapper so it stops before Related Work. */}
       <div 
-        className={`absolute top-0 right-0 bottom-0 w-full max-w-[480px] z-40 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        className={`fixed lg:absolute inset-y-0 right-0 w-full max-w-[480px] z-40 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
       >
-        {/* Sticky wrapper so the text follows you as you scroll down the page. */}
-        {/* Added onWheel to stop event propagation explicitly for macOS trackpads */}
+        {/* Sticky wrapper so the text follows you as you scroll down the page (desktop only). */}
+        {/* data-lenis-prevent lets the inner container scroll on touch devices despite the global smooth-scroll. */}
         <div 
-          className={`sticky top-0 h-[100dvh] w-full overflow-y-auto overscroll-contain bg-[#F5F2EA] lg:bg-white border-l border-gray-200 transform transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] custom-scrollbar ${
+          data-lenis-prevent
+          className={`h-[100dvh] lg:sticky lg:top-0 w-full overflow-y-auto overscroll-contain bg-[#F5F2EA] lg:bg-white border-l border-gray-200 transform transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] custom-scrollbar ${
             isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
           onWheel={(e) => {

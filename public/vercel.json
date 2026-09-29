@@ -4,6 +4,13 @@
   "outputDirectory": "dist",
   "routes": [
     {
+      "src": "^/(?:(?:%20|%2520|\\s)?)en(?:/.*)?$",
+      "status": 301,
+      "headers": {
+        "Location": "/"
+      }
+    },
+    {
       "handle": "filesystem"
     },
     {

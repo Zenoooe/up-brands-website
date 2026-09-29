@@ -26,7 +26,11 @@ async function generateLocalSitemap() {
   // Static routes
   const staticRoutes = [
     { url: '', priority: '1.0', changefreq: 'weekly' },
+    { url: '/projects', priority: '0.9', changefreq: 'weekly' },
     { url: '/about', priority: '0.8', changefreq: 'monthly' },
+    { url: '/company', priority: '0.8', changefreq: 'monthly' },
+    { url: '/faq', priority: '0.7', changefreq: 'monthly' },
+    { url: '/store', priority: '0.5', changefreq: 'monthly' },
     { url: '/blog', priority: '0.8', changefreq: 'weekly' },
   ];
 

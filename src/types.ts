@@ -53,6 +53,15 @@ export interface Subscriber {
   created_at: string;
 }
 
+export interface Lead {
+  id: string;
+  contact_info: string;
+  message: string | null;
+  source: string;
+  status: string;
+  created_at: string;
+}
+
 export interface Settings {
   key: string;
   value: any;

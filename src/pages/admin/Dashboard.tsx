@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Project, BlogPost, Subscriber } from '../../types';
+import { Project, BlogPost, Subscriber, Lead } from '../../types';
 import { Link } from 'react-router-dom';
 import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff, CheckCircle2, ShieldCheck, ExternalLink, Settings as SettingsIcon } from 'lucide-react';
 import { backupImageToSupabase } from '../../utils/imageBackup';
@@ -243,6 +243,7 @@ export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [triggering, setTriggering] = useState(false);
@@ -317,16 +318,18 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [projectsRes, postsRes, subscribersRes, settingsRes] = await Promise.all([
+      const [projectsRes, postsRes, subscribersRes, settingsRes, leadsRes] = await Promise.all([
         supabase.from('projects').select('*').order('sort_order', { ascending: true }),
         supabase.from('posts').select('*').order('sort_order', { ascending: true }).order('date', { ascending: false }),
         supabase.from('subscribers').select('*').order('created_at', { ascending: false }),
-        supabase.from('settings').select('*')
+        supabase.from('settings').select('*'),
+        supabase.from('leads').select('*').order('created_at', { ascending: false })
       ]);
 
       if (projectsRes.data) setProjects(projectsRes.data);
       if (postsRes.data) setPosts(postsRes.data);
       if (subscribersRes.data) setSubscribers(subscribersRes.data);
+      if (leadsRes.data) setLeads(leadsRes.data);
       if (settingsRes.data) {
         const heroSettings = settingsRes.data.find(s => s.key === 'hero_interaction')?.value || {};
         setClickSpawnEnabled(heroSettings.enable_click_spawn !== false);
@@ -580,6 +583,53 @@ export default function Dashboard() {
     
     link.setAttribute('href', url);
     link.setAttribute('download', `subscribers_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const deleteLead = async (id: string) => {
+    if (!confirm('Are you sure you want to remove this message?')) return;
+    try {
+      // .select() returns the removed rows so we can detect if RLS blocked the delete
+      const { data, error } = await supabase.from('leads').delete().eq('id', id).select();
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast.error('Delete blocked by database policy');
+        return;
+      }
+      toast.success('Message removed');
+      fetchData();
+    } catch (e) {
+      toast.error('Failed to remove message');
+    }
+  };
+
+  const exportLeads = () => {
+    if (leads.length === 0) {
+      toast.error('No messages to export');
+      return;
+    }
+
+    const escapeCsv = (value: string) => `"${(value || '').replace(/"/g, '""')}"`;
+    const csvContent = [
+      ['Contact', 'Message', 'Source', 'Status', 'Received At'].join(','),
+      ...leads.map(lead => [
+        escapeCsv(lead.contact_info),
+        escapeCsv(lead.message || ''),
+        escapeCsv(lead.source),
+        escapeCsv(lead.status),
+        new Date(lead.created_at).toISOString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `leads_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -1090,6 +1140,61 @@ export default function Dashboard() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button onClick={() => deleteSubscriber(sub.id)} className="text-red-600 hover:text-red-800">
+                        <Trash2 size={16} className="inline" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Chat Leads Section */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold uppercase tracking-tight">Chat Messages</h2>
+            <p className="text-sm text-gray-500 mt-1">Messages captured from the website chat widget.</p>
+          </div>
+          <button
+            onClick={exportLeads}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700"
+          >
+            <Download size={16} /> Export CSV
+          </button>
+        </div>
+
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-500 uppercase">
+              <tr>
+                <th className="px-6 py-3">Contact</th>
+                <th className="px-6 py-3">Message</th>
+                <th className="px-6 py-3">Received At</th>
+                <th className="px-6 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {leads.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                    No messages yet.
+                  </td>
+                </tr>
+              ) : (
+                leads.map((lead) => (
+                  <tr key={lead.id} className="hover:bg-gray-50 align-top">
+                    <td className="px-6 py-4 font-medium whitespace-nowrap">{lead.contact_info}</td>
+                    <td className="px-6 py-4 text-gray-600 max-w-md">
+                      {lead.message ? lead.message : <span className="text-gray-400 italic">—</span>}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
+                      {new Date(lead.created_at).toLocaleDateString()} {new Date(lead.created_at).toLocaleTimeString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => deleteLead(lead.id)} className="text-red-600 hover:text-red-800">
                         <Trash2 size={16} className="inline" />
                       </button>
                     </td>

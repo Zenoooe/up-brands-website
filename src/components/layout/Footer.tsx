@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import LogoFont from '../../assets/logofont.svg';
 import { motion } from 'framer-motion';
@@ -11,6 +12,14 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const footerLinks = [
+    { label: t('footer.projects'), href: '/projects' },
+    { label: t('footer.company'), href: '/company' },
+    { label: t('footer.faq'), href: '/faq' },
+    { label: t('footer.store'), href: '/store' },
+    { label: t('nav.blog'), href: '/blog' },
+  ];
 
   const handleSubscribe = async (e: FormEvent) => {
     e.preventDefault();
@@ -100,6 +109,19 @@ export function Footer() {
               <p>Zhuhai | Hong Kong | Macau | Global</p>
               <p>Brand Strategy • Visual Identity • Digital Marketing</p>
             </div>
+
+            {/* Quick Links */}
+            <nav className="flex flex-wrap gap-x-5 gap-y-2 mb-12">
+              {footerLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-sm text-[#F3EFEA]/80 hover:text-[#F3EFEA] hover:underline transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           <div className="w-full max-w-md">
