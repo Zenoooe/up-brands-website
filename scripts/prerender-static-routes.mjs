@@ -508,6 +508,76 @@ async function run() {
 
   await writeRoute('/store', storeHtml);
 
+  const serviceSlugs = ['signage-system', 'branding-upgrade', 'ip-design', 'strategy-consulting'];
+  const serviceItems = enLocale?.services?.items || {};
+
+  for (const slug of serviceSlugs) {
+    const item = serviceItems[slug];
+    if (!item) continue;
+
+    const canonical = routeUrl(`/service/${slug}`);
+    const sections = Array.isArray(item.sections) ? item.sections : [];
+    const deliverables = Array.isArray(item.deliverables) ? item.deliverables : [];
+
+    const content = [
+      ...sections.map(
+        (section) =>
+          `<h2 style="margin:24px 0 6px;font-size:1.3rem;">${escapeHtml(section.title || '')}</h2><p style="margin:0;color:#444;">${escapeHtml(section.desc || '')}</p>`,
+      ),
+      deliverables.length
+        ? `<h2 style="margin:24px 0 6px;font-size:1.3rem;">Deliverables</h2><ul style="margin:0;padding-left:20px;color:#444;">${deliverables
+            .map((entry) => `<li>${escapeHtml(entry)}</li>`)
+            .join('')}</ul>`
+        : '',
+    ].join('');
+
+    const html = renderBaseHtml(template, {
+      title: `${item.title} | Up-Brands`,
+      description: item.summary || item.intro || '',
+      canonical,
+      image: DEFAULT_OG,
+      schemas: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: item.title,
+          serviceType: item.title,
+          description: item.summary || item.intro || '',
+          url: canonical,
+          inLanguage: 'en',
+          provider: {
+            '@type': 'Organization',
+            name: 'Up-Brands™上游文创',
+            url: routeUrl('/'),
+            areaServed: ['Greater Bay Area', 'Hong Kong', 'Macau', 'Shenzhen', 'Zhuhai', 'Guangzhou'],
+          },
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: routeUrl('/') },
+            { '@type': 'ListItem', position: 2, name: 'Services', item: routeUrl('/company') },
+            { '@type': 'ListItem', position: 3, name: item.title, item: canonical },
+          ],
+        },
+      ],
+      body: pageChrome({
+        eyebrow: 'Services',
+        title: item.title,
+        description: item.intro || item.summary || '',
+        content,
+        links: [
+          { href: '/company', label: 'About our services', description: 'See how we work across strategy, design, and delivery.' },
+          { href: '/projects', label: 'Browse our projects', description: 'See recent branding, packaging, and visual identity work.' },
+          { href: '/faq', label: 'Read our FAQ', description: 'Answers on process, pricing, and how to start a project.' },
+        ],
+      }),
+    });
+
+    await writeRoute(`/service/${slug}`, html);
+  }
+
   const blogIndexHtml = renderBaseHtml(template, {
     title: 'Brand Insights | Up-Brands Blog',
     description:

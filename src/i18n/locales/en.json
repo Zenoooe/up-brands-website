@@ -317,5 +317,125 @@
     "cta_desc": "Contact us for brand merchandise, licensed templates, or custom design resources.",
     "cta_btn": "Contact Us",
     "back": "Browse our work"
+  },
+  "services": {
+    "eyebrow": "Services",
+    "sections_title": "What's Included",
+    "deliverables_title": "Deliverables",
+    "related_title": "Explore More Services",
+    "related_desc": "Each service can stand alone, or combine into a complete brand program.",
+    "cta_title": "Let's build your brand together",
+    "cta_desc": "Tell us where your brand is today and where you want it to go. We will respond with a free initial diagnosis.",
+    "cta_btn": "Start a Project",
+    "items": {
+      "signage-system": {
+        "title": "Signage System",
+        "summary": "End-to-end signage and wayfinding systems — from strategy and design to production-ready specifications for retail, hospitality, and commercial spaces.",
+        "intro": "A signage system turns a brand into a physical experience. We design signage and wayfinding that guide people clearly, reinforce your identity at every touchpoint, and are ready for real fabrication.",
+        "sections": [
+          {
+            "title": "Wayfinding Strategy",
+            "desc": "We map user journeys, decision points, and information hierarchy so visitors always know where they are and where to go next."
+          },
+          {
+            "title": "Signage Design & Identity",
+            "desc": "Facade, interior, and directional signage designed to match your visual identity — materials, typography, colour, and lighting considered together."
+          },
+          {
+            "title": "Production & Rollout",
+            "desc": "Fabrication-ready drawings, material specifications, and vendor coordination so the system is built consistently across every location."
+          }
+        ],
+        "deliverables": [
+          "Signage strategy and wayfinding plan",
+          "Facade, interior, and directional signage design",
+          "Material and production specifications",
+          "Guidelines for multi-site rollout",
+          "Vendor coordination and site review"
+        ],
+        "keywords": ["signage design", "wayfinding system", "signage and wayfinding", "retail signage", "标识设计", "导视系统"]
+      },
+      "branding-upgrade": {
+        "title": "Branding Upgrade",
+        "summary": "A structured brand refresh for businesses whose identity no longer matches their ambition — repositioning, visual renewal, and a clearer system across every touchpoint.",
+        "intro": "Brands drift. Markets move, offers evolve, and the identity that worked at launch can start to feel dated or inconsistent. A branding upgrade realigns strategy and visual expression so your brand looks as strong as the business behind it.",
+        "sections": [
+          {
+            "title": "Brand Audit & Positioning",
+            "desc": "We review every current touchpoint, interview stakeholders, and redefine the positioning that the refreshed identity needs to express."
+          },
+          {
+            "title": "Visual Identity Renewal",
+            "desc": "Logo refinement or redesign, typography, colour, imagery, and layout systems that feel current without losing the equity you have already built."
+          },
+          {
+            "title": "System & Rollout",
+            "desc": "Updated brand guidelines, templates, and application assets so the new identity is used consistently across print, packaging, and digital."
+          }
+        ],
+        "deliverables": [
+          "Brand audit and positioning statement",
+          "Refined or redesigned visual identity",
+          "Typography, colour, and layout system",
+          "Updated brand guidelines",
+          "Application templates for print and digital"
+        ],
+        "keywords": ["brand refresh", "rebranding", "brand upgrade", "visual identity design", "品牌升级", "品牌更新"]
+      },
+      "ip-design": {
+        "title": "IP Design",
+        "summary": "Character and IP development that gives your brand a memorable personality — mascot design, IP systems, and artwork ready for packaging, campaigns, and merchandise.",
+        "intro": "A strong IP gives your brand a face people remember and want to engage with. We design original characters and IP systems that carry your brand story across packaging, social content, events, and licensed merchandise.",
+        "sections": [
+          {
+            "title": "IP Strategy & Story",
+            "desc": "We define the character's role, personality, and narrative so the IP is not just decorative but does real work for the brand."
+          },
+          {
+            "title": "Character & Visual Development",
+            "desc": "Original character design, expression sets, poses, and a visual language that stays recognisable across many applications."
+          },
+          {
+            "title": "Application & Merchandise",
+            "desc": "Packaging, stickers, social templates, and merchandise-ready artwork so the IP can be deployed consistently and commercially."
+          }
+        ],
+        "deliverables": [
+          "IP strategy and character brief",
+          "Original character design and expression sets",
+          "IP visual guidelines",
+          "Packaging and social application assets",
+          "Merchandise-ready artwork files"
+        ],
+        "keywords": ["IP design", "mascot design", "character design", "brand character", "IP形象设计", "品牌吉祥物"]
+      },
+      "strategy-consulting": {
+        "title": "Strategy Consulting",
+        "summary": "Brand strategy and creative consulting for founders and teams who need clarity before they invest — positioning, messaging, naming, and go-to-market direction.",
+        "intro": "Before design, you need direction. We work with founders and marketing teams to clarify where the brand should compete, what it should stand for, and how it should communicate — so every creative decision afterwards has a reason.",
+        "sections": [
+          {
+            "title": "Research & Diagnosis",
+            "desc": "Market, competitor, and audience research that surfaces the real opportunity and the gaps in your current brand."
+          },
+          {
+            "title": "Positioning & Messaging",
+            "desc": "A clear positioning statement, value proposition, brand architecture, and messaging framework your team can actually use."
+          },
+          {
+            "title": "Creative & Go-to-Market Direction",
+            "desc": "Naming, creative territories, and channel direction that translate strategy into something your team can brief and execute."
+          }
+        ],
+        "deliverables": [
+          "Market and competitor research",
+          "Brand positioning and value proposition",
+          "Messaging framework and tone of voice",
+          "Naming and creative direction",
+          "Go-to-market recommendations"
+        ],
+        "keywords": ["brand strategy", "brand consulting", "positioning strategy", "market entry consulting", "品牌策略", "品牌咨询"]
+      }
+    }
   }
 }

@@ -68,6 +68,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       { url: '/company', priority: '0.8', changefreq: 'monthly' },
       { url: '/faq', priority: '0.7', changefreq: 'monthly' },
       { url: '/store', priority: '0.5', changefreq: 'monthly' },
+      { url: '/service/signage-system', priority: '0.7', changefreq: 'monthly' },
+      { url: '/service/branding-upgrade', priority: '0.7', changefreq: 'monthly' },
+      { url: '/service/ip-design', priority: '0.7', changefreq: 'monthly' },
+      { url: '/service/strategy-consulting', priority: '0.7', changefreq: 'monthly' },
       { url: '/blog', priority: '0.8', changefreq: 'weekly' },
     ];
 

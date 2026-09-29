@@ -18,6 +18,7 @@ const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const Company = lazy(() => import('./pages/Company'));
 const Store = lazy(() => import('./pages/Store'));
+const ServiceDetail = lazy(() => import('./pages/ServiceDetail'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin Imports (Also Lazy)
@@ -81,6 +82,7 @@ function App() {
                 <Route path="/company" element={<Company />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/store" element={<Store />} />
+                <Route path="/service/:slug" element={<ServiceDetail />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
 

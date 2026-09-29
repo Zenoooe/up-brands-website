@@ -4,7 +4,91 @@
   "outputDirectory": "dist",
   "routes": [
     {
-      "src": "^/(?:(?:%20|%2520|\\s)?)en(?:/.*)?$",
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:en-US|en)(?:/.*)?$",
+      "status": 301,
+      "headers": {
+        "Location": "/?lng=en"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:zh-CN|zh-Hans|cn)(?:/.*)?$",
+      "status": 301,
+      "headers": {
+        "Location": "/?lng=zh-CN"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:zh-TW|zh-Hant|tw)(?:/.*)?$",
+      "status": 301,
+      "headers": {
+        "Location": "/?lng=zh-TW"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:zh-HK|hk)(?:/.*)?$",
+      "status": 301,
+      "headers": {
+        "Location": "/?lng=zh-HK"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)zh-MO(?:/.*)?$",
+      "status": 301,
+      "headers": {
+        "Location": "/?lng=zh-MO"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)zh(?:/.*)?$",
+      "status": 301,
+      "headers": {
+        "Location": "/?lng=zh-CN"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)about-us/?$",
+      "status": 301,
+      "headers": {
+        "Location": "/about"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:contact(?:-us)?|team|services?|specialist(?:/.*)?)/?$",
+      "status": 301,
+      "headers": {
+        "Location": "/company"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:portfolio|works|project)/?$",
+      "status": 301,
+      "headers": {
+        "Location": "/projects"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)news/?$",
+      "status": 301,
+      "headers": {
+        "Location": "/blog"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)pricing/?$",
+      "status": 301,
+      "headers": {
+        "Location": "/faq"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:category(?:/.*)?|product(?:/.*)?|checkout|shop)/?$",
+      "status": 301,
+      "headers": {
+        "Location": "/store"
+      }
+    },
+    {
+      "src": "^/(?:(?:%20|%2520|\\s)?)(?:home|search|log-in|privacy|terms|utility-pages(?:/.*)?)/?$",
       "status": 301,
       "headers": {
         "Location": "/"
