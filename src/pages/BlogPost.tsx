@@ -5,6 +5,7 @@ import { usePost } from '../hooks/usePosts';
 import { SEO } from '../components/common/SEO';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getBlogImageAlt, getCanonicalUrl } from '../utils/seo';
 import { getSupabaseUrl, getValidImageUrl } from '../utils/image';
@@ -240,6 +241,7 @@ export default function BlogPost() {
 
               <div className="prose prose-lg md:prose-xl max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:scroll-mt-32 prose-p:text-gray-600 prose-img:rounded-lg">
                 <ReactMarkdown
+                  remarkPlugins={[remarkBreaks]}
                   components={{
                     h2: ({ children }) => (
                       <h2 id={slugifyHeading(String(children))}>{children}</h2>

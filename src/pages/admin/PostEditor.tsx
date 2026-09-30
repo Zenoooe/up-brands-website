@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { BlogPost } from '../../types';
 import { Helmet } from 'react-helmet-async';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import {
   Upload,
   Bold,
@@ -22,6 +23,20 @@ import {
 } from 'lucide-react';
 import { uploadImageFile } from '../../utils/imageUpload';
 import toast from 'react-hot-toast';
+import TurndownService from 'turndown';
+
+const turndown = new TurndownService({
+  headingStyle: 'atx',
+  bulletListMarker: '-',
+  codeBlockStyle: 'fenced',
+  emDelimiter: '*',
+});
+turndown.addRule('hr', { filter: 'hr', replacement: () => '\n\n---\n\n' });
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+type ToolId = 'bold' | 'italic' | 'heading' | 'quote' | 'ul' | 'ol' | 'link' | 'code' | 'image' | 'hr';
 
 type MarkdownFieldProps = {
   label: string;
@@ -33,9 +48,25 @@ type MarkdownFieldProps = {
 function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<'split' | 'write' | 'preview'>('split');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [activeSurface, setActiveSurface] = useState<'source' | 'preview'>('source');
+  const [previewFocused, setPreviewFocused] = useState(false);
+  // While the preview is being edited we feed it a frozen markdown snapshot so
+  // React never rewrites the DOM under the caret. The live value still flows out
+  // through onChange, keeping the source pane in sync.
+  const [previewSource, setPreviewSource] = useState(value);
+  const [previewKey, setPreviewKey] = useState(0);
+  const editingPreview = useRef(false);
+  const previewDirty = useRef(false);
+
+  useEffect(() => {
+    if (!editingPreview.current) setPreviewSource(value);
+  }, [value]);
+
+  const previewActive = mode === 'preview' || (mode === 'split' && activeSurface === 'preview');
 
   const insertText = (snippet: string) => {
     const el = textareaRef.current;
@@ -82,34 +113,132 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
     });
   };
 
+  const syncFromPreview = () => {
+    const el = previewRef.current;
+    if (!el) return;
+    previewDirty.current = true;
+    onChange(turndown.turndown(el.innerHTML));
+  };
+
   const handleImageSelected = async (file: File) => {
     setUploadingImage(true);
     const toastId = toast.loading(t('admin.editor.uploading'));
     try {
       const url = await uploadImageFile(file, 'blog');
       const alt = file.name.replace(/\.[^.]+$/, '');
-      insertText(`\n\n![${alt}](${url})\n\n`);
+      if (previewActive) {
+        const el = previewRef.current;
+        if (el) {
+          el.focus();
+          document.execCommand('insertHTML', false, `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}">`);
+          syncFromPreview();
+        }
+      } else {
+        insertText(`\n\n![${alt}](${url})\n\n`);
+      }
       toast.success(t('admin.editor.uploadSuccess'), { id: toastId });
     } catch (error) {
       console.error(error);
-      toast.error(t('admin.editor.uploadFailed'), { id: toastId });
+      const detail = error instanceof Error ? error.message : '';
+      toast.error(detail ? `${t('admin.editor.uploadFailed')}: ${detail}` : t('admin.editor.uploadFailed'), { id: toastId });
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const tools = [
-    { icon: Bold, title: 'Bold', action: () => wrapSelection('**') },
-    { icon: Italic, title: 'Italic', action: () => wrapSelection('*') },
-    { icon: Heading2, title: 'Heading', action: () => prefixLine('## ') },
-    { icon: Quote, title: 'Quote', action: () => prefixLine('> ') },
-    { icon: List, title: 'Bullet list', action: () => prefixLine('- ') },
-    { icon: ListOrdered, title: 'Numbered list', action: () => prefixLine('1. ') },
-    { icon: Link2, title: 'Link', action: () => wrapSelection('[', '](https://)') },
-    { icon: Code2, title: 'Inline code', action: () => wrapSelection('`') },
-    { icon: ImagePlus, title: t('admin.editor.insertImage'), action: () => fileInputRef.current?.click() },
-    { icon: Minus, title: 'Divider', action: () => onChange(`${value}\n\n---\n\n`) },
+  const handlePreviewInput = () => {
+    syncFromPreview();
+  };
+
+  // Enter inserts a line break (not a new <div> block) so a single press maps to
+  // a markdown line-break symbol and survives the round-trip through the preview.
+  const handlePreviewKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter') return;
+    // Shift+Enter already inserts a <br> in most browsers; plain Enter would
+    // otherwise create a new block (<p>/<div>) that turndown turns into a
+    // paragraph. Force a line break so a single press becomes a hard break.
+    e.preventDefault();
+    const ok = document.execCommand('insertLineBreak');
+    if (!ok) document.execCommand('insertHTML', false, '<br>');
+    syncFromPreview();
+  };
+
+  const handlePreviewFocus = () => {
+    editingPreview.current = true;
+    previewDirty.current = false;
+    setPreviewFocused(true);
+    setActiveSurface('preview');
+  };
+
+  const handlePreviewBlur = () => {
+    editingPreview.current = false;
+    setPreviewFocused(false);
+    // Clicking in and out without editing should not rewrite the markdown.
+    if (!previewDirty.current) return;
+    previewDirty.current = false;
+    const el = previewRef.current;
+    const next = el ? turndown.turndown(el.innerHTML) : value;
+    setPreviewSource(next);
+    setPreviewKey((k) => k + 1);
+    if (next !== value) onChange(next);
+  };
+
+  // Toolbar actions operate on whichever pane is active: the raw markdown
+  // textarea, or the inline-editable preview (via execCommand).
+  const applyTool = (id: ToolId) => {
+    if (previewActive) {
+      const el = previewRef.current;
+      if (!el) return;
+      el.focus();
+      switch (id) {
+        case 'bold': document.execCommand('bold'); break;
+        case 'italic': document.execCommand('italic'); break;
+        case 'heading': document.execCommand('formatBlock', false, 'H2'); break;
+        case 'quote': document.execCommand('formatBlock', false, 'BLOCKQUOTE'); break;
+        case 'ul': document.execCommand('insertUnorderedList'); break;
+        case 'ol': document.execCommand('insertOrderedList'); break;
+        case 'link': {
+          const url = window.prompt('URL', 'https://');
+          if (url) document.execCommand('createLink', false, url);
+          break;
+        }
+        case 'code': {
+          const selected = window.getSelection()?.toString() ?? '';
+          document.execCommand('insertHTML', false, `<code>${escapeHtml(selected)}</code>`);
+          break;
+        }
+        case 'image': fileInputRef.current?.click(); return;
+        case 'hr': document.execCommand('insertHorizontalRule'); break;
+      }
+      syncFromPreview();
+      return;
+    }
+    switch (id) {
+      case 'bold': wrapSelection('**'); break;
+      case 'italic': wrapSelection('*'); break;
+      case 'heading': prefixLine('## '); break;
+      case 'quote': prefixLine('> '); break;
+      case 'ul': prefixLine('- '); break;
+      case 'ol': prefixLine('1. '); break;
+      case 'link': wrapSelection('[', '](https://)'); break;
+      case 'code': wrapSelection('`'); break;
+      case 'image': fileInputRef.current?.click(); break;
+      case 'hr': onChange(`${value}\n\n---\n\n`); break;
+    }
+  };
+
+  const tools: { id: ToolId; icon: typeof Bold; title: string }[] = [
+    { id: 'bold', icon: Bold, title: 'Bold' },
+    { id: 'italic', icon: Italic, title: 'Italic' },
+    { id: 'heading', icon: Heading2, title: 'Heading' },
+    { id: 'quote', icon: Quote, title: 'Quote' },
+    { id: 'ul', icon: List, title: 'Bullet list' },
+    { id: 'ol', icon: ListOrdered, title: 'Numbered list' },
+    { id: 'link', icon: Link2, title: 'Link' },
+    { id: 'code', icon: Code2, title: 'Inline code' },
+    { id: 'image', icon: ImagePlus, title: t('admin.editor.insertImage') },
+    { id: 'hr', icon: Minus, title: 'Divider' },
   ];
 
   return (
@@ -125,13 +254,14 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
         }}
       />
       <div className="flex flex-wrap items-center gap-1 px-2 py-2 border-b border-gray-200 bg-gray-50">
-        {tools.map(({ icon: Icon, title, action }) => (
+        {tools.map(({ id, icon: Icon, title }) => (
           <button
-            key={title}
+            key={id}
             type="button"
             title={title}
-            onClick={action}
-            disabled={mode === 'preview' || (title === t('admin.editor.insertImage') && uploadingImage)}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => applyTool(id)}
+            disabled={id === 'image' && uploadingImage}
             className="p-2 rounded text-gray-600 hover:bg-gray-200 hover:text-black disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
           >
             <Icon size={16} />
@@ -168,19 +298,33 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
             ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            onFocus={() => setActiveSurface('source')}
             placeholder={placeholder}
-            className="w-full h-[480px] p-4 font-mono text-sm leading-relaxed outline-none resize-none border-r border-gray-100"
+            data-lenis-prevent
+            className="w-full h-[480px] p-4 font-mono text-sm leading-relaxed outline-none resize-none overflow-auto border-r border-gray-100"
           />
         )}
         {mode !== 'write' && (
-          <div className="w-full h-[480px] overflow-auto p-4 bg-gray-50/50">
-            {value.trim() ? (
-              <div className="prose prose-sm max-w-none prose-headings:font-bold prose-img:rounded-lg">
-                <ReactMarkdown>{value}</ReactMarkdown>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-400">{t('admin.editor.previewEmpty')}</p>
+          <div className="relative w-full h-[480px] bg-gray-50/50">
+            {!value.trim() && !previewFocused && (
+              <p className="pointer-events-none absolute left-0 top-0 p-4 text-sm text-gray-400">
+                {t('admin.editor.previewEmpty')}
+              </p>
             )}
+            <div
+              key={previewKey}
+              ref={previewRef}
+              contentEditable
+              suppressContentEditableWarning
+              data-lenis-prevent
+              onFocus={handlePreviewFocus}
+              onInput={handlePreviewInput}
+              onKeyDown={handlePreviewKeyDown}
+              onBlur={handlePreviewBlur}
+              className="prose prose-sm max-w-none h-full overflow-auto p-4 outline-none transition-colors focus:bg-white prose-headings:font-bold prose-img:rounded-lg"
+            >
+              <ReactMarkdown remarkPlugins={[remarkBreaks]}>{previewSource}</ReactMarkdown>
+            </div>
           </div>
         )}
       </div>
@@ -244,7 +388,8 @@ export default function PostEditor() {
       toast.success(t('admin.editor.uploadSuccess'), { id: toastId });
     } catch (error) {
       console.error(error);
-      toast.error(t('admin.editor.uploadFailed'), { id: toastId });
+      const detail = error instanceof Error ? error.message : '';
+      toast.error(detail ? `${t('admin.editor.uploadFailed')}: ${detail}` : t('admin.editor.uploadFailed'), { id: toastId });
     } finally {
       setUploadingCover(false);
       if (coverInputRef.current) coverInputRef.current.value = '';
