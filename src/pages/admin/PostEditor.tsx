@@ -1,19 +1,209 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { BlogPost } from '../../types';
 import { Helmet } from 'react-helmet-async';
-import { Upload } from 'lucide-react';
-import { backupImageToSupabase } from '../../utils/imageBackup';
+import ReactMarkdown from 'react-markdown';
+import {
+  Upload,
+  Bold,
+  Italic,
+  Heading2,
+  Quote,
+  Link2,
+  List,
+  ListOrdered,
+  Code2,
+  Minus,
+  ImagePlus,
+  ExternalLink,
+  Trash2,
+} from 'lucide-react';
+import { uploadImageFile } from '../../utils/imageUpload';
 import toast from 'react-hot-toast';
 
+type MarkdownFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+};
+
+function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldProps) {
+  const { t } = useTranslation();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mode, setMode] = useState<'split' | 'write' | 'preview'>('split');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const insertText = (snippet: string) => {
+    const el = textareaRef.current;
+    if (!el) {
+      onChange(value + snippet);
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const next = value.slice(0, start) + snippet + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + snippet.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
+  const wrapSelection = (before: string, after = before) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = value.slice(start, end);
+    const next = value.slice(0, start) + before + selected + after + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + before.length + selected.length + after.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
+  const prefixLine = (prefix: string) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+    const next = value.slice(0, lineStart) + prefix + value.slice(lineStart);
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + prefix.length, start + prefix.length);
+    });
+  };
+
+  const handleImageSelected = async (file: File) => {
+    setUploadingImage(true);
+    const toastId = toast.loading(t('admin.editor.uploading'));
+    try {
+      const url = await uploadImageFile(file, 'blog');
+      const alt = file.name.replace(/\.[^.]+$/, '');
+      insertText(`\n\n![${alt}](${url})\n\n`);
+      toast.success(t('admin.editor.uploadSuccess'), { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error(t('admin.editor.uploadFailed'), { id: toastId });
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const tools = [
+    { icon: Bold, title: 'Bold', action: () => wrapSelection('**') },
+    { icon: Italic, title: 'Italic', action: () => wrapSelection('*') },
+    { icon: Heading2, title: 'Heading', action: () => prefixLine('## ') },
+    { icon: Quote, title: 'Quote', action: () => prefixLine('> ') },
+    { icon: List, title: 'Bullet list', action: () => prefixLine('- ') },
+    { icon: ListOrdered, title: 'Numbered list', action: () => prefixLine('1. ') },
+    { icon: Link2, title: 'Link', action: () => wrapSelection('[', '](https://)') },
+    { icon: Code2, title: 'Inline code', action: () => wrapSelection('`') },
+    { icon: ImagePlus, title: t('admin.editor.insertImage'), action: () => fileInputRef.current?.click() },
+    { icon: Minus, title: 'Divider', action: () => onChange(`${value}\n\n---\n\n`) },
+  ];
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handleImageSelected(file);
+        }}
+      />
+      <div className="flex flex-wrap items-center gap-1 px-2 py-2 border-b border-gray-200 bg-gray-50">
+        {tools.map(({ icon: Icon, title, action }) => (
+          <button
+            key={title}
+            type="button"
+            title={title}
+            onClick={action}
+            disabled={mode === 'preview' || (title === t('admin.editor.insertImage') && uploadingImage)}
+            className="p-2 rounded text-gray-600 hover:bg-gray-200 hover:text-black disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+          >
+            <Icon size={16} />
+          </button>
+        ))}
+        <div className="ml-auto flex items-center gap-1 bg-white rounded-md border border-gray-200 p-0.5">
+          <button
+            type="button"
+            onClick={() => setMode('write')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${mode === 'write' ? 'bg-black text-white' : 'text-gray-500 hover:text-black'}`}
+          >
+            {t('admin.editor.write')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('split')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${mode === 'split' ? 'bg-black text-white' : 'text-gray-500 hover:text-black'}`}
+          >
+            {t('admin.editor.split')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('preview')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${mode === 'preview' ? 'bg-black text-white' : 'text-gray-500 hover:text-black'}`}
+          >
+            {t('admin.editor.preview')}
+          </button>
+        </div>
+      </div>
+
+      <div className={`grid ${mode === 'split' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
+        {mode !== 'preview' && (
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="w-full h-[480px] p-4 font-mono text-sm leading-relaxed outline-none resize-none border-r border-gray-100"
+          />
+        )}
+        {mode !== 'write' && (
+          <div className="w-full h-[480px] overflow-auto p-4 bg-gray-50/50">
+            {value.trim() ? (
+              <div className="prose prose-sm max-w-none prose-headings:font-bold prose-img:rounded-lg">
+                <ReactMarkdown>{value}</ReactMarkdown>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">{t('admin.editor.previewEmpty')}</p>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="px-3 py-2 border-t border-gray-100 bg-white text-xs text-gray-400 flex items-center justify-between">
+        <span>{label}</span>
+        <span>
+          {value.length} {t('admin.editor.characters')}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function PostEditor() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
-  
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(false);
-  const [backingUp, setBackingUp] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [activeLang, setActiveLang] = useState<'en' | 'zh'>('en');
   const [formData, setFormData] = useState<Partial<BlogPost>>({
     slug: '',
     title_en: '',
@@ -26,7 +216,7 @@ export default function PostEditor() {
     imageUrl: '',
     backup_image_url: '',
     author: 'Up-Brands Team',
-    tags: []
+    tags: [],
   });
 
   const [tagsString, setTagsString] = useState('');
@@ -45,26 +235,31 @@ export default function PostEditor() {
     }
   };
 
-  const handleBackupImage = async () => {
-    if (!formData.imageUrl) {
-      toast.error('Please enter a Cover Image URL first');
-      return;
-    }
-
-    // Use slug as part of filename for easier identification
-    const imageId = `post_${formData.slug || 'untitled'}_${Date.now()}`;
-    
-    setBackingUp(true);
-    const toastId = toast.loading('Backing up image...');
-
+  const handleCoverUpload = async (file: File) => {
+    setUploadingCover(true);
+    const toastId = toast.loading(t('admin.editor.uploading'));
     try {
-      const newUrl = await backupImageToSupabase(formData.imageUrl, imageId);
-      setFormData(prev => ({ ...prev, backup_image_url: newUrl }));
-      toast.success('Image backed up successfully!', { id: toastId });
+      const url = await uploadImageFile(file, 'covers');
+      setFormData((prev) => ({ ...prev, imageUrl: url, backup_image_url: url }));
+      toast.success(t('admin.editor.uploadSuccess'), { id: toastId });
     } catch (error) {
-      toast.error('Failed to backup image', { id: toastId });
+      console.error(error);
+      toast.error(t('admin.editor.uploadFailed'), { id: toastId });
     } finally {
-      setBackingUp(false);
+      setUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = '';
+    }
+  };
+
+  const handleDelete = async () => {
+    if (isNew || !id) return;
+    if (!confirm(t('admin.editor.deleteConfirm'))) return;
+    try {
+      await supabase.from('posts').delete().eq('id', id);
+      toast.success(t('admin.editor.deleted'));
+      navigate('/admin/posts');
+    } catch (error) {
+      toast.error(t('admin.editor.deleteFailed'));
     }
   };
 
@@ -75,7 +270,7 @@ export default function PostEditor() {
     try {
       const payload = {
         ...formData,
-        tags: tagsString.split(',').map(t => t.trim()).filter(Boolean)
+        tags: tagsString.split(',').map((t) => t.trim()).filter(Boolean),
       };
 
       if (isNew) {
@@ -87,213 +282,270 @@ export default function PostEditor() {
       // Notify Bing IndexNow
       try {
         const postUrl = `https://www.up-brands.com/blog/${payload.slug}`;
-        
+
         // Use our new backend API
         fetch(`/api/indexnow?url=${encodeURIComponent(postUrl)}`)
-          .then(res => res.json())
-          .then(data => console.log('IndexNow result:', data))
-          .catch(err => console.warn('IndexNow failed', err));
-        
+          .then((res) => res.json())
+          .then((data) => console.log('IndexNow result:', data))
+          .catch((err) => console.warn('IndexNow failed', err));
+
         // Notify Baidu (via proxy to avoid CORS)
         const baiduToken = 'a8dKMsRIVkl7JfbF';
         const baiduProxyUrl = `/api/baidu-push?site=https://www.up-brands.com&token=${baiduToken}&url=${encodeURIComponent(postUrl)}`;
 
         // Fire and forget
-        fetch(baiduProxyUrl).catch(err => console.warn('Baidu push failed', err));
-        
-        toast.success('Post saved & Search Engines notified!');
+        fetch(baiduProxyUrl).catch((err) => console.warn('Baidu push failed', err));
+
+        toast.success(t('admin.editor.saved'));
       } catch (err) {
         // Ignore SEO errors
       }
 
-      navigate('/admin');
+      navigate('/admin/posts');
     } catch (error) {
       console.error('Error saving post:', error);
-      alert('Failed to save post');
+      alert(t('admin.editor.saveFailed'));
     } finally {
       setLoading(false);
     }
   };
 
+  const setField = (key: keyof BlogPost, value: unknown) =>
+    setFormData((prev) => ({ ...prev, [key]: value }));
+
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
+    <div className="max-w-7xl mx-auto pb-24">
       <Helmet>
-        <title>{isNew ? 'New Post' : 'Edit Post'} | Admin</title>
+        <title>{isNew ? t('admin.editor.newTitle') : t('admin.editor.editTitle')} | Admin</title>
       </Helmet>
 
-      <h1 className="text-2xl font-bold mb-8 uppercase tracking-tight">
-        {isNew ? 'Create New Post' : 'Edit Post'}
-      </h1>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <Link to="/admin/posts" className="text-sm text-gray-400 hover:text-black transition-colors">
+            ← {t('admin.editor.back')}
+          </Link>
+          <h1 className="text-3xl font-black uppercase tracking-tight mt-1">
+            {isNew ? t('admin.editor.newTitle') : t('admin.editor.editTitle')}
+          </h1>
+        </div>
+        {!isNew && formData.slug && (
+          <a
+            href={`/blog/${formData.slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors"
+          >
+            <ExternalLink size={16} /> {t('admin.editor.viewLive')}
+          </a>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Meta Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL)</label>
-            <input
-              type="text"
-              value={formData.slug}
-              onChange={e => setFormData({...formData, slug: e.target.value})}
-              className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none font-mono text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-            <input
-              type="date"
-              value={formData.date}
-              onChange={e => setFormData({...formData, date: e.target.value})}
-              className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              required
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image URL (Original)</label>
-            <div className="flex gap-2">
+        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-6">{t('admin.editor.settings')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.slug')}</label>
               <input
-                type="url"
-                value={formData.imageUrl}
-                onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                type="text"
+                value={formData.slug}
+                onChange={(e) => setField('slug', e.target.value)}
+                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none font-mono text-sm"
                 required
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.date')}</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setField('date', e.target.value)}
+                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.cover')}</label>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleCoverUpload(file);
+                }}
+              />
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={formData.imageUrl}
+                  onChange={(e) => setField('imageUrl', e.target.value)}
+                  className="flex-1 px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={uploadingCover}
+                  className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  <Upload size={16} />
+                  {uploadingCover ? t('admin.editor.uploading') : t('admin.editor.upload')}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">{t('admin.editor.coverHint')}</p>
+              {formData.imageUrl && (
+                <div className="mt-3 w-full max-w-xs aspect-[16/9] overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
+                  <img src={formData.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.author')}</label>
+              <input
+                type="text"
+                value={formData.author}
+                onChange={(e) => setField('author', e.target.value)}
+                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.tags')}</label>
+              <input
+                type="text"
+                value={tagsString}
+                onChange={(e) => setTagsString(e.target.value)}
+                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                placeholder={t('admin.editor.tagsPlaceholder')}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Content Editor */}
+        <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">{t('admin.editor.content')}</h2>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
               <button
                 type="button"
-                onClick={handleBackupImage}
-                disabled={backingUp || !formData.imageUrl}
-                className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
-                title="Backup image to Supabase"
+                onClick={() => setActiveLang('en')}
+                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors ${activeLang === 'en' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
               >
-                <Upload size={16} />
-                {backingUp ? 'Backing up...' : 'Backup'}
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveLang('zh')}
+                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors ${activeLang === 'zh' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
+              >
+                中文
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Original URL. Click "Backup" to generate a stable Supabase link below.
-            </p>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Backup Image URL (Supabase)</label>
-            <input
-              type="url"
-              value={formData.backup_image_url || ''}
-              onChange={e => setFormData({...formData, backup_image_url: e.target.value})}
-              className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none bg-gray-50"
-              placeholder="Generated automatically when you click Backup"
-            />
-          </div>
-           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
-            <input
-              type="text"
-              value={formData.author}
-              onChange={e => setFormData({...formData, author: e.target.value})}
-              className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
-            <input
-              type="text"
-              value={tagsString}
-              onChange={e => setTagsString(e.target.value)}
-              className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-              placeholder="Design, Branding, News"
-            />
-          </div>
-        </div>
+          {activeLang === 'en' ? (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.titleEn')}</label>
+                <input
+                  type="text"
+                  value={formData.title_en}
+                  onChange={(e) => setField('title_en', e.target.value)}
+                  className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.excerptEn')}</label>
+                <textarea
+                  value={formData.excerpt_en}
+                  onChange={(e) => setField('excerpt_en', e.target.value)}
+                  className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none h-24"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.contentEn')}</label>
+                <MarkdownField
+                  label={t('admin.editor.mdHint', { lang: 'EN' })}
+                  value={formData.content_en || ''}
+                  onChange={(v) => setField('content_en', v)}
+                  placeholder={'# Heading\n\nWrite your article in **Markdown**...'}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.titleZh')}</label>
+                <input
+                  type="text"
+                  value={formData.title_zh}
+                  onChange={(e) => setField('title_zh', e.target.value)}
+                  className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.excerptZh')}</label>
+                <textarea
+                  value={formData.excerpt_zh}
+                  onChange={(e) => setField('excerpt_zh', e.target.value)}
+                  className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none h-24"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.contentZh')}</label>
+                <MarkdownField
+                  label={t('admin.editor.mdHint', { lang: '中文' })}
+                  value={formData.content_zh || ''}
+                  onChange={(v) => setField('content_zh', v)}
+                  placeholder={'# 标题\n\n用 **Markdown** 撰写正文...'}
+                />
+                <p className="text-xs text-gray-500 mt-1">{t('admin.editor.zhHint')}</p>
+              </div>
+            </div>
+          )}
+        </section>
 
-        {/* English Content */}
-        <div className="border-t border-gray-100 pt-6">
-          <h3 className="font-bold text-lg mb-4">English Content</h3>
-          <div className="space-y-4">
+        {/* Sticky action bar */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title (EN)</label>
-              <input
-                type="text"
-                value={formData.title_en}
-                onChange={e => setFormData({...formData, title_en: e.target.value})}
-                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-                required
-              />
+              {!isNew && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <Trash2 size={16} /> {t('admin.editor.delete')}
+                </button>
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt (EN)</label>
-              <textarea
-                value={formData.excerpt_en}
-                onChange={e => setFormData({...formData, excerpt_en: e.target.value})}
-                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none h-24"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown EN)</label>
-              <textarea
-                value={formData.content_en}
-                onChange={e => setFormData({...formData, content_en: e.target.value})}
-                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none h-64 font-mono text-sm"
-                required
-              />
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/admin/posts')}
+                className="px-6 py-2 text-gray-600 hover:text-gray-900"
+              >
+                {t('admin.editor.cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-2 bg-black text-white rounded font-bold uppercase hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              >
+                {loading ? t('admin.editor.saving') : t('admin.editor.save')}
+              </button>
             </div>
           </div>
-        </div>
-
-        {/* Chinese Content */}
-        <div className="border-t border-gray-100 pt-6">
-          <h3 className="font-bold text-lg mb-4">Chinese Content</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title (ZH)</label>
-              <input
-                type="text"
-                value={formData.title_zh}
-                onChange={e => setFormData({...formData, title_zh: e.target.value})}
-                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt (ZH)</label>
-              <textarea
-                value={formData.excerpt_zh}
-                onChange={e => setFormData({...formData, excerpt_zh: e.target.value})}
-                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none h-24"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown ZH)</label>
-              <textarea
-                value={formData.content_zh}
-                onChange={e => setFormData({...formData, content_zh: e.target.value})}
-                className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-black outline-none h-64 font-mono text-sm"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Tip: Enter Traditional or Simplified Chinese. The frontend will automatically convert it based on user region.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-4 pt-6 border-t border-gray-100">
-          <button
-            type="button"
-            onClick={() => navigate('/admin')}
-            className="px-6 py-2 text-gray-600 hover:text-gray-900"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-black text-white rounded font-bold uppercase hover:bg-gray-800 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Save Post'}
-          </button>
         </div>
       </form>
     </div>

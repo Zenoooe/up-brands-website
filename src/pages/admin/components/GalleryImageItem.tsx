@@ -7,7 +7,7 @@ interface GalleryImageItemProps {
   url: string;
   index: number;
   onRemove: (index: number) => void;
-  onBackup: (url: string, index: number) => void;
+  onUpload: (url: string, index: number) => void;
 }
 
 export const GalleryImageItem = memo(function GalleryImageItem({ 
@@ -15,10 +15,10 @@ export const GalleryImageItem = memo(function GalleryImageItem({
   url, 
   index, 
   onRemove, 
-  onBackup 
+  onUpload 
 }: GalleryImageItemProps) {
   const isVimeo = url.includes('vimeo');
-  const isBackedUp = url.includes('supabase.co');
+  const isBackedUp = url.includes('cdn.jsdelivr.net');
 
   return (
     <Draggable draggableId={id} index={index}>
@@ -72,9 +72,9 @@ export const GalleryImageItem = memo(function GalleryImageItem({
             {!isBackedUp && (
               <button
                 type="button"
-                onClick={() => onBackup(url, index)}
+                onClick={() => onUpload(url, index)}
                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                title="Backup to Supabase"
+                title="Upload to CDN"
               >
                 <Upload size={18} />
               </button>

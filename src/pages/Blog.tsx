@@ -3,20 +3,20 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { usePosts } from '../hooks/usePosts';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SEO } from '../components/common/SEO';
 import { getBlogImageAlt, getCanonicalUrl } from '../utils/seo';
 import { getSupabaseUrl, getValidImageUrl } from '../utils/image';
-import { toSimplifiedChinese } from '../utils/opencc-simplified';
+import { convertChinese } from '../utils/zhConvert';
+import type { BlogPost } from '../types';
 
 export default function Blog() {
   const { t, i18n } = useTranslation();
   const { posts, loading } = usePosts();
   const isZh = i18n.language.startsWith('zh');
-  const isSimplified = i18n.language === 'zh-CN' || i18n.language === 'zh';
+  const isSimplified = isZh && !/(TW|HK|MO|Hant)/.test(i18n.language);
   const [convertedPosts, setConvertedPosts] = useState<Record<string, { title: string; excerpt: string }>>({});
-  
-  console.log("Blog.tsx rendering:", { loading, postsLength: posts.length, isZh, isSimplified });
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   // Custom SEO for Blog
   const seoTitle = i18n.language.startsWith('zh')
@@ -30,20 +30,22 @@ export default function Blog() {
   useEffect(() => {
     let isMounted = true;
 
-    if (!isZh || !isSimplified || posts.length === 0) {
+    if (!isZh || posts.length === 0) {
       setConvertedPosts({});
       return () => {
         isMounted = false;
       };
     }
 
+    const target = isSimplified ? 'simplified' : 'traditional';
+
     const convertPosts = async () => {
       const entries = await Promise.all(
         posts.map(async (post) => [
           post.id,
           {
-            title: await toSimplifiedChinese(post.title_zh),
-            excerpt: await toSimplifiedChinese(post.excerpt_zh),
+            title: await convertChinese(post.title_zh, target),
+            excerpt: await convertChinese(post.excerpt_zh, target),
           },
         ] as const),
       );
@@ -60,11 +62,37 @@ export default function Blog() {
     };
   }, [isSimplified, isZh, posts]);
 
+  const allTags = useMemo(() => {
+    const seen = new Set<string>();
+    posts.forEach((post) => post.tags?.forEach((tag) => tag && seen.add(tag)));
+    return Array.from(seen);
+  }, [posts]);
+
+  const filteredPosts = useMemo(
+    () => (activeTag ? posts.filter((post) => post.tags?.includes(activeTag)) : posts),
+    [posts, activeTag],
+  );
+
+  const featuredPost: BlogPost | null =
+    !activeTag && filteredPosts.length > 3 ? filteredPosts[0] : null;
+  const gridPosts = featuredPost ? filteredPosts.slice(1) : filteredPosts;
+
+  const resolveText = (post: BlogPost) => {
+    const rawTitle = isZh ? post.title_zh : post.title_en;
+    const rawExcerpt = isZh ? post.excerpt_zh : post.excerpt_en;
+    const convertedPost = convertedPosts[post.id];
+    return {
+      title: isZh ? convertedPost?.title || rawTitle : rawTitle,
+      excerpt: isZh ? convertedPost?.excerpt || rawExcerpt : rawExcerpt,
+      image: getValidImageUrl(post.backup_image_url, post.imageUrl),
+    };
+  };
+
   if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
 
   return (
     <Layout>
-      <SEO 
+      <SEO
         title={seoTitle}
         description={seoDesc}
         url={getCanonicalUrl('/blog')}
@@ -77,73 +105,130 @@ export default function Blog() {
           transition={{ duration: 0.8 }}
           className="max-w-6xl mx-auto"
         >
-          <h1 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-20">
+          <h1 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-12">
             {t('blog.title')}
           </h1>
 
-          {loading ? (
-            <div className="w-full h-64 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-16">
+              <button
+                type="button"
+                onClick={() => setActiveTag(null)}
+                className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-full border transition-colors ${
+                  activeTag === null
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-black hover:text-black'
+                }`}
+              >
+                {isZh ? '全部' : 'All'}
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setActiveTag(tag)}
+                  className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-full border transition-colors ${
+                    activeTag === tag
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-black hover:text-black'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post, index) => {
-                // Get the base text (either EN or ZH-Traditional)
-                const rawTitle = isZh ? post.title_zh : post.title_en;
-                const rawExcerpt = isZh ? post.excerpt_zh : post.excerpt_en;
-                
-                const convertedPost = convertedPosts[post.id];
-                const title = isZh && isSimplified ? convertedPost?.title || rawTitle : rawTitle;
-                const excerpt = isZh && isSimplified ? convertedPost?.excerpt || rawExcerpt : rawExcerpt;
-                
-                const finalImageToUse = getValidImageUrl(post.backup_image_url, post.imageUrl);
-                
-                return (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                    className="group cursor-pointer flex flex-col h-full"
-                  >
-                    <Link to={`/blog/${post.slug}`} className="block h-full">
-                      <div className="overflow-hidden aspect-[16/9] mb-6 bg-gray-100">
-                        <img 
-                          src={getSupabaseUrl(finalImageToUse, 800)} 
-                          alt={getBlogImageAlt(title, post.tags)}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          loading={index === 0 ? 'eager' : 'lazy'}
-                          fetchPriority={index === 0 ? 'high' : 'auto'}
-                          decoding="async"
-                          sizes="(max-width: 768px) 100vw, 50vw"
-                        />
+          )}
+
+          {featuredPost && (
+            <Link to={`/blog/${featuredPost.slug}`} className="group block mb-16">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div className="overflow-hidden aspect-[16/10] bg-gray-100">
+                  <img
+                    src={getSupabaseUrl(resolveText(featuredPost).image, 1200)}
+                    alt={getBlogImageAlt(resolveText(featuredPost).title, featuredPost.tags)}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-4 uppercase tracking-widest">
+                    <span className="px-3 py-1 bg-black text-white rounded-full">
+                      {isZh ? '精选' : 'Featured'}
+                    </span>
+                    {featuredPost.tags?.[0] && <span>{featuredPost.tags[0]}</span>}
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold leading-tight mb-4 group-hover:underline decoration-2 underline-offset-4">
+                    {resolveText(featuredPost).title}
+                  </h2>
+                  <p className="text-gray-600 line-clamp-3 mb-6">
+                    {resolveText(featuredPost).excerpt}
+                  </p>
+                  <span className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 group-hover:gap-4 transition-all">
+                    {t('blog.read_more')}
+                    <span className="text-lg">→</span>
+                  </span>
+                </div>
+              </div>
+            </Link>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {gridPosts.map((post, index) => {
+              const { title, excerpt, image } = resolveText(post);
+
+              return (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  className="group cursor-pointer flex flex-col h-full"
+                >
+                  <Link to={`/blog/${post.slug}`} className="block h-full">
+                    <div className="overflow-hidden aspect-[16/9] mb-6 bg-gray-100">
+                      <img
+                        src={getSupabaseUrl(image, 800)}
+                        alt={getBlogImageAlt(title, post.tags)}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                        decoding="async"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    </div>
+
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-3 uppercase tracking-widest">
+                        <span>{post.tags?.[0]}</span>
                       </div>
-                      
-                      <div className="flex-1 flex flex-col">
-                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3 uppercase tracking-widest">
-                          {/* <span>{post.date}</span> */}
-                          <span>{post.tags?.[0]}</span>
-                        </div>
-                        
-                        <h2 className="text-2xl font-bold mb-3 leading-tight group-hover:underline decoration-2 underline-offset-4">
-                          {title}
-                        </h2>
-                        
-                        <p className="text-gray-600 line-clamp-3 mb-6 flex-1">
-                          {excerpt}
-                        </p>
-                        
-                        <span className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 group-hover:gap-4 transition-all">
-                          {t('blog.read_more')}
-                          <span className="text-lg">→</span>
-                        </span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
+
+                      <h2 className="text-2xl font-bold mb-3 leading-tight group-hover:underline decoration-2 underline-offset-4">
+                        {title}
+                      </h2>
+
+                      <p className="text-gray-600 line-clamp-3 mb-6 flex-1">
+                        {excerpt}
+                      </p>
+
+                      <span className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 group-hover:gap-4 transition-all">
+                        {t('blog.read_more')}
+                        <span className="text-lg">→</span>
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {filteredPosts.length === 0 && (
+            <p className="text-center text-gray-500 py-24">
+              {isZh ? '暂无相关文章。' : 'No articles found.'}
+            </p>
           )}
         </motion.div>
       </section>

@@ -27,6 +27,7 @@ const AdminLogin = lazy(() => import('./pages/admin/Login'));
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const ProjectEditor = lazy(() => import('./pages/admin/ProjectEditor'));
+const PostsManager = lazy(() => import('./pages/admin/PostsManager'));
 const PostEditor = lazy(() => import('./pages/admin/PostEditor'));
 
 // Loading Fallback
@@ -92,6 +93,7 @@ function App() {
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<Dashboard />} />
                   <Route path="projects/:id" element={<ProjectEditor />} />
+                  <Route path="posts" element={<PostsManager />} />
                   <Route path="posts/:id" element={<PostEditor />} />
                 </Route>
 

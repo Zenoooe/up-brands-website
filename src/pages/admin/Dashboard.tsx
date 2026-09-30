@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Project, BlogPost, Subscriber, Lead } from '../../types';
+import { Project, Subscriber, Lead } from '../../types';
 import { Link } from 'react-router-dom';
-import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff, CheckCircle2, ShieldCheck, ExternalLink, Settings as SettingsIcon } from 'lucide-react';
-import { backupImageToSupabase } from '../../utils/imageBackup';
-import { getSupabaseUrl, getValidImageUrl } from '../../utils/image';
+import { Plus, Edit2, Trash2, GripVertical, RefreshCw, Download, Eye, EyeOff, ShieldCheck, ExternalLink, Settings as SettingsIcon } from 'lucide-react';
+import { getValidImageUrl } from '../../utils/image';
 import {
   DndContext,
   closestCenter,
@@ -89,7 +88,7 @@ function SortableProjectRow({
       </td>
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2">
-          {project.backup_image_url && !project.backup_image_url.includes('supabase.co') ? (
+          {project.backup_image_url && (project.backup_image_url.includes('cdn.jsdelivr.net') || !project.backup_image_url.includes('supabase.co')) ? (
             <div title="Image backed up (China accessible)" className="p-2 text-green-600">
               <ShieldCheck size={18} />
             </div>
@@ -145,103 +144,8 @@ function SortableProjectRow({
   );
 }
 
-function SortablePostRow({ 
-  post, 
-  onDelete, 
-  onToggleVisibility 
-}: { 
-  post: BlogPost; 
-  onDelete: (id: string) => void;
-  onToggleVisibility: (id: string, current: boolean) => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition
-  } = useSortable({ id: post.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const isHidden = post.is_visible === false;
-
-  return (
-    <tr ref={setNodeRef} style={style} className={`bg-white hover:bg-gray-50 ${isHidden ? 'opacity-60 bg-gray-50/50' : ''}`}>
-      <td className="px-6 py-4 w-12 cursor-grab" {...attributes} {...listeners}>
-        <GripVertical size={20} className="text-gray-400" />
-      </td>
-      <td className="px-6 py-4 w-24">
-        <div className="relative">
-          <img src={getValidImageUrl(post.backup_image_url, post.imageUrl)} alt="" className={`w-12 h-12 object-cover rounded ${isHidden ? 'grayscale' : ''}`} />
-          {isHidden && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded">
-              <EyeOff size={16} className="text-white drop-shadow-md" />
-            </div>
-          )}
-        </div>
-      </td>
-      <td className="px-6 py-4 font-mono text-gray-500">{post.date}</td>
-      <td className="px-6 py-4 font-medium max-w-xs truncate" title={post.title_en}>
-         <span className={isHidden ? 'line-through text-gray-400' : ''}>{post.title_en}</span>
-         {isHidden && <span className="ml-2 text-xs text-gray-400 italic">(Hidden)</span>}
-      </td>
-      <td className="px-6 py-4 font-medium max-w-xs truncate" title={post.title_zh}>
-        <span className={isHidden ? 'line-through text-gray-400' : ''}>{post.title_zh}</span>
-      </td>
-      <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-2">
-          {post.backup_image_url && !post.backup_image_url.includes('supabase.co') ? (
-            <div title="Image backed up (China accessible)" className="p-2 text-green-600">
-              <ShieldCheck size={18} />
-            </div>
-          ) : (
-             <div title="Using original URL" className="p-2 text-gray-300">
-               <ShieldCheck size={18} />
-            </div>
-          )}
-          <button 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleVisibility(post.id, post.is_visible !== false);
-            }}
-            type="button"
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${isHidden ? 'text-gray-400' : 'text-gray-600'}`}
-            title={isHidden ? "Show Post" : "Hide Post"}
-          >
-            {isHidden ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-          <Link 
-            to={`/admin/posts/${post.id}`} 
-            onClick={(e) => e.stopPropagation()}
-            className="p-2 rounded-full hover:bg-blue-50 text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            <Edit2 size={18} />
-          </Link>
-          <button 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete(post.id);
-            }}
-            type="button"
-            className="p-2 rounded-full hover:bg-red-50 text-red-600 hover:text-red-800 transition-colors"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -318,16 +222,14 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [projectsRes, postsRes, subscribersRes, settingsRes, leadsRes] = await Promise.all([
+      const [projectsRes, subscribersRes, settingsRes, leadsRes] = await Promise.all([
         supabase.from('projects').select('*').order('sort_order', { ascending: true }),
-        supabase.from('posts').select('*').order('sort_order', { ascending: true }).order('date', { ascending: false }),
         supabase.from('subscribers').select('*').order('created_at', { ascending: false }),
         supabase.from('settings').select('*'),
         supabase.from('leads').select('*').order('created_at', { ascending: false })
       ]);
 
       if (projectsRes.data) setProjects(projectsRes.data);
-      if (postsRes.data) setPosts(postsRes.data);
       if (subscribersRes.data) setSubscribers(subscribersRes.data);
       if (leadsRes.data) setLeads(leadsRes.data);
       if (settingsRes.data) {
@@ -401,33 +303,6 @@ export default function Dashboard() {
     }
   };
 
-  const handlePostDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setPosts((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-
-        // Update sort order in backend
-        const updates = newItems.map((item, index) => ({
-          id: item.id,
-          sort_order: index
-        }));
-
-        Promise.all(updates.map(u => 
-          supabase.from('posts').update({ sort_order: u.sort_order }).eq('id', u.id)
-        )).catch(err => {
-          console.error('Error updating sort order:', err);
-          toast.error('Failed to save sort order');
-        });
-
-        return newItems;
-      });
-    }
-  };
-
   const toggleProjectVisibility = async (id: string, currentIsVisible: boolean) => {
     const newValue = !currentIsVisible;
     
@@ -449,32 +324,6 @@ export default function Dashboard() {
       toast.error('Failed to update visibility');
       // Revert on error
       setProjects(prev => prev.map(p => 
-        p.id === id ? { ...p, is_visible: currentIsVisible } : p
-      ));
-    }
-  };
-
-  const togglePostVisibility = async (id: string, currentIsVisible: boolean) => {
-    const newValue = !currentIsVisible;
-    
-    // Optimistic update
-    setPosts(prev => prev.map(p => 
-      p.id === id ? { ...p, is_visible: newValue } : p
-    ));
-
-    try {
-      const { error } = await supabase
-        .from('posts')
-        .update({ is_visible: newValue })
-        .eq('id', id);
-
-      if (error) throw error;
-      toast.success(newValue ? 'Post visible' : 'Post hidden');
-    } catch (error) {
-      console.error('Error toggling visibility:', error);
-      toast.error('Failed to update visibility');
-      // Revert on error
-      setPosts(prev => prev.map(p => 
         p.id === id ? { ...p, is_visible: currentIsVisible } : p
       ));
     }
@@ -520,34 +369,6 @@ export default function Dashboard() {
     } catch (e) {
       console.error('Delete error:', e);
       toast.error('Failed to delete project');
-    }
-  };
-
-  const deletePost = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-    try {
-      // 1. Get backup URL
-      const { data: post } = await supabase
-        .from('posts')
-        .select('backup_image_url')
-        .eq('id', id)
-        .single();
-        
-      // 2. Delete file if exists
-      if (post?.backup_image_url && post.backup_image_url.includes('supabase.co')) {
-          const parts = post.backup_image_url.split('/');
-          const fileName = parts[parts.length - 1];
-          if (fileName) {
-              await supabase.storage.from('project-images').remove([fileName]);
-          }
-      }
-
-      // 3. Delete record
-      await supabase.from('posts').delete().eq('id', id);
-      toast.success('Post and files deleted');
-      fetchData();
-    } catch (e) {
-      toast.error('Failed to delete post');
     }
   };
 
@@ -1054,54 +875,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Posts Section */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold uppercase tracking-tight">Blog Posts</h2>
-          <Link 
-            to="/admin/posts/new" 
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800"
-          >
-            <Plus size={16} /> Add Post
-          </Link>
-        </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handlePostDragEnd}
-          >
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 text-gray-500 uppercase">
-                <tr>
-                  <th className="px-6 py-3 w-12"></th>
-                  <th className="px-6 py-3">Image</th>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Title (EN)</th>
-                  <th className="px-6 py-3">Title (ZH)</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <SortableContext
-                items={posts.map(p => p.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <tbody className="divide-y divide-gray-100">
-                  {posts.map((post) => (
-                    <SortablePostRow 
-                      key={post.id} 
-                      post={post} 
-                      onDelete={deletePost}
-                      onToggleVisibility={togglePostVisibility}
-                    />
-                  ))}
-                </tbody>
-              </SortableContext>
-            </table>
-          </DndContext>
-        </div>
-      </section>
 
       {/* Subscribers Section */}
       <section>

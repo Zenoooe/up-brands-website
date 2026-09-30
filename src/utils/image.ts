@@ -14,6 +14,11 @@ export function getValidImageUrl(backupUrl?: string | null, primaryUrl?: string 
 export const getSupabaseUrl = (url: string, width = 800) => {
   if (!url) return '';
 
+  // 0. jsDelivr CDN (GitHub-hosted assets) - serve directly, no proxy needed
+  if (url.includes('cdn.jsdelivr.net')) {
+    return url;
+  }
+
   // 1. Unsplash Optimization (Direct)
   if (url.includes('images.unsplash.com')) {
     const urlObj = new URL(url);

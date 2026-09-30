@@ -4,8 +4,7 @@ import { StrictModeDroppable } from '../../../components/common/StrictModeDroppa
 import { GalleryImageItem } from './GalleryImageItem';
 import { Plus, Code, Link2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { backupImageToSupabase } from '../../../utils/imageBackup';
-import { supabase } from '../../../lib/supabase';
+import { uploadImageFromUrl } from '../../../utils/imageUpload';
 import {
   extractProjectImagesFromHtml,
   isProjectPageUrl,
@@ -161,48 +160,26 @@ export const GalleryEditor = forwardRef<GalleryEditorHandle, GalleryEditorProps>
     };
 
     const handleRemoveImage = useCallback(async (index: number) => {
-      const itemToRemove = items[index];
-      
-      // Delete from UI immediately
+      // Delete from UI. CDN-hosted files remain on the `assets` branch.
       setItems(prev => prev.filter((_, i) => i !== index));
-      
-      // If it's a Supabase file, delete it from storage
-      if (itemToRemove && itemToRemove.url.includes('supabase.co')) {
-          try {
-              const parts = itemToRemove.url.split('/');
-              const fileName = parts[parts.length - 1];
-              if (fileName) {
-                  const { error } = await supabase.storage.from('project-images').remove([fileName]);
-                  if (error) {
-                      console.warn('Failed to delete file from storage', error);
-                  } else {
-                      toast.success('File deleted from storage');
-                  }
-              }
-          } catch (e) {
-              console.error('Error deleting file:', e);
-          }
-      }
-    }, [items]);
+    }, []);
 
-    const handleBackupSingle = useCallback(async (url: string, index: number) => {
-      // Deprecated functionality
-      const targetProjectId = projectId || crypto.randomUUID();
-      const toastId = toast.loading('Backing up image...');
+    const handleUploadToCdn = useCallback(async (url: string, index: number) => {
+      const toastId = toast.loading('Uploading image to CDN...');
 
       try {
-        const newUrl = await backupImageToSupabase(url, targetProjectId);
+        const newUrl = await uploadImageFromUrl(url, 'projects');
         setItems(prev => {
             const newItems = [...prev];
             newItems[index] = { ...newItems[index], url: newUrl };
             return newItems;
         });
-        toast.success('Image backed up!', { id: toastId });
+        toast.success('Image uploaded to CDN!', { id: toastId });
       } catch (error) {
         console.error(error);
-        toast.error('Backup failed', { id: toastId });
+        toast.error('Upload failed', { id: toastId });
       }
-    }, [projectId]);
+    }, []);
 
     const onDragEnd = (result: any) => {
       if (!result.destination) return;
@@ -300,7 +277,7 @@ export const GalleryEditor = forwardRef<GalleryEditorHandle, GalleryEditorProps>
                       url={item.url}
                       index={index}
                       onRemove={handleRemoveImage}
-                      onBackup={handleBackupSingle}
+                      onUpload={handleUploadToCdn}
                     />
                   ))}
                   {provided.placeholder}
