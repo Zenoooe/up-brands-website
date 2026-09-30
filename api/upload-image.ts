@@ -68,18 +68,26 @@ async function githubFetch(path: string, init?: RequestInit) {
   });
 }
 
+async function readError(res: Response) {
+  const body = await res.text().catch(() => '');
+  return `GitHub ${res.status}${body ? `: ${body.slice(0, 300)}` : ''}`;
+}
+
 async function ensureBranch() {
   const check = await githubFetch(`/branches/${BRANCH}`);
   if (check.ok) return;
+  const checkInfo = await readError(check);
 
   // Branch missing → create it from the repo's default branch.
   const repoRes = await githubFetch('');
-  if (!repoRes.ok) throw new Error('Unable to read repository info');
+  if (!repoRes.ok) {
+    throw new Error(`Unable to read repository info (${await readError(repoRes)}); branch check: ${checkInfo}`);
+  }
   const repo = await repoRes.json();
   const defaultBranch = repo.default_branch || 'main';
 
   const refRes = await githubFetch(`/git/ref/heads/${defaultBranch}`);
-  if (!refRes.ok) throw new Error(`Unable to read ${defaultBranch} branch`);
+  if (!refRes.ok) throw new Error(`Unable to read ${defaultBranch} branch (${await readError(refRes)})`);
   const ref = await refRes.json();
 
   const createRes = await githubFetch('/git/refs', {
@@ -88,7 +96,7 @@ async function ensureBranch() {
   });
   // 422 means it was created concurrently — that's fine.
   if (!createRes.ok && createRes.status !== 422) {
-    throw new Error(`Unable to create ${BRANCH} branch`);
+    throw new Error(`Unable to create ${BRANCH} branch (${await readError(createRes)})`);
   }
 }
 
@@ -157,7 +165,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!uploadRes.ok) {
       const errorText = await uploadRes.text();
       console.error('GitHub upload error:', uploadRes.status, errorText);
-      throw new Error(`GitHub upload failed: ${uploadRes.status}`);
+      throw new Error(`GitHub upload failed: ${uploadRes.status}: ${errorText.slice(0, 300)}`);
     }
 
     const cdnUrl = `${CDN_BASE}/${path}`;
