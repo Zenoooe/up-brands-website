@@ -209,6 +209,44 @@ function sanitizeAssetName(name: string) {
   return cleaned || 'image';
 }
 
+async function assetsGithubFetch(pat: string, path: string, init?: RequestInit) {
+  return fetch(`https://api.github.com/repos/${ASSETS_OWNER}/${ASSETS_REPO}${path}`, {
+    ...init,
+    headers: {
+      Accept: 'application/vnd.github.v3+json',
+      Authorization: `token ${pat}`,
+      'Content-Type': 'application/json',
+      ...(init?.headers || {}),
+    },
+  });
+}
+
+// The `assets` branch may not exist yet (first ever upload); create it from the
+// repo's default branch. Mirrors ensureBranch() in api/upload-image.ts.
+async function ensureAssetsBranch(pat: string) {
+  const check = await assetsGithubFetch(pat, `/branches/${ASSETS_BRANCH}`);
+  if (check.ok) return;
+
+  const repoRes = await assetsGithubFetch(pat, '');
+  if (!repoRes.ok) throw new Error(`Unable to read repository info (GitHub ${repoRes.status})`);
+  const repo = (await repoRes.json()) as { default_branch?: string };
+  const defaultBranch = repo.default_branch || 'main';
+
+  const refRes = await assetsGithubFetch(pat, `/git/ref/heads/${defaultBranch}`);
+  if (!refRes.ok) throw new Error(`Unable to read ${defaultBranch} branch (GitHub ${refRes.status})`);
+  const ref = (await refRes.json()) as { object?: { sha?: string } };
+
+  const createRes = await assetsGithubFetch(pat, '/git/refs', {
+    method: 'POST',
+    body: JSON.stringify({ ref: `refs/heads/${ASSETS_BRANCH}`, sha: ref.object?.sha }),
+  });
+  // 422 means it was created concurrently — that's fine.
+  if (!createRes.ok && createRes.status !== 422) {
+    const body = await createRes.text().catch(() => '');
+    throw new Error(`Unable to create ${ASSETS_BRANCH} branch (GitHub ${createRes.status}: ${body.slice(0, 200)})`);
+  }
+}
+
 function readJsonBody(req: any): Promise<any> {
   return new Promise((resolve, reject) => {
     let raw = '';
@@ -267,6 +305,8 @@ async function uploadToGithubAssets(
   const ext = EXT_BY_TYPE[contentType.split(';')[0].trim()] || extFromName || 'jpg';
   const safeFolder = (folder || 'blog').replace(/[^\p{L}\p{N}_-]+/gu, '').slice(0, 40) || 'blog';
   const path = `${safeFolder}/${Date.now()}-${sanitizeAssetName(originalName)}.${ext}`;
+
+  await ensureAssetsBranch(pat);
 
   const uploadRes = await fetch(
     `https://api.github.com/repos/${ASSETS_OWNER}/${ASSETS_REPO}/contents/${path}`,
