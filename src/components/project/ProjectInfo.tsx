@@ -1,26 +1,28 @@
 import { Project } from '../../types';
 import { getProjectDisplayCategory, getProjectDisplaySubtitle } from '../../../shared/project-metadata';
-import { useTranslation } from 'react-i18next';
+import { parseProjectTags } from '../../utils/tags';
+import { useTagTranslations } from '../../hooks/useTagTranslations';
 
 interface ProjectInfoProps {
   project: Project;
 }
 
 export const ProjectInfo = ({ project }: ProjectInfoProps) => {
-  const { t } = useTranslation();
+  const { translateTag } = useTagTranslations();
   const subtitle = getProjectDisplaySubtitle(project);
-  const categoryText = getProjectDisplayCategory(project);
-  
-  // Translate category tags if needed
-  const categoryTags = categoryText
-    ? categoryText.split(',').map((tag: string) => {
-        const trimmed = tag.trim();
-        // Check if it's an industry or service and translate
-        return t(`tags.industries.${trimmed}`, { 
-          defaultValue: t(`tags.services.${trimmed}`, { defaultValue: trimmed }) 
-        });
-      }).filter(Boolean)
-    : [];
+
+  // Prefer the structured tags stored as JSON so tags containing commas
+  // (e.g. "Architecture (Retail, Hospitality, Workspace Design)") stay intact.
+  const { services, industries } = parseProjectTags(project.category);
+  const rawTags =
+    services.length > 0 || industries.length > 0
+      ? [...services, ...industries]
+      : getProjectDisplayCategory(project)
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+
+  const categoryTags = rawTags.map((tag) => translateTag(tag)).filter(Boolean);
 
   return (
     <div className="w-full pt-16 pb-12 px-8 md:px-16 flex flex-col md:flex-row md:items-start justify-between gap-8 bg-[#F5F2EA]">

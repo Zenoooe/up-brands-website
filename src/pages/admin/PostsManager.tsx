@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { BlogPost } from '../../types';
 import { Link } from 'react-router-dom';
-import { Plus, Edit2, Trash2, GripVertical, Eye, EyeOff, ShieldCheck, ShieldOff, ImageOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, Eye, EyeOff, ShieldCheck, ShieldOff, ImageOff, ExternalLink } from 'lucide-react';
 import { getValidImageUrl } from '../../utils/image';
 import {
   DndContext,
@@ -149,6 +149,15 @@ function SortablePostRow({
         >
           <Edit2 size={18} />
         </Link>
+        <a
+          href={`/blog/${post.slug}`}
+          target="_blank"
+          rel="noreferrer"
+          className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-black transition-colors"
+          title={t('admin.posts.viewLive')}
+        >
+          <ExternalLink size={18} />
+        </a>
         <button
           type="button"
           onClick={() => onDelete(post.id)}

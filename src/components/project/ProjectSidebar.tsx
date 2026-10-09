@@ -1,7 +1,8 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DOMPurify from 'dompurify';
 import { Project } from '../../types';
+import { convertChinese } from '../../utils/zhConvert';
 
 interface ProjectSidebarProps {
   project: Project;
@@ -13,20 +14,50 @@ export const ProjectSidebar = ({ project, isOpen, onClose }: ProjectSidebarProps
   const { i18n } = useTranslation();
 
   // Multi-language Description Logic
+  // The stored Chinese description is converted to the visitor's preferred
+  // script (Simplified/Traditional) on the client, so zh-TW always renders
+  // Traditional even when no pre-generated description_tw exists.
   const descriptionEn = project.description_en;
   const descriptionZh = project.description;
-  const descriptionTw = project.description_tw;
+  const isZh = i18n.language.startsWith('zh');
+  const isSimplified = isZh && !/(TW|HK|MO|Hant)/.test(i18n.language);
+
+  const [convertedDescription, setConvertedDescription] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!isZh || !descriptionZh) {
+      setConvertedDescription(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const target = isSimplified ? 'simplified' : 'traditional';
+
+    void convertChinese(descriptionZh, target).then((result) => {
+      if (isMounted) {
+        setConvertedDescription(result);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isZh, isSimplified, descriptionZh]);
+
   const description = useMemo(() => {
-    if (i18n.language.startsWith('en') && descriptionEn) {
-      return descriptionEn;
+    if (i18n.language.startsWith('en')) {
+      return descriptionEn || descriptionZh || '';
     }
 
-    if (i18n.language.includes('TW') || i18n.language.includes('Hant') || i18n.language === 'zh-HK') {
-      return descriptionTw || descriptionZh || "";
+    if (isZh) {
+      return convertedDescription ?? descriptionZh ?? '';
     }
 
-    return descriptionZh || "";
-  }, [i18n.language, descriptionEn, descriptionTw, descriptionZh]);
+    return descriptionZh || '';
+  }, [i18n.language, isZh, descriptionEn, descriptionZh, convertedDescription]);
 
   const cleanDescription = useMemo(() => {
     return DOMPurify.sanitize(description);

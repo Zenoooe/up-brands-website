@@ -16,6 +16,8 @@ export interface Project {
   instagramLink?: string;
   worldBrandSocietyLink?: string;
   packagingOfTheWorldLink?: string;
+  abduzeedoLink?: string;
+  inspirationGridLink?: string;
   images?: string[]; // Array of project detail images
   description?: string; // Full project description (Default/Chinese)
   description_tw?: string; // Traditional Chinese description

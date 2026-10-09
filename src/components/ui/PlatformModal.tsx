@@ -170,6 +170,20 @@ export const PlatformModal = ({ project, position, onClose, mode = 'view', onCon
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black text-center leading-[1.1]">Packaging<br/>World</span>
             </a>
           )}
+
+          {project.abduzeedoLink && (
+            <a href={project.abduzeedoLink} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group" title="Abduzeedo">
+              <div className="w-12 h-12 bg-[#FF3E00] text-white rounded-full flex items-center justify-center text-[9px] font-black group-hover:scale-110 transition-transform shadow-sm">ABDZ</div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black text-center leading-[1.1]">Abduzeedo</span>
+            </a>
+          )}
+
+          {project.inspirationGridLink && (
+            <a href={project.inspirationGridLink} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group" title="The Inspiration Grid">
+              <div className="w-12 h-12 bg-[#111111] text-white rounded-full flex items-center justify-center text-[9px] font-black group-hover:scale-110 transition-transform shadow-sm">TIG</div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black text-center leading-[1.1]">Inspiration<br/>Grid</span>
+            </a>
+          )}
         </div>
 
         <div className="border-t border-gray-100 pt-3">

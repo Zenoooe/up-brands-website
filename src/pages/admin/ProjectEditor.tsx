@@ -47,6 +47,8 @@ export default function ProjectEditor() {
     instagramLink: '',
     worldBrandSocietyLink: '',
     packagingOfTheWorldLink: '',
+    abduzeedoLink: '',
+    inspirationGridLink: '',
     images: [],
     description: '',
     description_tw: '',
@@ -738,6 +740,14 @@ export default function ProjectEditor() {
              <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Packaging of the World Link</label>
                 <input type="url" value={formData.packagingOfTheWorldLink || ''} onChange={e => setFormData(prev => ({...prev, packagingOfTheWorldLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Abduzeedo Link</label>
+                <input type="url" value={formData.abduzeedoLink || ''} onChange={e => setFormData(prev => ({...prev, abduzeedoLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
+             </div>
+             <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Inspiration Grid Link</label>
+                <input type="url" value={formData.inspirationGridLink || ''} onChange={e => setFormData(prev => ({...prev, inspirationGridLink: e.target.value}))} className="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-black outline-none" />
              </div>
           </div>
         </div>

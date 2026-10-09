@@ -409,11 +409,11 @@ export default function ProjectDetail() {
           </button>
         </div>
         
-        {/* Floating Button (Mobile) */}
-        <div className="lg:hidden fixed bottom-8 right-6 z-[60]">
+        {/* Floating Button (Mobile) — bottom-left, vertically centred with the chat launcher (both h-14 / bottom-6) */}
+        <div className="lg:hidden fixed bottom-6 left-6 z-[60]">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="bg-[#1A1A1A] text-white text-sm font-bold px-6 py-3 rounded-full shadow-lg transition-transform hover:scale-105"
+            className="h-14 bg-[#1A1A1A] text-white text-sm font-bold px-6 rounded-full shadow-lg flex items-center transition-transform hover:scale-105"
           >
             About the project {isSidebarOpen ? '×' : '+'}
           </button>

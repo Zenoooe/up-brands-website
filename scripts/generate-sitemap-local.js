@@ -53,21 +53,34 @@ async function generateLocalSitemap() {
   });
 
   // Fetch projects
+  let projects = [];
+  let posts = [];
   try {
-    const { data: projects, error: projectsError } = await supabase
+    const { data: projectsData, error: projectsError } = await supabase
       .from('projects')
       .select('id, slug, created_at, updated_at')
       .eq('is_visible', true);
 
-    if (projectsError) console.error('Error fetching projects:', projectsError);
+    if (projectsError) {
+      console.warn('Supabase unavailable for projects:', projectsError.message);
+    } else {
+      projects = projectsData || [];
+    }
 
     // Fetch blog posts
-    const { data: posts, error: postsError } = await supabase
+    const { data: postsData, error: postsError } = await supabase
       .from('posts')
       .select('slug, created_at, updated_at, date')
       .eq('is_visible', true);
 
-    if (postsError) console.error('Error fetching posts:', postsError);
+    if (postsError) {
+      console.warn('Supabase unavailable for posts:', postsError.message);
+    } else {
+      posts = postsData || [];
+    }
+  } catch (e) {
+    console.warn('Supabase connection failed, skipping dynamic routes:', e.message);
+  }
 
     // Helper to escape XML special characters
     const escapeXml = (unsafe) => {
@@ -116,10 +129,6 @@ async function generateLocalSitemap() {
   </url>`;
       });
     }
-
-  } catch (e) {
-    console.error('Exception fetching data:', e);
-  }
 
   xml += `
 </urlset>`;

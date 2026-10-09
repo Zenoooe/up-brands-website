@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -20,6 +20,7 @@ import {
   ImagePlus,
   ExternalLink,
   Trash2,
+  X,
 } from 'lucide-react';
 import { uploadImageFile } from '../../utils/imageUpload';
 import toast from 'react-hot-toast';
@@ -32,41 +33,207 @@ const turndown = new TurndownService({
   emDelimiter: '*',
 });
 turndown.addRule('hr', { filter: 'hr', replacement: () => '\n\n---\n\n' });
+// Keep image alt text verbatim: the default rule escapes underscores, turning a
+// filename like "hf_2026..." into "hf\_2026...".
+turndown.addRule('image', {
+  filter: 'img',
+  replacement: (_content, node) => {
+    const el = node as HTMLImageElement;
+    return `![${el.getAttribute('alt') ?? ''}](${el.getAttribute('src') ?? ''})`;
+  },
+});
+
+// execCommand editing leaves artefacts that turndown would otherwise turn into
+// malformed markdown: a stray <br> at the start of a heading ("##   \nTitle"),
+// bold text inside a heading ("## **Title**"), or <strong> wrapping a line
+// break ("**  \n1. Title**"). Normalise a copy of the DOM into shapes that map
+// to clean markdown. The live editor DOM is never touched.
+function normalizeHtmlForMarkdown(html: string): string {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const body = doc.body;
+  const headings = 'h1,h2,h3,h4,h5,h6';
+
+  // Headings hold plain text only: drop inline markup and line breaks.
+  body.querySelectorAll(headings).forEach((heading) => {
+    heading.textContent = (heading.textContent ?? '').replace(/\s+/g, ' ').trim();
+  });
+  // An empty heading is just noise.
+  body.querySelectorAll(headings).forEach((heading) => {
+    if (!(heading.textContent ?? '').trim()) heading.remove();
+  });
+
+  // Emphasis must not wrap a line break; split it so <br> sits between runs.
+  body.querySelectorAll('strong,b,em,i').forEach((el) => {
+    if (!el.querySelector('br')) return;
+    const fragment = doc.createDocumentFragment();
+    let run = doc.createElement(el.tagName.toLowerCase());
+    Array.from(el.childNodes).forEach((node) => {
+      if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === 'BR') {
+        if (run.childNodes.length) fragment.appendChild(run);
+        fragment.appendChild(node.cloneNode());
+        run = doc.createElement(el.tagName.toLowerCase());
+      } else {
+        run.appendChild(node);
+      }
+    });
+    if (run.childNodes.length) fragment.appendChild(run);
+    el.replaceWith(fragment);
+  });
+
+  return body.innerHTML;
+}
+
+const htmlToMarkdown = (el: HTMLElement) => turndown.turndown(normalizeHtmlForMarkdown(el.innerHTML));
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+// Turn a base64 data: URL (Word / Google Docs embed pictures this way) into a
+// File so it can go through the same CDN upload path as a real image file.
+async function dataUrlToFile(dataUrl: string, index: number): Promise<File> {
+  const blob = await (await fetch(dataUrl)).blob();
+  const ext = (blob.type.split('/')[1] || 'png').replace('+xml', '');
+  return new File([blob], `pasted-${index}.${ext}`, { type: blob.type || 'image/png' });
+}
+
+// Pasted rich text (Word, Google Docs, web pages) carries inline base64 pictures
+// plus a lot of presentational junk. Keep only semantic tags and pull the base64
+// pictures out, so they can be uploaded and no huge data URL reaches the DB.
+function cleanPastedHtml(html: string): { html: string; dataUrls: string[] } {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const body = doc.body;
+  const dataUrls: string[] = [];
+
+  body
+    .querySelectorAll('style,script,meta,link,title,noscript,iframe,svg,canvas,object,embed')
+    .forEach((el) => el.remove());
+
+  body.querySelectorAll('img').forEach((img) => {
+    const src = img.getAttribute('src') ?? '';
+    if (src.startsWith('data:image/')) dataUrls.push(src);
+    img.remove();
+  });
+
+  const allowed = new Set([
+    'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
+    'P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U',
+    'UL', 'OL', 'LI', 'BLOCKQUOTE', 'A', 'CODE', 'PRE', 'HR',
+  ]);
+  Array.from(body.querySelectorAll('*')).forEach((el) => {
+    if (!allowed.has(el.tagName)) {
+      el.replaceWith(...Array.from(el.childNodes));
+      return;
+    }
+    Array.from(el.attributes).forEach((attr) => {
+      if (el.tagName === 'A' && attr.name === 'href') return;
+      el.removeAttribute(attr.name);
+    });
+  });
+
+  return { html: body.innerHTML, dataUrls };
+}
+
 type ToolId = 'bold' | 'italic' | 'heading' | 'quote' | 'ul' | 'ol' | 'link' | 'code' | 'image' | 'hr';
+
+type PoolImage = { url: string; name: string };
 
 type MarkdownFieldProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  poolImages: PoolImage[];
+  poolUploading: boolean;
+  onUploadImages: (files: File[]) => Promise<PoolImage[]>;
+  onRemoveImage: (url: string) => void;
 };
 
-function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldProps) {
+// The rich surface is user-owned while editing: React must never re-render the
+// markdown tree underneath the caret, because that is exactly what reverted a
+// freshly typed Enter / line break. memo with an always-equal comparator freezes
+// the subtree until we deliberately remount it with a new key.
+const FrozenMarkdown = memo(
+  function FrozenMarkdown({ source }: { source: string }) {
+    return <ReactMarkdown remarkPlugins={[remarkBreaks]}>{source}</ReactMarkdown>;
+  },
+  () => true
+);
+
+function MarkdownField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  poolImages,
+  poolUploading,
+  onUploadImages,
+  onRemoveImage,
+}: MarkdownFieldProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [mode, setMode] = useState<'split' | 'write' | 'preview'>('split');
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const poolFileRef = useRef<HTMLInputElement>(null);
+  // Rich (WYSIWYG) editing is the primary surface; Markdown is an optional view
+  // for people who prefer the raw source (or want to copy it out).
+  const [mode, setMode] = useState<'rich' | 'split' | 'markdown'>('rich');
   const [activeSurface, setActiveSurface] = useState<'source' | 'preview'>('source');
   const [previewFocused, setPreviewFocused] = useState(false);
-  // While the preview is being edited we feed it a frozen markdown snapshot so
-  // React never rewrites the DOM under the caret. The live value still flows out
-  // through onChange, keeping the source pane in sync.
+  // While the rich editor is in use we feed it a frozen markdown snapshot so React
+  // never rewrites the DOM under the caret. Re-rendering it from the markdown is
+  // exactly what made a fresh Enter / line break snap back to its original form.
   const [previewSource, setPreviewSource] = useState(value);
+  // Bumping this remounts FrozenMarkdown, rebuilding the rich DOM from markdown
+  // only when we intend to (external value change, or returning from Markdown view).
   const [previewKey, setPreviewKey] = useState(0);
-  const editingPreview = useRef(false);
+  // The markdown we last emitted through onChange. When it comes back on the value
+  // prop we skip re-rendering, because the DOM already reflects it.
+  const lastEmittedRef = useRef<string | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
   const previewDirty = useRef(false);
+  // Last known caret position (as a text offset) inside the rich editor. Kept up
+  // to date via selectionchange so inserting from the image pool still lands at
+  // the caret even though clicking a thumbnail / opening the file dialog steals
+  // focus and clears the DOM selection.
+  const savedCaretOffsetRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!editingPreview.current) setPreviewSource(value);
+    if (value === lastEmittedRef.current) return;
+    setPreviewSource(value);
+    setPreviewKey((k) => k + 1);
   }, [value]);
 
-  const previewActive = mode === 'preview' || (mode === 'split' && activeSurface === 'preview');
+  // Rebuild the rich DOM from markdown when coming back from the Markdown view,
+  // where the editable surface was unmounted and the snapshot may be stale.
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    const prev = prevModeRef.current;
+    if (prev === mode) return;
+    prevModeRef.current = mode;
+    if (prev === 'markdown' && mode !== 'markdown') {
+      setPreviewSource(valueRef.current);
+      setPreviewKey((k) => k + 1);
+    }
+  }, [mode]);
+
+  // Track the caret while the rich editor is in use.
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const el = previewRef.current;
+      const sel = window.getSelection();
+      if (!el || !sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      if (!el.contains(range.startContainer)) return;
+      const probe = range.cloneRange();
+      probe.selectNodeContents(el);
+      probe.setEnd(range.startContainer, range.startOffset);
+      savedCaretOffsetRef.current = probe.toString().length;
+    };
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+  }, []);
+
+  const previewActive = mode === 'rich' || (mode === 'split' && activeSurface === 'preview');
 
   const insertText = (snippet: string) => {
     const el = textareaRef.current;
@@ -74,8 +241,11 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
       onChange(value + snippet);
       return;
     }
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
+    // When the textarea isn't focused (e.g. inserting from the image pool) fall
+    // back to appending at the end instead of dropping the snippet at position 0.
+    const focused = document.activeElement === el;
+    const start = focused ? el.selectionStart : value.length;
+    const end = focused ? el.selectionEnd : value.length;
     const next = value.slice(0, start) + snippet + value.slice(end);
     onChange(next);
     requestAnimationFrame(() => {
@@ -117,37 +287,115 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
     const el = previewRef.current;
     if (!el) return;
     previewDirty.current = true;
-    onChange(turndown.turndown(el.innerHTML));
+    const md = htmlToMarkdown(el);
+    lastEmittedRef.current = md;
+    onChange(md);
   };
 
-  const handleImageSelected = async (file: File) => {
-    setUploadingImage(true);
-    const toastId = toast.loading(t('admin.editor.uploading'));
-    try {
-      const url = await uploadImageFile(file, 'blog');
-      const alt = file.name.replace(/\.[^.]+$/, '');
-      if (previewActive) {
-        const el = previewRef.current;
-        if (el) {
-          el.focus();
-          document.execCommand('insertHTML', false, `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}">`);
-          syncFromPreview();
+  const restoreRichCaret = () => {
+    const el = previewRef.current;
+    if (!el) return;
+    el.focus();
+    const sel = window.getSelection();
+    if (!sel) return;
+    const range = document.createRange();
+    const offset = savedCaretOffsetRef.current;
+    let placed = false;
+    if (offset != null) {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      let remaining = offset;
+      let node = walker.nextNode();
+      while (node) {
+        if (remaining <= node.textContent!.length) {
+          range.setStart(node, remaining);
+          range.collapse(true);
+          placed = true;
+          break;
         }
-      } else {
-        insertText(`\n\n![${alt}](${url})\n\n`);
+        remaining -= node.textContent!.length;
+        node = walker.nextNode();
       }
-      toast.success(t('admin.editor.uploadSuccess'), { id: toastId });
-    } catch (error) {
-      console.error(error);
-      const detail = error instanceof Error ? error.message : '';
-      toast.error(detail ? `${t('admin.editor.uploadFailed')}: ${detail}` : t('admin.editor.uploadFailed'), { id: toastId });
-    } finally {
-      setUploadingImage(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+    if (!placed) {
+      range.selectNodeContents(el);
+      range.collapse(false);
+    }
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+
+  // Insert an image coming from the shared image pool at the current caret.
+  const insertImageAtCaret = (url: string, alt: string) => {
+    if (previewActive) {
+      const el = previewRef.current;
+      if (!el) return;
+      if (document.activeElement === el) el.focus();
+      else restoreRichCaret();
+      document.execCommand('insertHTML', false, `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}">`);
+      syncFromPreview();
+    } else {
+      insertText(`\n\n![${alt}](${url})\n\n`);
     }
   };
 
   const handlePreviewInput = () => {
+    syncFromPreview();
+  };
+
+  // Rich-text paste: upload every picture to the CDN, drop it into the shared
+  // image pool, and insert it at the caret. Base64 pictures are pulled out of
+  // the pasted HTML so no huge data URL ever reaches the database.
+  const handlePreviewPaste = async (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const clipboard = e.clipboardData;
+    if (!clipboard) return;
+
+    const files: File[] = [];
+    const seen = new Set<string>();
+    const addFile = (file: File | null) => {
+      if (!file || !file.type.startsWith('image/')) return;
+      const key = `${file.name}:${file.size}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      files.push(file);
+    };
+    Array.from(clipboard.items).forEach((item) => {
+      if (item.kind === 'file') addFile(item.getAsFile());
+    });
+    Array.from(clipboard.files).forEach(addFile);
+
+    const rawHtml = clipboard.getData('text/html');
+    const { html: cleanHtml, dataUrls } = rawHtml
+      ? cleanPastedHtml(rawHtml)
+      : { html: '', dataUrls: [] as string[] };
+    const plainText = clipboard.getData('text/plain');
+
+    // Nothing to upload: keep the browser's default paste.
+    if (files.length === 0 && dataUrls.length === 0) return;
+    e.preventDefault();
+
+    // Insert the text part first, keeping the rich structure but without images.
+    if (cleanHtml) document.execCommand('insertHTML', false, cleanHtml);
+    else if (plainText) document.execCommand('insertText', false, plainText);
+
+    // Remember the caret so the pictures land right after the pasted text, even
+    // though the uploads finish later.
+    const selection = window.getSelection();
+    const caret = selection && selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null;
+
+    const inlineFiles = await Promise.all(dataUrls.map((url, i) => dataUrlToFile(url, i)));
+    const uploaded = await onUploadImages([...inlineFiles, ...files]);
+
+    const el = previewRef.current;
+    if (!el || uploaded.length === 0) return;
+    el.focus();
+    const sel = window.getSelection();
+    if (sel && caret) {
+      sel.removeAllRanges();
+      sel.addRange(caret);
+    }
+    uploaded.forEach((img) => {
+      document.execCommand('insertHTML', false, `<img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.name)}">`);
+    });
     syncFromPreview();
   };
 
@@ -165,22 +413,22 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
   };
 
   const handlePreviewFocus = () => {
-    editingPreview.current = true;
     previewDirty.current = false;
     setPreviewFocused(true);
     setActiveSurface('preview');
   };
 
   const handlePreviewBlur = () => {
-    editingPreview.current = false;
     setPreviewFocused(false);
     // Clicking in and out without editing should not rewrite the markdown.
     if (!previewDirty.current) return;
     previewDirty.current = false;
     const el = previewRef.current;
-    const next = el ? turndown.turndown(el.innerHTML) : value;
-    setPreviewSource(next);
-    setPreviewKey((k) => k + 1);
+    const next = el ? htmlToMarkdown(el) : value;
+    // Never feed the markdown back into the DOM here: re-rendering the rich
+    // surface from markdown is what undid a freshly typed Enter / line break.
+    // The DOM is left exactly as the user sees it; we only sync the value out.
+    lastEmittedRef.current = next;
     if (next !== value) onChange(next);
   };
 
@@ -208,7 +456,9 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
           document.execCommand('insertHTML', false, `<code>${escapeHtml(selected)}</code>`);
           break;
         }
-        case 'image': fileInputRef.current?.click(); return;
+        case 'image':
+          poolFileRef.current?.click();
+          return;
         case 'hr': document.execCommand('insertHorizontalRule'); break;
       }
       syncFromPreview();
@@ -223,7 +473,7 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
       case 'ol': prefixLine('1. '); break;
       case 'link': wrapSelection('[', '](https://)'); break;
       case 'code': wrapSelection('`'); break;
-      case 'image': fileInputRef.current?.click(); break;
+      case 'image': poolFileRef.current?.click(); break;
       case 'hr': onChange(`${value}\n\n---\n\n`); break;
     }
   };
@@ -243,16 +493,6 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) void handleImageSelected(file);
-        }}
-      />
       <div className="flex flex-wrap items-center gap-1 px-2 py-2 border-b border-gray-200 bg-gray-50">
         {tools.map(({ id, icon: Icon, title }) => (
           <button
@@ -261,7 +501,7 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
             title={title}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => applyTool(id)}
-            disabled={id === 'image' && uploadingImage}
+            disabled={id === 'image' && poolUploading}
             className="p-2 rounded text-gray-600 hover:bg-gray-200 hover:text-black disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
           >
             <Icon size={16} />
@@ -270,10 +510,10 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
         <div className="ml-auto flex items-center gap-1 bg-white rounded-md border border-gray-200 p-0.5">
           <button
             type="button"
-            onClick={() => setMode('write')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${mode === 'write' ? 'bg-black text-white' : 'text-gray-500 hover:text-black'}`}
+            onClick={() => setMode('rich')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${mode === 'rich' ? 'bg-black text-white' : 'text-gray-500 hover:text-black'}`}
           >
-            {t('admin.editor.write')}
+            {t('admin.editor.rich')}
           </button>
           <button
             type="button"
@@ -284,16 +524,69 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
           </button>
           <button
             type="button"
-            onClick={() => setMode('preview')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${mode === 'preview' ? 'bg-black text-white' : 'text-gray-500 hover:text-black'}`}
+            onClick={() => setMode('markdown')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${mode === 'markdown' ? 'bg-black text-white' : 'text-gray-500 hover:text-black'}`}
           >
-            {t('admin.editor.preview')}
+            {t('admin.editor.markdown')}
           </button>
         </div>
       </div>
 
+      {/* Attachment-style image pool, shared by EN & 中文. Click a thumbnail to
+          drop it at the caret of the field you are editing. */}
+      <div className="flex items-center gap-2 px-2 py-2 border-b border-gray-200 bg-white overflow-x-auto" data-lenis-prevent>
+        <span className="shrink-0 flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-gray-400">
+          <ImagePlus size={14} /> {t('admin.editor.imagePool')}
+        </span>
+        <input
+          ref={poolFileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files && files.length) onUploadImages(Array.from(files));
+            e.target.value = '';
+          }}
+        />
+        {poolImages.length === 0 && (
+          <span className="shrink-0 text-xs text-gray-400">{t('admin.editor.imagePoolHint')}</span>
+        )}
+        {poolImages.map((img) => (
+          <div key={img.url} className="group relative shrink-0">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => insertImageAtCaret(img.url, img.name)}
+              title={`${t('admin.editor.insertImage')}: ${img.name}`}
+              className="block w-12 h-12 overflow-hidden rounded border border-gray-200 bg-white hover:border-black transition-colors"
+            >
+              <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onRemoveImage(img.url)}
+              title={t('admin.editor.removeImage')}
+              className="absolute -top-1.5 -right-1.5 hidden group-hover:flex items-center justify-center w-4 h-4 rounded-full bg-black text-white hover:bg-red-500 transition-colors"
+            >
+              <X size={10} />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => poolFileRef.current?.click()}
+          disabled={poolUploading}
+          className="ml-auto shrink-0 flex items-center gap-1.5 border border-gray-200 px-2.5 py-1.5 rounded text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+        >
+          <Upload size={14} />
+          {poolUploading ? t('admin.editor.uploading') : t('admin.editor.addImage')}
+        </button>
+      </div>
+
       <div className={`grid ${mode === 'split' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
-        {mode !== 'preview' && (
+        {mode !== 'rich' && (
           <textarea
             ref={textareaRef}
             value={value}
@@ -304,26 +597,26 @@ function MarkdownField({ label, value, onChange, placeholder }: MarkdownFieldPro
             className="w-full h-[480px] p-4 font-mono text-sm leading-relaxed outline-none resize-none overflow-auto border-r border-gray-100"
           />
         )}
-        {mode !== 'write' && (
-          <div className="relative w-full h-[480px] bg-gray-50/50">
+        {mode !== 'markdown' && (
+          <div className="relative w-full h-[480px] bg-white">
             {!value.trim() && !previewFocused && (
               <p className="pointer-events-none absolute left-0 top-0 p-4 text-sm text-gray-400">
-                {t('admin.editor.previewEmpty')}
+                {t('admin.editor.editorEmpty')}
               </p>
             )}
             <div
-              key={previewKey}
               ref={previewRef}
               contentEditable
               suppressContentEditableWarning
               data-lenis-prevent
               onFocus={handlePreviewFocus}
               onInput={handlePreviewInput}
+              onPaste={handlePreviewPaste}
               onKeyDown={handlePreviewKeyDown}
               onBlur={handlePreviewBlur}
-              className="prose prose-sm max-w-none h-full overflow-auto p-4 outline-none transition-colors focus:bg-white prose-headings:font-bold prose-img:rounded-lg"
+              className="prose prose-sm max-w-none h-full overflow-auto p-4 outline-none prose-headings:font-bold prose-img:rounded-lg"
             >
-              <ReactMarkdown remarkPlugins={[remarkBreaks]}>{previewSource}</ReactMarkdown>
+              <FrozenMarkdown key={previewKey} source={previewSource} />
             </div>
           </div>
         )}
@@ -348,6 +641,9 @@ export default function PostEditor() {
   const [loading, setLoading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [activeLang, setActiveLang] = useState<'en' | 'zh'>('en');
+  // Attachment-style image pool, shared between the EN and ZH content fields.
+  const [poolImages, setPoolImages] = useState<PoolImage[]>([]);
+  const [poolUploading, setPoolUploading] = useState(false);
   const [formData, setFormData] = useState<Partial<BlogPost>>({
     slug: '',
     title_en: '',
@@ -396,6 +692,34 @@ export default function PostEditor() {
     }
   };
 
+  const handlePoolUpload = async (files: File[]): Promise<PoolImage[]> => {
+    const list = files;
+    if (list.length === 0) return [];
+    setPoolUploading(true);
+    const toastId = toast.loading(t('admin.editor.uploading'));
+    try {
+      const uploaded = await Promise.all(
+        list.map(async (file) => ({
+          url: await uploadImageFile(file, 'blog'),
+          name: file.name.replace(/\.[^.]+$/, '') || 'image',
+        }))
+      );
+      setPoolImages((prev) => [...prev, ...uploaded]);
+      toast.success(t('admin.editor.uploadSuccess'), { id: toastId });
+      return uploaded;
+    } catch (error) {
+      console.error(error);
+      const detail = error instanceof Error ? error.message : '';
+      toast.error(detail ? `${t('admin.editor.uploadFailed')}: ${detail}` : t('admin.editor.uploadFailed'), { id: toastId });
+      return [];
+    } finally {
+      setPoolUploading(false);
+    }
+  };
+
+  const removeFromPool = (url: string) =>
+    setPoolImages((prev) => prev.filter((img) => img.url !== url));
+
   const handleDelete = async () => {
     if (isNew || !id) return;
     if (!confirm(t('admin.editor.deleteConfirm'))) return;
@@ -419,9 +743,14 @@ export default function PostEditor() {
       };
 
       if (isNew) {
-        await supabase.from('posts').insert(payload);
+        const { data, error } = await supabase.from('posts').insert(payload).select('id').single();
+        if (error) throw error;
+        // Swap /new for the real id but stay on the editor page so the author
+        // can keep working without being bounced back to the post list.
+        if (data?.id) navigate(`/admin/posts/${data.id}`, { replace: true });
       } else {
-        await supabase.from('posts').update(payload).eq('id', id);
+        const { error } = await supabase.from('posts').update(payload).eq('id', id);
+        if (error) throw error;
       }
 
       // Notify Bing IndexNow
@@ -440,13 +769,11 @@ export default function PostEditor() {
 
         // Fire and forget
         fetch(baiduProxyUrl).catch((err) => console.warn('Baidu push failed', err));
-
-        toast.success(t('admin.editor.saved'));
       } catch (err) {
         // Ignore SEO errors
       }
 
-      navigate('/admin/posts');
+      toast.success(t('admin.editor.saved'));
     } catch (error) {
       console.error('Error saving post:', error);
       alert(t('admin.editor.saveFailed'));
@@ -618,10 +945,14 @@ export default function PostEditor() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.contentEn')}</label>
                 <MarkdownField
-                  label={t('admin.editor.mdHint', { lang: 'EN' })}
+                  label={t('admin.editor.bodyHint', { lang: 'EN' })}
                   value={formData.content_en || ''}
                   onChange={(v) => setField('content_en', v)}
                   placeholder={'# Heading\n\nWrite your article in **Markdown**...'}
+                  poolImages={poolImages}
+                  poolUploading={poolUploading}
+                  onUploadImages={handlePoolUpload}
+                  onRemoveImage={removeFromPool}
                 />
               </div>
             </div>
@@ -649,10 +980,14 @@ export default function PostEditor() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('admin.editor.contentZh')}</label>
                 <MarkdownField
-                  label={t('admin.editor.mdHint', { lang: '中文' })}
+                  label={t('admin.editor.bodyHint', { lang: '中文' })}
                   value={formData.content_zh || ''}
                   onChange={(v) => setField('content_zh', v)}
                   placeholder={'# 标题\n\n用 **Markdown** 撰写正文...'}
+                  poolImages={poolImages}
+                  poolUploading={poolUploading}
+                  onUploadImages={handlePoolUpload}
+                  onRemoveImage={removeFromPool}
                 />
                 <p className="text-xs text-gray-500 mt-1">{t('admin.editor.zhHint')}</p>
               </div>

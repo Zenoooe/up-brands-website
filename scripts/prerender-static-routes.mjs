@@ -231,26 +231,36 @@ async function writeRoute(routePath, html) {
 }
 
 async function fetchProjects() {
-  const { data, error } = await supabase
-    .from('projects')
-    .select('id, slug, title, subtitle, category, description, description_en, imageUrl, backup_image_url, link, updated_at, is_visible, sort_order')
-    .or('is_visible.eq.true,is_visible.is.null')
-    .order('sort_order', { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, slug, title, subtitle, category, description, description_en, imageUrl, backup_image_url, link, updated_at, is_visible, sort_order')
+      .or('is_visible.eq.true,is_visible.is.null')
+      .order('sort_order', { ascending: true });
 
-  if (error) throw error;
-  return data || [];
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.warn('Supabase unavailable, using empty projects list:', err.message);
+    return [];
+  }
 }
 
 async function fetchPosts() {
-  const { data, error } = await supabase
-    .from('posts')
-    .select('id, slug, title_en, title_zh, excerpt_en, excerpt_zh, content_en, content_zh, date, imageUrl, backup_image_url, author, tags, is_visible, sort_order')
-    .eq('is_visible', true)
-    .order('sort_order', { ascending: true })
-    .order('date', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, slug, title_en, title_zh, excerpt_en, excerpt_zh, content_en, content_zh, date, imageUrl, backup_image_url, author, tags, is_visible, sort_order')
+      .eq('is_visible', true)
+      .order('sort_order', { ascending: true })
+      .order('date', { ascending: false });
 
-  if (error) throw error;
-  return data || [];
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.warn('Supabase unavailable, using empty posts list:', err.message);
+    return [];
+  }
 }
 
 async function readLocale(localeFile) {
