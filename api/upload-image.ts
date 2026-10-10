@@ -1,16 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Uploads an image to the dedicated `up-brands-blog-assets` repo and returns a
-// jsDelivr CDN URL (free image hosting, no Supabase Storage usage). Binary assets
-// live in their own public repo so the website repo stays small.
+// Uploads an image to the `assets` branch of the website repo and returns a
+// jsDelivr CDN URL (free image hosting, no Supabase Storage usage). That branch
+// is never merged, so the binaries stay out of the deployed source tree.
 //
 // jsDelivr serves any branch/tag:
 //   https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
 
 const GITHUB_PAT = process.env.GITHUB_PAT;
 const REPO_OWNER = 'Zenoooe';
-const REPO_NAME = 'up-brands-blog-assets';
-const BRANCH = 'main';
+const REPO_NAME = 'up-brands-website';
+const BRANCH = 'assets';
 const CDN_BASE = `https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@${BRANCH}`;
 
 // Allow slightly larger JSON payloads (base64 images). Vercel still caps the

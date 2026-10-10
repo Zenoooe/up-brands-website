@@ -173,8 +173,8 @@ function behanceDevPythonProxy() {
 // so without this middleware the request falls through to index.html and the
 // client reports "Image upload failed".
 const ASSETS_OWNER = 'Zenoooe';
-const ASSETS_REPO = 'up-brands-blog-assets';
-const ASSETS_BRANCH = 'main';
+const ASSETS_REPO = 'up-brands-website';
+const ASSETS_BRANCH = 'assets';
 const ASSETS_CDN_BASE = `https://cdn.jsdelivr.net/gh/${ASSETS_OWNER}/${ASSETS_REPO}@${ASSETS_BRANCH}`;
 
 const EXT_BY_TYPE: Record<string, string> = {
