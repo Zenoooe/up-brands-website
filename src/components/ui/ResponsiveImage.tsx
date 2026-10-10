@@ -50,8 +50,7 @@ export const ResponsiveImage = ({ src: originalSrc, alt, className, priority = f
         if (!isSupabase) setCurrentSrc(proxySrc);
       }}
       loading={priority ? "eager" : "lazy"}
-      // @ts-ignore
-      fetchpriority={priority ? "high" : "auto"}
+      fetchPriority={priority ? "high" : "auto"}
       {...props}
     />
   );

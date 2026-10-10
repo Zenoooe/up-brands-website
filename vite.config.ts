@@ -173,8 +173,8 @@ function behanceDevPythonProxy() {
 // so without this middleware the request falls through to index.html and the
 // client reports "Image upload failed".
 const ASSETS_OWNER = 'Zenoooe';
-const ASSETS_REPO = 'up-brands-website';
-const ASSETS_BRANCH = 'assets';
+const ASSETS_REPO = 'up-brands-blog-assets';
+const ASSETS_BRANCH = 'main';
 const ASSETS_CDN_BASE = `https://cdn.jsdelivr.net/gh/${ASSETS_OWNER}/${ASSETS_REPO}@${ASSETS_BRANCH}`;
 
 const EXT_BY_TYPE: Record<string, string> = {
@@ -221,14 +221,25 @@ async function assetsGithubFetch(pat: string, path: string, init?: RequestInit) 
   });
 }
 
-// The `assets` branch may not exist yet (first ever upload); create it from the
+// The assets branch may not exist yet (first ever upload); create it from the
 // repo's default branch. Mirrors ensureBranch() in api/upload-image.ts.
 async function ensureAssetsBranch(pat: string) {
   const check = await assetsGithubFetch(pat, `/branches/${ASSETS_BRANCH}`);
   if (check.ok) return;
 
+  // Only a 404 means the branch is missing; 401/403 mean the token is bad, so
+  // report that instead of pretending the branch is absent. Mirrors
+  // ensureBranch() in api/upload-image.ts.
+  if (check.status !== 404) {
+    const body = await check.text().catch(() => '');
+    throw new Error(`GitHub rejected the branch check (${check.status}${body ? `: ${body.slice(0, 300)}` : ''})`);
+  }
+
   const repoRes = await assetsGithubFetch(pat, '');
-  if (!repoRes.ok) throw new Error(`Unable to read repository info (GitHub ${repoRes.status})`);
+  if (!repoRes.ok) {
+    const body = await repoRes.text().catch(() => '');
+    throw new Error(`Unable to read repository info (GitHub ${repoRes.status}${body ? `: ${body.slice(0, 300)}` : ''})`);
+  }
   const repo = (await repoRes.json()) as { default_branch?: string };
   const defaultBranch = repo.default_branch || 'main';
 

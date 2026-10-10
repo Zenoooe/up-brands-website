@@ -1,15 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Uploads an image to the GitHub repo's dedicated `assets` branch and returns
-// a jsDelivr CDN URL (free image hosting, no Supabase Storage usage).
+// Uploads an image to the dedicated `up-brands-blog-assets` repo and returns a
+// jsDelivr CDN URL (free image hosting, no Supabase Storage usage). Binary assets
+// live in their own public repo so the website repo stays small.
 //
 // jsDelivr serves any branch/tag:
 //   https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
 
 const GITHUB_PAT = process.env.GITHUB_PAT;
 const REPO_OWNER = 'Zenoooe';
-const REPO_NAME = 'up-brands-website';
-const BRANCH = 'assets';
+const REPO_NAME = 'up-brands-blog-assets';
+const BRANCH = 'main';
 const CDN_BASE = `https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@${BRANCH}`;
 
 // Allow slightly larger JSON payloads (base64 images). Vercel still caps the
@@ -76,12 +77,18 @@ async function readError(res: Response) {
 async function ensureBranch() {
   const check = await githubFetch(`/branches/${BRANCH}`);
   if (check.ok) return;
-  const checkInfo = await readError(check);
+
+  // A 404 means the branch is genuinely absent (or the repo is still empty), so
+  // create it below. Anything else — 401 bad token, 403 forbidden — is an auth
+  // problem: fail fast with the real cause instead of reporting a missing branch.
+  if (check.status !== 404) {
+    throw new Error(`GitHub rejected the branch check (${await readError(check)})`);
+  }
 
   // Branch missing → create it from the repo's default branch.
   const repoRes = await githubFetch('');
   if (!repoRes.ok) {
-    throw new Error(`Unable to read repository info (${await readError(repoRes)}); branch check: ${checkInfo}`);
+    throw new Error(`Unable to read repository info (${await readError(repoRes)})`);
   }
   const repo = await repoRes.json();
   const defaultBranch = repo.default_branch || 'main';
