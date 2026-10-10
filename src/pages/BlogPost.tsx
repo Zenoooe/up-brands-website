@@ -5,6 +5,8 @@ import { usePost } from '../hooks/usePosts';
 import { SEO } from '../components/common/SEO';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkCjkFriendly from 'remark-cjk-friendly';
 import remarkBreaks from 'remark-breaks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getBlogImageAlt, getCanonicalUrl } from '../utils/seo';
@@ -36,6 +38,62 @@ function extractHeadings(markdown: string): Heading[] {
   });
 
   return headings;
+}
+
+// Heading ids are generated as `h-<slug-of-full-heading-text>`, but the Table of
+// Contents authors paste into the article body links to fragments they typed by
+// hand — usually "ordinal + short title" (e.g. "#三重新定義問題" for the heading
+// "三、重新定義問題：品牌不是冰山，是一個「力場」"). Those never match by id, so:
+//  1. try the authored fragment as an exact id (sidebar-style anchors),
+//  2. rebuild the id from the link text, which normally repeats the full heading
+//     title — allowing for the ordinal the author dropped,
+//  3. fall back to prefix / substring matching on the fragment itself.
+function resolveHeadingTarget(root: HTMLElement, fragment: string, linkText: string): HTMLElement | null {
+  const decoded = decodeURIComponent(fragment);
+
+  const byId = document.getElementById(decoded);
+  if (byId) return byId;
+
+  const fromText = linkText.trim() ? slugifyHeading(linkText) : '';
+  if (fromText && document.getElementById(fromText)) {
+    return document.getElementById(fromText);
+  }
+
+  const needle = decoded.replace(/^h-/, '');
+  const fromTextBody = fromText.replace(/^h-/, '');
+  const headings = Array.from(
+    root.querySelectorAll<HTMLElement>('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]')
+  );
+  const headingBody = (heading: HTMLElement) => heading.id.replace(/^h-/, '');
+
+  // Compare the bodies, not the prefixed ids: the generated id is
+  // `h-<heading>`, so an `h-`-prefixed needle can never be a suffix of it.
+  const byTextSuffix = fromTextBody
+    ? headings.find((heading) => {
+        const body = headingBody(heading);
+        return body === fromTextBody || body.endsWith(fromTextBody);
+      })
+    : undefined;
+
+  return (
+    byTextSuffix ??
+    headings.find((heading) => {
+      const body = headingBody(heading);
+      return body.startsWith(needle) || (needle.length >= 4 && body.includes(needle));
+    }) ??
+    null
+  );
+}
+
+function scrollToHeading(target: HTMLElement) {
+  // Lenis drives the page scroll; a bare scrollIntoView is overridden by its
+  // animation loop. The -128px offset clears the fixed header.
+  const lenis = (window as any).lenis;
+  if (typeof lenis?.scrollTo === 'function') {
+    lenis.scrollTo(target, { offset: -128, duration: 1 });
+  } else {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 export default function BlogPost() {
@@ -95,6 +153,33 @@ export default function BlogPost() {
   const content = isZh ? convertedContent?.content || rawContent : rawContent;
 
   const headings = useMemo(() => extractHeadings(content), [content]);
+
+  // The Table of Contents inside the article body is authored markdown, so its
+  // anchors are plain <a href="#..."> with no onClick of their own. Delegate
+  // those clicks to the resolver above instead of relying on the browser's exact
+  // id match, which fails for the shortened fragments authors write.
+  useEffect(() => {
+    const root = articleRef.current;
+    if (!root) return;
+
+    const handleAnchorClick = (event: MouseEvent) => {
+      const link = (event.target as HTMLElement | null)?.closest?.('a[href^="#"]');
+      if (!link) return;
+
+      const href = link.getAttribute('href') ?? '';
+      if (href.length < 2) return;
+
+      const target = resolveHeadingTarget(root, href.slice(1), link.textContent ?? '');
+      if (!target) return;
+
+      event.preventDefault();
+      scrollToHeading(target);
+      window.history.replaceState(null, '', href);
+    };
+
+    root.addEventListener('click', handleAnchorClick);
+    return () => root.removeEventListener('click', handleAnchorClick);
+  }, [content]);
 
   // Reading progress + scrollspy
   useEffect(() => {
@@ -239,9 +324,9 @@ export default function BlogPost() {
                 </div>
               </header>
 
-              <div className="prose prose-lg md:prose-xl max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:scroll-mt-32 prose-p:text-gray-600 prose-img:rounded-lg">
+              <div className="post-content">
                 <ReactMarkdown
-                  remarkPlugins={[remarkBreaks]}
+                  remarkPlugins={[remarkGfm, remarkCjkFriendly, remarkBreaks]}
                   components={{
                     h2: ({ children }) => (
                       <h2 id={slugifyHeading(String(children))}>{children}</h2>

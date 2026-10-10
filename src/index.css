@@ -8,6 +8,277 @@
   }
 }
 
+/* ===============================================================
+   Blog article typography — applied via `.post-content` on the
+   markdown wrapper in BlogPost.tsx.
+   White-paper style: warm minimal palette, generous vertical rhythm.
+   Replaces the previous `prose-*` utilities, which had no effect
+   because @tailwindcss/typography is not installed.
+   =============================================================== */
+@layer components {
+  .post-content {
+    --pc-ink: #1f2021;
+    --pc-body: #333333;
+    --pc-cream: #f3efea;
+    --pc-cream-soft: #faf8f5;
+    --pc-accent: #c0ac97;
+    --pc-rule: #e6e2db;
+
+    font-size: 1.0625rem; /* 17px */
+    line-height: 1.85;
+    color: var(--pc-body);
+    letter-spacing: 0.005em;
+    word-break: break-word;
+  }
+
+  .post-content > :first-child {
+    margin-top: 0;
+  }
+
+  .post-content > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* ---------- Headings ---------- */
+  .post-content h1,
+  .post-content h2,
+  .post-content h3,
+  .post-content h4,
+  .post-content h5,
+  .post-content h6 {
+    color: var(--pc-ink);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    scroll-margin-top: 8rem;
+  }
+
+  .post-content h1 {
+    font-size: 2.25rem;
+    margin: 2.2em 0 0.6em;
+  }
+
+  .post-content h2 {
+    font-size: 1.75rem;
+    margin: 2em 0 0.55em;
+    padding-bottom: 0.4em;
+    border-bottom: 1px solid var(--pc-rule);
+  }
+
+  .post-content h3 {
+    font-size: 1.375rem;
+    margin: 1.8em 0 0.5em;
+  }
+
+  .post-content h4 {
+    font-size: 1.125rem;
+    margin: 1.6em 0 0.45em;
+  }
+
+  .post-content h5,
+  .post-content h6 {
+    font-size: 1rem;
+    margin: 1.5em 0 0.4em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #4a4a4a;
+  }
+
+  /* ---------- Paragraphs ---------- */
+  .post-content p {
+    font-size: 1.0625rem;
+    line-height: 1.85;
+    margin: 1.5em 0;
+  }
+
+  /* ---------- Lists ---------- */
+  .post-content ul,
+  .post-content ol {
+    margin: 1.5em 0;
+    padding-left: 1.5em;
+  }
+
+  .post-content ul {
+    list-style: disc;
+  }
+
+  .post-content ol {
+    list-style: decimal;
+  }
+
+  .post-content ul ul {
+    list-style: circle;
+  }
+
+  .post-content ul ul ul {
+    list-style: square;
+  }
+
+  .post-content li {
+    margin: 0.55em 0;
+    padding-left: 0.25em;
+    line-height: 1.8;
+  }
+
+  .post-content li > ul,
+  .post-content li > ol {
+    margin: 0.55em 0;
+  }
+
+  .post-content li::marker {
+    color: var(--pc-accent);
+  }
+
+  /* ---------- Blockquote ---------- */
+  .post-content blockquote {
+    margin: 2em 0;
+    padding: 1.25em 1.5em;
+    background: var(--pc-cream);
+    border-left: 3px solid var(--pc-accent);
+    border-radius: 0 6px 6px 0;
+    color: var(--pc-ink);
+  }
+
+  .post-content blockquote p {
+    margin: 0.5em 0;
+    line-height: 1.8;
+  }
+
+  .post-content blockquote p:first-child {
+    margin-top: 0;
+  }
+
+  .post-content blockquote p:last-child {
+    margin-bottom: 0;
+  }
+
+  .post-content blockquote cite {
+    display: block;
+    margin-top: 0.75em;
+    font-size: 0.875rem;
+    font-style: normal;
+    color: #6b6b6b;
+  }
+
+  /* ---------- Tables ---------- */
+  .post-content table {
+    width: 100%;
+    margin: 2em 0;
+    border: 1px solid var(--pc-rule);
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+
+  .post-content thead {
+    background: var(--pc-cream);
+  }
+
+  .post-content th {
+    padding: 0.85em 1em;
+    text-align: left;
+    font-weight: 700;
+    color: var(--pc-ink);
+    border-bottom: 1px solid var(--pc-rule);
+  }
+
+  .post-content td {
+    padding: 0.85em 1em;
+    border-bottom: 1px solid var(--pc-rule);
+    vertical-align: top;
+  }
+
+  .post-content tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .post-content tbody tr:nth-child(even) {
+    background: var(--pc-cream-soft);
+  }
+
+  /* ---------- Links & emphasis ---------- */
+  .post-content a {
+    color: var(--pc-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--pc-accent);
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+  }
+
+  .post-content a:hover {
+    color: #000;
+    text-decoration-color: var(--pc-ink);
+  }
+
+  .post-content strong {
+    color: var(--pc-ink);
+    font-weight: 700;
+  }
+
+  /* ---------- Code ---------- */
+  .post-content code {
+    background: var(--pc-cream);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.875em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--pc-ink);
+  }
+
+  .post-content pre {
+    margin: 2em 0;
+    padding: 1.25em 1.5em;
+    background: var(--pc-ink);
+    color: var(--pc-cream);
+    border-radius: 6px;
+    overflow-x: auto;
+    line-height: 1.7;
+  }
+
+  .post-content pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: 0.875rem;
+  }
+
+  /* ---------- Media & rules ---------- */
+  .post-content img {
+    margin: 2em 0;
+    border-radius: 4px;
+  }
+
+  .post-content hr {
+    margin: 3em 0;
+    border: 0;
+    border-top: 1px solid var(--pc-rule);
+  }
+
+  /* ---------- Small screens ---------- */
+  @media (max-width: 640px) {
+    .post-content {
+      font-size: 1rem;
+    }
+
+    .post-content p {
+      font-size: 1rem;
+    }
+
+    .post-content h1 {
+      font-size: 1.75rem;
+    }
+
+    .post-content h2 {
+      font-size: 1.5rem;
+    }
+
+    .post-content h3 {
+      font-size: 1.25rem;
+    }
+  }
+}
+
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

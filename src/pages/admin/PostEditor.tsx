@@ -5,6 +5,8 @@ import { supabase } from '../../lib/supabase';
 import { BlogPost } from '../../types';
 import { Helmet } from 'react-helmet-async';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkCjkFriendly from 'remark-cjk-friendly';
 import remarkBreaks from 'remark-breaks';
 import {
   Upload,
@@ -154,7 +156,7 @@ type MarkdownFieldProps = {
 // the subtree until we deliberately remount it with a new key.
 const FrozenMarkdown = memo(
   function FrozenMarkdown({ source }: { source: string }) {
-    return <ReactMarkdown remarkPlugins={[remarkBreaks]}>{source}</ReactMarkdown>;
+    return <ReactMarkdown remarkPlugins={[remarkGfm, remarkCjkFriendly, remarkBreaks]}>{source}</ReactMarkdown>;
   },
   () => true
 );
