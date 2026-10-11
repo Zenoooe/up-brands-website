@@ -10,6 +10,8 @@ import { getSupabaseUrl, getValidImageUrl } from '../utils/image';
 import { getCanonicalUrl, getProjectImageAlt } from '../utils/seo';
 import { getProjectDisplayCategory, getProjectDisplaySubtitle } from '../../shared/project-metadata';
 import { parseProjectTags } from '../utils/tags';
+import { FilterBar } from '../components/home/FilterBar';
+import { useFilterTags } from '../hooks/useFilterTags';
 
 const ProjectCard = ({ project, index }: { project: Project; index: number }) => {
   let displayUrl = getValidImageUrl(project.backup_image_url, project.imageUrl);
@@ -57,11 +59,24 @@ const ProjectCard = ({ project, index }: { project: Project; index: number }) =>
 export default function Work() {
   const { t } = useTranslation();
   const { projects, loading } = useBehanceProjects();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  
-  const service = searchParams.get('service');
-  const industry = searchParams.get('industry');
+  const { availableServices, availableIndustries, translationsMap } = useFilterTags(projects);
+
+  const service = searchParams.get('service') ?? '';
+  const industry = searchParams.get('industry') ?? '';
+
+  // The filter drives the URL, so a filtered listing stays shareable and the
+  // grid updates live without a "go" button.
+  const updateFilter = (key: 'service' | 'industry', value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) {
+      next.set(key, value);
+    } else {
+      next.delete(key);
+    }
+    setSearchParams(next);
+  };
 
   // Same listing is served at /work and the SEO alias /projects.
   const basePath = location.pathname.startsWith('/projects') ? '/projects' : '/work';
@@ -97,6 +112,20 @@ export default function Work() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
+          {/* Same filter as the home page, wired to the URL so this listing
+              filters in place instead of sending the visitor off to /work. */}
+          <FilterBar
+            services={availableServices}
+            industries={availableIndustries}
+            selectedService={service}
+            selectedIndustry={industry}
+            onServiceChange={(value) => updateFilter('service', value)}
+            onIndustryChange={(value) => updateFilter('industry', value)}
+            translationsMap={translationsMap}
+            showGoButton={false}
+            embedded
+          />
+
           <Link to="/" className="inline-flex items-center text-sm font-bold uppercase tracking-widest text-gray-500 hover:text-black mb-8 transition-colors">
             ← Back to Home
           </Link>

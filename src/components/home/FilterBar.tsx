@@ -12,6 +12,12 @@ interface FilterBarProps {
   onServiceChange: (val: string) => void;
   onIndustryChange: (val: string) => void;
   translationsMap?: Record<string, string>;
+  // The "Go to work" call to action only makes sense while the visitor is still
+  // on the home page. Listing pages already react to the picks, so they hide it.
+  showGoButton?: boolean;
+  // Drops the full-width band chrome (cream fill, hairline, own gutters) for
+  // callers that nest the bar inside a hero that already provides them.
+  embedded?: boolean;
 }
 
 const Dropdown = ({ 
@@ -96,7 +102,9 @@ export const FilterBar = ({
   selectedIndustry,
   onServiceChange,
   onIndustryChange,
-  translationsMap = {}
+  translationsMap = {},
+  showGoButton = true,
+  embedded = false
 }: FilterBarProps) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -125,8 +133,14 @@ export const FilterBar = ({
   };
 
   return (
-    <div className="w-full py-12 md:py-16 bg-[#F3EFEA] flex flex-col xl:flex-row items-center justify-between gap-8 border-b border-black/10 z-30 relative px-4 md:px-8 xl:px-16">
-      <div className={`flex-1 flex flex-wrap items-center justify-center xl:justify-start ${isChinese ? 'text-4xl md:text-5xl lg:text-6xl font-medium tracking-normal' : 'text-3xl md:text-5xl lg:text-6xl font-light tracking-tight'} leading-tight text-center xl:text-left text-[#1f2021]`}>
+    <div
+      className={`w-full flex flex-col gap-8 z-30 relative ${
+        embedded
+          ? 'items-start xl:flex-row xl:items-center mb-8'
+          : 'xl:flex-row items-center justify-between py-12 md:py-16 bg-[#F3EFEA] border-b border-black/10 px-4 md:px-8 xl:px-16'
+      }`}
+    >
+      <div className={`flex-1 flex flex-wrap items-center ${embedded ? 'justify-start text-left' : 'justify-center xl:justify-start text-center xl:text-left'} ${isChinese ? 'text-4xl md:text-5xl lg:text-6xl font-medium tracking-normal' : 'text-3xl md:text-5xl lg:text-6xl font-light tracking-tight'} leading-tight text-[#1f2021]`}>
         {isChinese ? (
           <>
             <span className="my-2 whitespace-nowrap">我们为</span>
@@ -173,13 +187,15 @@ export const FilterBar = ({
         )}
       </div>
 
-      <button
-        onClick={handleGoTo}
-        className="group inline-flex items-center justify-center gap-4 bg-black text-white px-10 py-5 rounded-full font-bold uppercase tracking-widest text-sm hover:bg-[#1769FF] transition-all duration-300 whitespace-nowrap flex-shrink-0 shadow-xl hover:shadow-2xl hover:-translate-y-1"
-      >
-        <span>{t('filter_bar.go_to_work')}</span>
-        <ArrowRight size={20} className="transform group-hover:translate-x-2 transition-transform" />
-      </button>
+      {showGoButton && (
+        <button
+          onClick={handleGoTo}
+          className="group inline-flex items-center justify-center gap-4 bg-black text-white px-10 py-5 rounded-full font-bold uppercase tracking-widest text-sm hover:bg-[#1769FF] transition-all duration-300 whitespace-nowrap flex-shrink-0 shadow-xl hover:shadow-2xl hover:-translate-y-1"
+        >
+          <span>{t('filter_bar.go_to_work')}</span>
+          <ArrowRight size={20} className="transform group-hover:translate-x-2 transition-transform" />
+        </button>
+      )}
     </div>
   );
 };

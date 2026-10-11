@@ -19,6 +19,7 @@ import { supabase } from '../lib/supabase';
 import { getCanonicalUrl, getProjectImageAlt } from '../utils/seo';
 import { getProjectDisplayCategory, getProjectDisplaySubtitle } from '../../shared/project-metadata';
 import { FilterBar } from '../components/home/FilterBar';
+import { useFilterTags } from '../hooks/useFilterTags';
 import { ServicesSection } from '../components/home/ServicesSection';
 import { parseProjectTags } from '../utils/tags';
 
@@ -130,87 +131,7 @@ export default function Home() {
   const [selectedService, setSelectedService] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   
-  const [dynamicServices, setDynamicServices] = useState<string[]>([]);
-  const [dynamicIndustries, setDynamicIndustries] = useState<string[]>([]);
-  const [translationsMap, setTranslationsMap] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    async function loadTagsFromSettings() {
-      try {
-        const [servicesRes, industriesRes] = await Promise.all([
-          supabase.from('settings').select('value').eq('key', 'services_hierarchy').maybeSingle(),
-          supabase.from('settings').select('value').eq('key', 'industries_list').maybeSingle()
-        ]);
-        
-        const sSet = new Set<string>();
-        const iSet = new Set<string>();
-        const tMap: Record<string, string> = {};
-        
-        if (servicesRes.data && servicesRes.data.value) {
-          servicesRes.data.value.forEach((cat: any) => {
-            if (cat.items && Array.isArray(cat.items)) {
-              cat.items.forEach((item: any) => {
-                if (item.en) {
-                  // Only add to filter if explicitly allowed (defaults to true if undefined)
-                  if (item.showInFilter !== false) {
-                    sSet.add(item.en);
-                  }
-                  if (item.zh) tMap[item.en] = item.zh;
-                }
-              });
-            }
-          });
-        }
-        
-        if (industriesRes.data && industriesRes.data.value) {
-          industriesRes.data.value.forEach((ind: any) => {
-            if (ind.en) {
-              // Only add to filter if explicitly allowed (defaults to true if undefined)
-              if (ind.showInFilter !== false) {
-                iSet.add(ind.en);
-              } else {
-                console.log("Excluding industry from filter:", ind.en);
-              }
-              if (ind.zh) tMap[ind.en] = ind.zh;
-            }
-          });
-        }
-        
-        console.log("Loaded tags from Supabase:", { sSet: Array.from(sSet), iSet: Array.from(iSet) });
-        setDynamicServices(Array.from(sSet).sort());
-        setDynamicIndustries(Array.from(iSet).sort());
-        setTranslationsMap(tMap);
-      } catch (e) {
-        console.error('Failed to load tags from settings for FilterBar', e);
-      }
-    }
-    
-    loadTagsFromSettings();
-  }, []);
-
-  // Use the dynamic services for the filter dropdown.
-  // We no longer automatically merge project tags into the filter dropdown 
-  // because the user wants explicit control via the Admin panel checkboxes.
-  const { availableServices, availableIndustries } = useMemo(() => {
-    // If the database has absolutely no tags configured yet, we can fallback to project tags.
-    // Otherwise, we strictly use what is checked in the admin panel.
-    const services = new Set<string>(dynamicServices);
-    const industries = new Set<string>(dynamicIndustries);
-    
-    if (dynamicServices.length === 0 || dynamicIndustries.length === 0) {
-      console.log("Falling back to project tags because dynamic tags are empty");
-      projects.forEach(p => {
-        const tags = parseProjectTags(p.category);
-        if (dynamicServices.length === 0) tags.services.forEach(s => services.add(s));
-        if (dynamicIndustries.length === 0) tags.industries.forEach(i => industries.add(i));
-      });
-    }
-    
-    return {
-      availableServices: Array.from(services).sort(),
-      availableIndustries: Array.from(industries).sort()
-    };
-  }, [projects, dynamicServices, dynamicIndustries]);
+  const { availableServices, availableIndustries, translationsMap } = useFilterTags(projects);
 
   // Filter projects based on selections
   const filteredProjects = useMemo(() => {
